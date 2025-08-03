@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+import { Resend } from 'resend';
 
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || '',
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,15 +25,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL!, "Crystal Services");
-    const recipients = [new Recipient(process.env.MAILERSEND_TO_EMAIL!, "Crystal Services")];
+    // Check if API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'Email service niet geconfigureerd' },
+        { status: 500 }
+      );
+    }
 
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setReplyTo(new Sender(email, name))
-      .setSubject(`Nieuwe ophaalverzoek van ${name}`)
-      .setHtml(`
+    // Send email using Resend
+    const { data, error } = await resend.emails.send({
+      from: `Crystal Services <${process.env.FROM_EMAIL}>`,
+      to: [process.env.TO_EMAIL!],
+      replyTo: email,
+      subject: `Nieuwe ophaalverzoek van ${name}`,
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <div style="text-align: center; margin-bottom: 30px;">
@@ -80,8 +85,8 @@ export async function POST(request: NextRequest) {
             </div>
           </div>
         </div>
-      `)
-      .setText(`
+      `,
+      text: `
 Nieuwe ophaalverzoek van Crystal Services website
 
 Klantgegevens:
@@ -101,17 +106,31 @@ BELANGRIJK: Gratis ophaal- en leverservice geldt alleen voor bestellingen van â‚
 
 ---
 Dit verzoek is verzonden via het ophaalformulier op crystal-services.be
-      `);
+      `
+    });
 
-    await mailerSend.email.send(emailParams);
+    if (error) {
+      console.error('Resend error:', error);
+      return NextResponse.json(
+        { error: 'Er is een fout opgetreden bij het verzenden van het ophaalverzoek' },
+        { status: 500 }
+      );
+    }
 
+    console.log('Pickup request email sent successfully via Resend:', data);
     return NextResponse.json(
       { message: 'Ophaalverzoek succesvol verzonden' },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error('Error sending pickup request:', error);
+    console.error('Error sending pickup request email via Resend:', error);
+    
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij het verzenden van het ophaalverzoek' },
       { status: 500 }
