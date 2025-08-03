@@ -6,9 +6,11 @@ export default function PickupForm() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    date: "",
     phone: "",
     address: "",
+    service: "",
+    pickupDate: "",
+    pickupTime: "",
     message: "",
     agreeToTerms: false
   });
@@ -16,7 +18,7 @@ export default function PickupForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
     if (type === "checkbox") {
@@ -36,24 +38,45 @@ export default function PickupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitStatus("success");
-      setFormData({ 
-        name: "", 
-        email: "", 
-        date: "", 
-        phone: "", 
-        address: "", 
-        message: "", 
-        agreeToTerms: false 
+    setSubmitStatus("idle");
+
+    try {
+      const response = await fetch('/api/pickup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-      
-      // Reset status after 3 seconds
-      setTimeout(() => setSubmitStatus("idle"), 3000);
-    }, 1000);
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus("success");
+        setFormData({ 
+          name: "", 
+          email: "", 
+          phone: "", 
+          address: "", 
+          service: "",
+          pickupDate: "",
+          pickupTime: "",
+          message: "", 
+          agreeToTerms: false 
+        });
+        
+        // Reset status after 3 seconds
+        setTimeout(() => setSubmitStatus("idle"), 3000);
+      } else {
+        setSubmitStatus("error");
+        alert(result.error || 'Er is een fout opgetreden bij het verzenden van het ophaalverzoek.');
+      }
+    } catch (error) {
+      setSubmitStatus("error");
+      alert('Er is een fout opgetreden bij het verzenden van het ophaalverzoek.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -98,20 +121,64 @@ export default function PickupForm() {
           </div>
         </div>
 
-        {/* Date Field */}
+        {/* Service Field */}
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-            Datum
+          <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-2">
+            Gewenste service
+          </label>
+          <select
+            id="service"
+            name="service"
+            value={formData.service}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+          >
+            <option value="">Selecteer een service</option>
+            <option value="Wassen">Wassen</option>
+            <option value="Strijken">Strijken</option>
+            <option value="Droogkuis">Droogkuis</option>
+            <option value="Zakelijke kledij">Zakelijke kledij</option>
+            <option value="Complete service">Complete service (wassen + strijken)</option>
+          </select>
+        </div>
+
+        {/* Pickup Date Field */}
+        <div>
+          <label htmlFor="pickupDate" className="block text-sm font-medium text-gray-700 mb-2">
+            Ophaaldatum
           </label>
           <input
             type="date"
-            id="date"
-            name="date"
-            value={formData.date}
+            id="pickupDate"
+            name="pickupDate"
+            value={formData.pickupDate}
             onChange={handleChange}
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
           />
+        </div>
+
+        {/* Pickup Time Field */}
+        <div>
+          <label htmlFor="pickupTime" className="block text-sm font-medium text-gray-700 mb-2">
+            Voorkeurstijd voor ophaling
+          </label>
+          <select
+            id="pickupTime"
+            name="pickupTime"
+            value={formData.pickupTime}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+          >
+            <option value="">Selecteer een tijd</option>
+            <option value="08:00 - 10:00">08:00 - 10:00</option>
+            <option value="10:00 - 12:00">10:00 - 12:00</option>
+            <option value="12:00 - 14:00">12:00 - 14:00</option>
+            <option value="14:00 - 16:00">14:00 - 16:00</option>
+            <option value="16:00 - 18:00">16:00 - 18:00</option>
+          </select>
         </div>
 
         {/* Phone Field */}

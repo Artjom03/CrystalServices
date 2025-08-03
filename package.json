@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "mailersend": "^2.6.0",
     "next": "15.4.5",
     "react": "^18",
     "react-dom": "^18"
