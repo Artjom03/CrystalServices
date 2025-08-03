@@ -34,6 +34,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check all environment variables
+    console.log('Environment check:', {
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      hasFromEmail: !!process.env.FROM_EMAIL,
+      hasToEmail: !!process.env.TO_EMAIL,
+      fromEmail: process.env.FROM_EMAIL,
+      toEmail: process.env.TO_EMAIL
+    });
+
     console.log('Sending email with Resend:', {
       from: process.env.FROM_EMAIL,
       to: process.env.TO_EMAIL,
