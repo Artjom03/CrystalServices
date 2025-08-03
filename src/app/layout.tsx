@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   keywords: "wasserij, strijkservice, droogkuis, Borgerhout, haal- en brengservice",
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: '32x32' },
       { url: '/icon.svg', type: 'image/svg+xml' }
     ],
     apple: [
