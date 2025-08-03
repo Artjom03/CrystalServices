@@ -94,7 +94,7 @@ export default function PickupForm() {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
             placeholder="Voer uw naam in"
           />
         </div>
@@ -112,7 +112,7 @@ export default function PickupForm() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
               placeholder="voorbeeld@email.com"
             />
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -132,7 +132,7 @@ export default function PickupForm() {
             value={formData.service}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
           >
             <option value="">Selecteer een service</option>
             <option value="Wassen">Wassen</option>
@@ -155,7 +155,7 @@ export default function PickupForm() {
             value={formData.pickupDate}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
           />
         </div>
 
@@ -170,7 +170,7 @@ export default function PickupForm() {
             value={formData.pickupTime}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
           >
             <option value="">Selecteer een tijd</option>
             <option value="08:00 - 10:00">08:00 - 10:00</option>
@@ -193,7 +193,7 @@ export default function PickupForm() {
             value={formData.phone}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
             placeholder="Voer uw telefoonnummer in"
           />
         </div>
@@ -210,7 +210,7 @@ export default function PickupForm() {
             value={formData.address}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
             placeholder="Straat en huisnummer, postcode en plaats"
           />
         </div>
@@ -226,7 +226,7 @@ export default function PickupForm() {
             value={formData.message}
             onChange={handleChange}
             rows={6}
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-vertical"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-vertical text-gray-900 placeholder-gray-400"
             placeholder="Vermeld hier de gewenste datum en tijd voor ophalen, eventuele speciale instructies..."
           />
         </div>
