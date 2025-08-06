@@ -39,6 +39,15 @@ export default function PickupForm() {
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
+    // Manual validation check
+    if (!formData.name || !formData.email || !formData.service || 
+        !formData.pickupDate || !formData.phone || !formData.address || 
+        !formData.agreeToTerms) {
+      alert('Alle verplichte velden moeten ingevuld worden');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/pickup', {
         method: 'POST',
