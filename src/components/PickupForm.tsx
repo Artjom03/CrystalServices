@@ -135,10 +135,7 @@ export default function PickupForm() {
             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
           >
             <option value="">Selecteer een service</option>
-            <option value="Wassen">Wassen</option>
             <option value="Strijken">Strijken</option>
-            <option value="Droogkuis">Droogkuis</option>
-            <option value="Zakelijke kledij">Zakelijke kledij</option>
             <option value="Complete service">Complete service (wassen + strijken)</option>
           </select>
         </div>
@@ -160,7 +157,7 @@ export default function PickupForm() {
         </div>
 
         {/* Pickup Time Field */}
-        <div>
+        {/* <div>
           <label htmlFor="pickupTime" className="block text-sm font-medium text-gray-700 mb-2">
             Voorkeurstijd voor ophaling
           </label>
@@ -179,7 +176,7 @@ export default function PickupForm() {
             <option value="14:00 - 16:00">14:00 - 16:00</option>
             <option value="16:00 - 18:00">16:00 - 18:00</option>
           </select>
-        </div>
+        </div> */}
 
         {/* Phone Field */}
         <div>

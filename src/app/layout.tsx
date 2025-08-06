@@ -6,12 +6,8 @@ export const metadata: Metadata = {
   description: "Crystal Services biedt uitgebreide was-, strijk-, droog- en reinigingsdiensten in Borgerhout. Haal- en brengservice beschikbaar.",
   keywords: "wasserij, strijkservice, droogkuis, Borgerhout, haal- en brengservice",
   icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' }
-    ],
-    apple: [
-      { url: '/apple-icon.svg', sizes: '180x180', type: 'image/svg+xml' }
-    ],
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
   },
 };
 
