@@ -7,7 +7,6 @@ export default function ContactForm() {
     name: "",
     email: "",
     phone: "",
-    availableFrom: "",
     message: ""
   });
 
@@ -40,7 +39,7 @@ export default function ContactForm() {
 
       if (response.ok) {
         setSubmitStatus("success");
-        setFormData({ name: "", email: "", phone: "", availableFrom: "", message: "" });
+        setFormData({ name: "", email: "", phone: "", message: "" });
         
         // Reset status after 3 seconds
         setTimeout(() => setSubmitStatus("idle"), 3000);
@@ -112,27 +111,6 @@ export default function ContactForm() {
             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
             placeholder="Voer uw telefoonnummer in"
           />
-        </div>
-
-        {/* Available From Field */}
-        <div>
-          <label htmlFor="availableFrom" className="block text-sm font-medium text-gray-700 mb-2">
-            Vanaf welk tijdstip bent u beschikbaar?
-          </label>
-          <select
-            id="availableFrom"
-            name="availableFrom"
-            value={formData.availableFrom}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
-          >
-            <option value="">Selecteer een tijdstip</option>
-            <option value="08:00 - 10:00">08:00 - 10:00</option>
-            <option value="10:00 - 12:00">10:00 - 12:00</option>
-            <option value="12:00 - 14:00">12:00 - 14:00</option>
-            <option value="14:00 - 16:00">14:00 - 16:00</option>
-            <option value="16:00 - 18:00">16:00 - 18:00</option>
-          </select>
         </div>
 
         {/* Message Field */}

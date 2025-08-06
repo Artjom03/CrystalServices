@@ -10,7 +10,6 @@ export default function PickupForm() {
     address: "",
     service: "",
     pickupDate: "",
-    pickupTime: "",
     message: "",
     agreeToTerms: false
   });
@@ -60,7 +59,6 @@ export default function PickupForm() {
           address: "", 
           service: "",
           pickupDate: "",
-          pickupTime: "",
           message: "", 
           agreeToTerms: false 
         });
@@ -155,28 +153,6 @@ export default function PickupForm() {
             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
           />
         </div>
-
-        {/* Pickup Time Field */}
-        {/* <div>
-          <label htmlFor="pickupTime" className="block text-sm font-medium text-gray-700 mb-2">
-            Voorkeurstijd voor ophaling
-          </label>
-          <select
-            id="pickupTime"
-            name="pickupTime"
-            value={formData.pickupTime}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900"
-          >
-            <option value="">Selecteer een tijd</option>
-            <option value="08:00 - 10:00">08:00 - 10:00</option>
-            <option value="10:00 - 12:00">10:00 - 12:00</option>
-            <option value="12:00 - 14:00">12:00 - 14:00</option>
-            <option value="14:00 - 16:00">14:00 - 16:00</option>
-            <option value="16:00 - 18:00">16:00 - 18:00</option>
-          </select>
-        </div> */}
 
         {/* Phone Field */}
         <div>
