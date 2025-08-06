@@ -6,10 +6,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, address, service, pickupDate, pickupTime, message } = body;
+    const { name, email, phone, address, service, pickupDate, message } = body;
 
     // Validate required fields
-    if (!name || !email || !phone || !address || !service || !pickupDate || !pickupTime) {
+    if (!name || !email || !phone || !address || !service || !pickupDate) {
       return NextResponse.json(
         { error: 'Alle verplichte velden moeten ingevuld worden' },
         { status: 400 }
@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
               <h3 style="color: #1e40af; margin-bottom: 10px;">Service details:</h3>
               <p style="margin: 5px 0;"><strong>Gewenste service:</strong> ${service}</p>
               <p style="margin: 5px 0;"><strong>Ophaaldatum:</strong> ${pickupDate}</p>
-              <p style="margin: 5px 0;"><strong>Ophaaltijd:</strong> ${pickupTime}</p>
             </div>
             
             ${message ? `
@@ -98,7 +97,6 @@ Adres: ${address}
 Service details:
 Gewenste service: ${service}
 Ophaaldatum: ${pickupDate}
-Ophaaltijd: ${pickupTime}
 
 ${message ? `Opmerkingen:\n${message}\n` : ''}
 
