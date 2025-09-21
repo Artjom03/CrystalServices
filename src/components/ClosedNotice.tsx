@@ -7,8 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 // Persists dismissal in localStorage for this season.
 export default function ClosedNotice() {
   const [visible, setVisible] = useState(false);
-  // Base for dismissal keys; separate keys for pre-notice vs closed so both can be shown once
-  const storageBase = "closedNotice-2025b";
+  // Always show on refresh during the period (no persistence)
 
   // Compute if now is within the closed window, using Europe/Brussels timezone.
   const { phase, isWithinAnyPeriod } = useMemo(() => {
@@ -60,20 +59,19 @@ export default function ClosedNotice() {
       return;
     }
 
-    if (!isWithinAnyPeriod || !phase) return;
+    if (!isWithinAnyPeriod || !phase) {
+      setVisible(false);
+      return;
+    }
 
-    const key = `${storageBase}-${phase}`;
-    const dismissed = window.localStorage.getItem(key);
-    if (!dismissed) setVisible(true);
-  }, [isWithinAnyPeriod, phase, storageBase]);
+    // Show every time during the period
+    setVisible(true);
+  }, [isWithinAnyPeriod, phase]);
 
   if (!visible) return null;
 
   const dismiss = () => {
-    try {
-      const key = `${storageBase}-${phase ?? "pre"}`;
-      window.localStorage.setItem(key, "1");
-    } catch {}
+    // No persistence: will show again on refresh while within the period
     setVisible(false);
   };
 
