@@ -48,12 +48,6 @@ export default function Header() {
             >
               Contact
             </Link>
-            <Link 
-              href="/mijn-was-ophalen"
-              className="text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              Mijn was ophalen
-            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -91,13 +85,6 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
-              </Link>
-              <Link 
-                href="/mijn-was-ophalen"
-                className="text-gray-700 hover:text-blue-600 transition-colors text-left"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Mijn was ophalen
               </Link>
             </div>
           </nav>

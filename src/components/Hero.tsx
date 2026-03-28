@@ -58,11 +58,11 @@ export default function Hero() {
               <div className="bg-gray-900 text-white px-4 py-2 rounded-lg inline-block mb-6">
                 <strong>Snelle Service!</strong>
                 <br />
-                Wij bieden een haal- en brengservice aan, ook voor strijkwerk met dienstencheques.
+                Wij bieden een professionele strijkservice aan, ook voor strijkwerk met dienstencheques.
               </div>
               <p className="text-lg text-gray-700 mb-6">
                 Is strijken voor jou een lastige klus? Of besteed je je vrije tijd liever aan 
-                andere dingen? Wij hebben de oplossing! Breng je strijkgoed naar <strong>Crystal Services</strong> of laat ons het ophalen. 
+                andere dingen? Wij hebben de oplossing! Breng je strijkgoed naar <strong>Crystal Services</strong> en wij zorgen voor de rest. 
                 Wij zorgen ervoor dat alles netjes wordt gestreken, precies zoals jij het wilt.
               </p>
               <div className="mb-6">
@@ -71,18 +71,7 @@ export default function Hero() {
                   <li>• Was-, reinigings- en droogdiensten</li>
                 </ul>
               </div>
-              <p className="text-lg text-gray-700 mb-6">
-                <strong>Ophalen en leveren is mogelijk na 18.30 uur.</strong>
-              </p>
-              <p className="text-lg text-gray-700 mb-8">
-                Bij een minimale besteding van € 50,- kunt u gebruikmaken van onze gratis haal- en brengservice!
-              </p>
-              <a 
-                href="/mijn-was-ophalen" 
-                className="inline-block bg-gray-900 text-white px-8 py-3 hover:bg-gray-800 transition-colors text-lg font-semibold"
-              >
-                Mijn was ophalen
-              </a>
+              
             </div>
           </div>
         </div>

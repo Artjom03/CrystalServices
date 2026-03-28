@@ -14,14 +14,14 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Contact Info */}
+          {/* Contact */}
           <div>
             <h4 className="text-xl font-semibold mb-4">Contact</h4>
-            <div className="space-y-2 text-gray-300">
-              <p>📍 Lodewijk van berckenlaan 189, 2140 Borgerhout</p>
-              <p>📞 <a href="tel:0494403841" className="hover:text-white transition-colors">0494 40 38 41</a></p>
-              <p>✉️ <a href="mailto:info@crystal-services.be" className="hover:text-white transition-colors">info@crystal-services.be</a></p>
-            </div>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              <li>Lodewijk van Berckenlaan, 2140 Borgerhout</li>
+              <li>Tel: 0494 40 38 41</li>
+              <li>E-mail: info@crystal-services.be</li>
+            </ul>
           </div>
 
           {/* Services */}
@@ -32,7 +32,6 @@ export default function Footer() {
               <li>• Wassen en drogen</li>
               <li>• Reiniging delicate kledingstukken</li>
               <li>• Bedrijfskleding</li>
-              <li>• Haal- en brengservice</li>
             </ul>
           </div>
         </div>
@@ -42,7 +41,10 @@ export default function Footer() {
             © 2025 Crystal Services. Alle rechten voorbehouden.
           </p>
           <div className="flex justify-center">
-            <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
+            <a
+              href="#"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
+            >
               Cookies
             </a>
           </div>

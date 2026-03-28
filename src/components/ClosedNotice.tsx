@@ -95,7 +95,6 @@ export default function ClosedNotice() {
           <>
             <p className="mb-4 text-gray-700">
               We zijn gesloten van <strong>29 september</strong> t/m <strong>8 oktober</strong>.
-              Tijdens deze periode kunnen we geen ophalingen of leveringen uitvoeren.
             </p>
             <p className="mb-6 text-sm text-gray-600">
               Bedankt voor uw begrip. We helpen u graag weer vanaf <strong>9 oktober</strong>.
@@ -107,7 +106,7 @@ export default function ClosedNotice() {
               We zijn <strong>binnenkort tijdelijk gesloten</strong>: van <strong>29 september</strong> t/m <strong>8 oktober</strong>.
             </p>
             <p className="mb-6 text-sm text-gray-600">
-              Plan uw ophaling of levering bij voorkeur <strong>voor 29 september</strong> of <strong>na 8 oktober</strong>.
+              Plan uw bezoek bij voorkeur <strong>voor 29 september</strong> of <strong>na 8 oktober</strong>.
             </p>
           </>
         )}

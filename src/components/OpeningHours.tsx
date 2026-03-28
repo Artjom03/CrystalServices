@@ -41,13 +41,8 @@ export default function OpeningHours() {
           
           <div className="mt-8 text-center">
             <p className="text-gray-600 mb-4">
-              Ophalen en leveren is mogelijk na 18.30 uur
+              Voor vragen over openingstijden kunt u altijd contact met ons opnemen.
             </p>
-            <div className="bg-green-100 border border-green-300 rounded-lg p-4">
-              <p className="text-green-800 font-medium">
-                💡 Bij een minimale besteding van € 50,- kunt u gebruikmaken van onze gratis haal- en brengservice!
-              </p>
-            </div>
           </div>
         </div>
       </div>

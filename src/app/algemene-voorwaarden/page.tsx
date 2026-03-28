@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Algemene Voorwaarden - Crystal Services",
-  description: "Lees de algemene voorwaarden van Crystal Services voor onze wasophaling en haal- en brengservice.",
-  keywords: "algemene voorwaarden, Crystal Services, wasophaling, voorwaarden, service",
+  description: "Lees de algemene voorwaarden van Crystal Services voor onze was- en strijkdiensten.",
+  keywords: "algemene voorwaarden, Crystal Services, wasserij, strijkservice, voorwaarden, service",
 };
 
 export default function AlgemeneVoorwaarden() {
@@ -25,71 +25,62 @@ export default function AlgemeneVoorwaarden() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 1</h2>
                 <p className="text-gray-700">
                   Deze algemene voorwaarden zijn van toepassing op alle overeenkomsten tussen 
-                  Crystal Services en de klant met betrekking tot wasophaling.
+                  Crystal Services en de klant met betrekking tot onze was-, strijk- en droogkuisdiensten.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 2</h2>
                 <p className="text-gray-700">
-                  De kosten van wasophaling bedragen minimaal €50.
+                  De prijzen voor onze diensten worden duidelijk gecommuniceerd in het filiaal en/of via de
+                  communicatiekanalen van Crystal Services. Eventuele wijzigingen in prijzen worden vooraf
+                  bekendgemaakt.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 3</h2>
                 <p className="text-gray-700">
-                  Binnen een straal van 3 kilometer van het adres van Crystal Services (Lodewijk van 
-                  Berckenlaan 189, 2140 Antwerpen) is de ophaling gratis.
+                  De klant dient de was aan te leveren in een geschikte zak, tas of mand en is verantwoordelijk
+                  voor het correct sorteren van delicate of speciale stukken.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 4</h2>
-                <p className="text-gray-700 space-y-2">
-                  <span className="block">
-                    Binnen een straal van 3 kilometer van het adres van Crystal Services is de ophaling gratis.
-                  </span>
-                  <span className="block">
-                    Voor ophalingen buiten een straal van 3 kilometer wordt telefonisch contact 
-                    opgenomen om de kosten te bespreken.
-                  </span>
+                <p className="text-gray-700">
+                  Crystal Services behoudt zich het recht voor om was te weigeren indien deze niet voldoet aan
+                  de hygiëne- of veiligheidseisen.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 5</h2>
                 <p className="text-gray-700">
-                  De klant dient de was klaar te leggen in een afgesloten zak, tas of mand.
+                  Crystal Services behandelt alle was met de grootst mogelijke zorg, maar is niet aansprakelijk
+                  voor normale slijtage of reeds aanwezige schade aan textiel.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 6</h2>
                 <p className="text-gray-700">
-                  Crystal Services behoudt zich het recht voor om de was te weigeren indien deze niet 
-                  voldoet aan de eisen.
+                  De klant wordt geïnformeerd over het moment waarop de was klaar is voor afhaling in het filiaal.
+                  Was die niet tijdig wordt afgehaald, kan na een redelijke termijn kosten met zich meebrengen voor
+                  opslag.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 7</h2>
                 <p className="text-gray-700">
-                  Crystal Services zal de was op de afgesproken dag weer terugbrengen bij de klant.
+                  De klant is aansprakelijk voor het correct doorgeven van contactgegevens. Crystal Services kan
+                  niet verantwoordelijk worden gehouden indien de klant onbereikbaar is.
                 </p>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 8</h2>
-                <p className="text-gray-700">
-                  De klant is aansprakelijk voor eventuele schade aan de was tijdens de ophaling of 
-                  het transport. Crystal Services is niet aansprakelijk voor eventuele schade aan de 
-                  was, ongeacht de oorzaak.
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Artikel 9</h2>
                 <p className="text-gray-700">
                   Op deze algemene voorwaarden is Belgisch recht van toepassing.
                 </p>
