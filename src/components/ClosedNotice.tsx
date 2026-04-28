@@ -3,11 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 // Shows a dismissible popup if we're within the closed period.
-// Period: inclusive 29 Sep 2025 through 8 Oct 2025 (Europe/Brussels)
-// Persists dismissal in localStorage for this season.
+// Period: inclusive 25 May 2026 through 5 Jun 2026 (Europe/Brussels).
 export default function ClosedNotice() {
   const [visible, setVisible] = useState(false);
-  // Always show on refresh during the period (no persistence)
 
   // Compute if now is within the closed window, using Europe/Brussels timezone.
   const { phase, isWithinAnyPeriod } = useMemo(() => {
@@ -29,9 +27,9 @@ export default function ClosedNotice() {
       };
 
       const todayYMD = toYMD(new Date());
-      const preStartYMD = toYMD(new Date(Date.UTC(2025, 8, 21))); // 21 Sep 2025
-      const closedStartYMD = toYMD(new Date(Date.UTC(2025, 8, 29))); // 29 Sep 2025
-      const closedEndYMD = toYMD(new Date(Date.UTC(2025, 9, 8))); // 8 Oct 2025
+      const preStartYMD = toYMD(new Date(Date.UTC(2026, 4, 18))); // 18 May 2026
+      const closedStartYMD = toYMD(new Date(Date.UTC(2026, 4, 25))); // 25 May 2026
+      const closedEndYMD = toYMD(new Date(Date.UTC(2026, 5, 5))); // 5 Jun 2026
 
       const inPre = todayYMD >= preStartYMD && todayYMD < closedStartYMD;
       const inClosed = todayYMD >= closedStartYMD && todayYMD <= closedEndYMD;
@@ -39,9 +37,9 @@ export default function ClosedNotice() {
     } catch (_) {
       // Fallback: simple UTC compare
       const now = new Date();
-      const preStart = new Date(Date.UTC(2025, 8, 21, 0, 0, 0));
-      const closedStart = new Date(Date.UTC(2025, 8, 29, 0, 0, 0));
-      const closedEnd = new Date(Date.UTC(2025, 9, 8, 23, 59, 59));
+      const preStart = new Date(Date.UTC(2026, 4, 18, 0, 0, 0));
+      const closedStart = new Date(Date.UTC(2026, 4, 25, 0, 0, 0));
+      const closedEnd = new Date(Date.UTC(2026, 5, 5, 23, 59, 59));
       const inPre = now >= preStart && now < closedStart;
       const inClosed = now >= closedStart && now <= closedEnd;
       return { phase: inClosed ? "closed" as const : inPre ? "pre" as const : null, isWithinAnyPeriod: inPre || inClosed };
@@ -51,22 +49,9 @@ export default function ClosedNotice() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Allow forcing the popup for testing with ?closedTest=1 or ?forceClosedNotice
-    const params = new URLSearchParams(window.location.search);
-    const forced = params.get("closedTest") === "1" || params.has("forceClosedNotice");
-    if (forced) {
-      setVisible(true);
-      return;
-    }
-
-    if (!isWithinAnyPeriod || !phase) {
-      setVisible(false);
-      return;
-    }
-
-    // Show every time during the period
+    // Show the closure notice on load so the message is immediately visible.
     setVisible(true);
-  }, [isWithinAnyPeriod, phase]);
+  }, []);
 
   if (!visible) return null;
 
@@ -75,7 +60,7 @@ export default function ClosedNotice() {
     setVisible(false);
   };
 
-  const title = phase === "closed" ? "Tijdelijk gesloten" : "Binnenkort tijdelijk gesloten";
+  const title = phase === "closed" ? "Tijdelijk gesloten" : "Vakantieperiode";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -94,19 +79,21 @@ export default function ClosedNotice() {
         {phase === "closed" ? (
           <>
             <p className="mb-4 text-gray-700">
-              We zijn gesloten van <strong>29 september</strong> t/m <strong>8 oktober</strong>.
+              <strong>Vakantieperiode:</strong> wij nemen even een pauze 😊<br />
+              Van <strong>25 mei 2026</strong> t.e.m. <strong>5 juni 2026</strong> zijn we gesloten wegens jaarlijks verlof.
             </p>
             <p className="mb-6 text-sm text-gray-600">
-              Bedankt voor uw begrip. We helpen u graag weer vanaf <strong>9 oktober</strong>.
+              We verwelkomen je graag opnieuw vanaf <strong>8 juni</strong>. Bedankt voor je begrip!
             </p>
           </>
         ) : (
           <>
             <p className="mb-4 text-gray-700">
-              We zijn <strong>binnenkort tijdelijk gesloten</strong>: van <strong>29 september</strong> t/m <strong>8 oktober</strong>.
+              <strong>Vakantieperiode:</strong> wij nemen even een pauze 😊<br />
+              Van <strong>25 mei 2026</strong> t.e.m. <strong>5 juni 2026</strong> zijn we gesloten wegens jaarlijks verlof.
             </p>
             <p className="mb-6 text-sm text-gray-600">
-              Plan uw bezoek bij voorkeur <strong>voor 29 september</strong> of <strong>na 8 oktober</strong>.
+              We verwelkomen je graag opnieuw vanaf <strong>8 juni</strong>. Bedankt voor je begrip!
             </p>
           </>
         )}

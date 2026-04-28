@@ -3,6 +3,13 @@
 export default function InteractiveMap() {
   return (
     <div className="w-full">
+      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-sm">
+        <p className="font-semibold">Let op</p>
+        <p className="mt-1 text-sm leading-6">
+          Er is momenteel een fout in Google Maps waardoor je naar een verkeerde locatie wordt geleid. We raden aan om een andere navigatie-app te gebruiken, zoals Waze, om ons correct te bereiken.
+        </p>
+      </div>
+
       <div className="w-full h-96 rounded-lg shadow-md overflow-hidden">
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2499.123456789!2d4.4025!3d51.2194!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47c3f6f2f2f2f2f2%3A0x123456789!2sLodewijk%20van%20berckenlaan%20189%2C%202140%20Borgerhout%2C%20Belgium!5e0!3m2!1snl!2sbe!4v1234567890123!5m2!1snl!2sbe"
