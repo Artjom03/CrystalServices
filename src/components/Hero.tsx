@@ -14,7 +14,7 @@ export default function Hero() {
             </p>
             <p className="text-lg text-gray-700 mb-12">
               &quot;Crystal Services biedt een uitgebreid scala aan diensten op het gebied van 
-              strijken, wassen, drogen en droogkuis, zodat u meer tijd heeft voor de belangrijke 
+              strijken, wassen, drogen en reinigen, zodat u meer tijd heeft voor de belangrijke 
               dingen in het leven.&quot;
             </p>
             <a 

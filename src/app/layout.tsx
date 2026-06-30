@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClosedNotice from "@/components/ClosedNotice";
 
 export const metadata: Metadata = {
   title: "Crystal Services - Professionele Was- en Strijkdiensten",
@@ -20,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
-        <ClosedNotice />
         {children}
       </body>
     </html>

@@ -46,7 +46,7 @@ export default function Contact() {
               Heeft u geen tijd of zin meer om uw kleding zelf te wassen en strijken? Of heeft 
               u een dure jurk die u liever niet in de wasmachine doet? Dan bent u bij Crystal 
               Services aan het juiste adres! Wij zijn gespecialiseerd in het wassen, 
-              strijken, drogen en droogkuis van kleding en textiel.
+              strijken, drogen en reinigen van kleding en textiel.
             </p>
           </div>
 
