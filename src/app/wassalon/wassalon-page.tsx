@@ -20,7 +20,7 @@ const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 
 const stappen = [
   { num: "01", title: "Kom binnen", text: "Geen reservatie nodig — loop gewoon binnen tijdens de openingsuren." },
-  { num: "02", title: "Kies uw machine", text: "Meerdere formaten beschikbaar, ook voor grote lading zoals dekens." },
+  { num: "02", title: "Kies uw machine", text: "7 kg en 14 kg machines beschikbaar — van een gewone was tot dekens en dekbedden." },
   { num: "03", title: "Was & droog", text: "Onze Speed Queen machines wassen snel en krachtig — klaar in ± 60 minuten." },
   { num: "04", title: "Klaar", text: "Netjes gewassen en droog, zo weer mee naar huis." },
 ];
@@ -28,7 +28,7 @@ const stappen = [
 const redenen = [
   "Snelle, krachtige wasbeurten — klaar binnen ± 60 minuten.",
   "Commerciële, robuuste machines voor een consistent resultaat.",
-  "Ook geschikt voor grote lading: dekens, dekbedden, grote lakens.",
+  "7 kg en 14 kg machines — ook geschikt voor grote lading: dekens, dekbedden, grote lakens.",
   "Hulp nodig? Wij staan vooraan in de zaak en helpen graag even.",
 ];
 
@@ -182,8 +182,8 @@ export default function WassalonPage() {
               Kom gerust langs
             </h2>
             <p style={{ color: INK_SOFT }} className="mb-5">
-              Het wassalon is 7 dagen op 7 open, van 8:00 tot 22:00 uur — ook in het weekend en op
-              feestdagen. Geen afspraak nodig.
+              Voor de zelfbediening is het wassalon 7 dagen op 7 open, van 8:00 tot 22:00 uur —
+              ook in het weekend en op feestdagen. Geen afspraak nodig.
             </p>
             <a href="/#contact" style={{ background: GOLD }} className="inline-block text-white px-6 py-3 rounded-full font-semibold text-sm">
               Contactgegevens
