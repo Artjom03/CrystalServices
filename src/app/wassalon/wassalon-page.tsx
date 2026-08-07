@@ -226,7 +226,7 @@ export default function WassalonPage() {
             <p style={{ color: INK_SOFT }} className="mb-6">
               Geen zin om zelf te wassen? Breng uw kleding of linnen naar onze wasserij — wij
               wassen, drogen en strijken alles voor u, ook met dienstencheques. En voor horeca,
-              salons of B&B's werken wij ook zakelijk, met vaste ophaal- en brengdagen.
+              salons of B&B&apos;s werken wij ook zakelijk, met vaste ophaal- en brengdagen.
             </p>
             <div className="flex gap-3 flex-wrap">
               <a href="/#diensten" style={{ background: NAVY }} className="text-white px-6 py-3 rounded-full font-semibold text-sm">
