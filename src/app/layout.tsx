@@ -2,12 +2,24 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata = {
-  title: "Crystal Services | Wasserij & Strijkservice Borgerhout",
-  description: "Professionele was-, strijk- en droogkuisdienst in Borgerhout. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
-  keywords: ["wasserij Borgerhout", "strijkservice Antwerpen", "droogkuis Borgerhout", "dienstencheques strijken"],
+  title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
+  description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook boot- en jachttextiel, handtassen, motorkleding en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
+  keywords: [
+    "wasserij Antwerpen",
+    "droogkuis Antwerpen",
+    "wetcleaning Antwerpen",
+    "strijkservice Antwerpen",
+    "wasserij Borgerhout",
+    "wasserij Deurne",
+    "wasserij Berchem",
+    "wasserij Merksem",
+    "boot bedlinnen wassen Antwerpen",
+    "jachthaven wasserij Antwerpen",
+    "dienstencheques strijken",
+  ],
   openGraph: {
-    title: "Crystal Services | Wasserij & Strijkservice Borgerhout",
-    description: "Professionele was-, strijk- en droogkuisdienst in Borgerhout.",
+    title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
+    description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen, ook voor boot- en jachttextiel.",
     url: "https://crystal-services.be",
     siteName: "Crystal Services",
     locale: "nl_BE",
@@ -49,6 +61,27 @@ export default function RootLayout({
         },
       ],
       priceRange: "€€",
+      makesOffer: [
+        "Droogkuis",
+        "Wetcleaning",
+        "Strijken van kleding",
+        "Wassen en drogen",
+        "Reiniging van handtassen",
+        "Reiniging van motorkleding",
+        "Reiniging van leren kledij",
+        "Bedrijfskleding reinigen",
+        "Wassen van boot- en jachttextiel",
+      ].map((name) => ({
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name },
+      })),
+      areaServed: [
+        { "@type": "City", name: "Antwerpen" },
+        { "@type": "AdministrativeArea", name: "Borgerhout" },
+        { "@type": "AdministrativeArea", name: "Deurne" },
+        { "@type": "AdministrativeArea", name: "Berchem" },
+        { "@type": "AdministrativeArea", name: "Merksem" },
+      ],
     }),
   }}
 />
