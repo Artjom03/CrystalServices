@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
-  description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook handtassen, motorkleding en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
+  description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook schoenen en sneakers, handtassen, motorkleding en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
   keywords: [
     "wasserij Antwerpen",
     "droogkuis Antwerpen",
@@ -13,6 +13,8 @@ export const metadata = {
     "wasserij Deurne",
     "wasserij Berchem",
     "wasserij Merksem",
+    "schoenen reinigen Antwerpen",
+    "sneakers reinigen Antwerpen",
     "dienstencheques strijken",
   ],
   openGraph: {
@@ -68,6 +70,7 @@ export default function RootLayout({
         "Reiniging van motorkleding",
         "Reiniging van leren kledij",
         "Bedrijfskleding reinigen",
+        "Reiniging van schoenen en sneakers",
       ].map((name) => ({
         "@type": "Offer",
         itemOffered: { "@type": "Service", name },
