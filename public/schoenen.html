@@ -415,10 +415,8 @@
     border-left:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg);
   }
   .pkg-note{font-size:.83rem;color:var(--ink-soft);margin-top:20px;}
-  .shoe-hero-photo{
-    width:100%;border-radius:var(--radius);border:1px solid var(--line);
-    display:block;box-shadow:var(--shadow);
-  }
+  /* Geen hero-tag op deze pagina, dus de donkere gradient over de foto is niet nodig */
+  .hero-visual::after{display:none;}
   @media (max-width: 900px){ .pkg-grid{grid-template-columns:1fr;} }
 </style>
 <link rel="canonical" href="https://crystal-services.be/schoenen">
@@ -515,7 +513,7 @@
         </div>
       </div>
       <div class="hero-visual reveal">
-        <img class="shoe-hero-photo" src="/images/sneaker_cleaning.webp" alt="Sneakers reinigen met borstel en materiaalspecifieke producten bij Crystal Services in Antwerpen">
+        <img src="/images/sneaker_cleaning_hero.webp" width="900" height="1125" alt="Sneakers reinigen met borstel en materiaalspecifieke producten bij Crystal Services in Antwerpen">
       </div>
     </div>
   </section>
