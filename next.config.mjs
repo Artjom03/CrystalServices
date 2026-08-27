@@ -11,6 +11,10 @@ const nextConfig = {
           source: '/schoenen',
           destination: '/schoenen.html',
         },
+        {
+          source: '/motorkleding',
+          destination: '/motorkleding.html',
+        },
       ],
     };
   },
