@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
+// Waar contactberichten naartoe gaan. De env-variabelen mogen dit overschrijven,
+// maar zonder die instelling komt de mail nog steeds op het juiste adres aan.
+const TO_EMAIL = process.env.TO_EMAIL || 'info@crystal-services.be';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@crystal-services.be';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -37,21 +42,21 @@ export async function POST(request: NextRequest) {
       hasResendKey: !!process.env.RESEND_API_KEY,
       hasFromEmail: !!process.env.FROM_EMAIL,
       hasToEmail: !!process.env.TO_EMAIL,
-      fromEmail: process.env.FROM_EMAIL,
-      toEmail: process.env.TO_EMAIL
+      fromEmail: FROM_EMAIL,
+      toEmail: TO_EMAIL
     });
 
     console.log('Sending email with Resend:', {
-      from: process.env.FROM_EMAIL,
-      to: process.env.TO_EMAIL,
+      from: FROM_EMAIL,
+      to: TO_EMAIL,
       apiKey: process.env.RESEND_API_KEY ? 'Configured' : 'Missing'
     });
 
     // Send email using Resend
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { data, error } = await resend.emails.send({
-      from: `Crystal Services <${process.env.FROM_EMAIL}>`,
-      to: [process.env.TO_EMAIL!],
+      from: `Crystal Services <${FROM_EMAIL}>`,
+      to: [TO_EMAIL],
       replyTo: email,
       subject: `Nieuw contactbericht van ${name}`,
       html: `
