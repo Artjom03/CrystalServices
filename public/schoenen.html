@@ -232,7 +232,7 @@
   table.hours td{padding:13px 22px;border-bottom:1px solid var(--line);}
   table.hours tr:last-child td{border-bottom:none;}
   table.hours td:first-child{font-weight:600;}
-  table.hours td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--ink-soft);}
+  table.hours td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--ink-soft);white-space:nowrap;}
   .closed{color:var(--gold-deep);}
 
   /* ---------- Bedrijfskleding banner ---------- */
@@ -452,6 +452,19 @@
     nav.mainnav .navdrop a{padding:6px 0 6px 14px;font-size:.9rem;}
     nav.mainnav .navdrop a.active{background:none;}
   }
+
+  /* ---------- Tijdelijke openingsuren ---------- */
+  .uren-tijdelijk{
+    grid-column:1 / -1;
+    background:rgba(185,141,74,.10);border:1px solid var(--gold);
+    border-radius:12px;padding:14px 18px;margin:0 0 22px;
+    font-size:.9rem;color:var(--ink-soft);
+  }
+  .uren-tijdelijk b{
+    display:block;color:var(--navy);font-family:'Work Sans',sans-serif;
+    font-size:.93rem;margin-bottom:3px;
+  }
+  .hours-ticket .ticket-head .tijdelijk{color:var(--gold);}
 </style>
 <link rel="canonical" href="https://crystal-services.be/schoenen">
 <script type="application/ld+json">
@@ -606,7 +619,7 @@
         </div>
 
       </div>
-      <p class="pkg-note reveal">De prijs van pakket 3 hangt af van het materiaal en de staat van de schoenen. Wij bekijken ze bij afgifte en spreken de prijs op voorhand met u af.</p>
+      <p class="pkg-note reveal"><b>Alle prijzen zijn indicatief.</b> De definitieve prijs hangt af van het materiaal en de staat van de schoenen. Wij bekijken ze bij afgifte en spreken de prijs altijd op voorhand met u af.</p>
     </div>
   </section>
 
@@ -924,16 +937,16 @@
   }
 
   function kiloPriceAnswer(){
-    return "Onze prijzen worden per stuk berekend, niet per kilo. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.";
+    return "Onze prijzen worden per stuk berekend, niet per kilo, en zijn steeds indicatief. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.";
   }
 
   const answers = {
-    openingsuren: "Wij zijn open van maandag tot vrijdag, van 8:00 tot 18:00 uur. In het weekend en op feestdagen zijn wij gesloten.",
+    openingsuren: "Onze uren zijn tijdelijk aangepast: wij zijn open van maandag tot vrijdag, van 8:00 tot 11:00 en van 13:00 tot 17:00 uur. Tussen 11:00 en 13:00 zijn wij gesloten, net als in het weekend en op feestdagen.",
     dienstencheques: "Ja, u kan bij ons betalen met dienstencheques voor strijkwerk. Breng ze gerust mee langs of vraag ernaar bij afgifte.",
     diensten: "Wij bieden strijkservice, was- en droogdiensten, droogkuis en wetcleaning, reiniging van bedrijfskleding, en gespecialiseerde reiniging van schoenen en sneakers, handtassen, motorkleding en leer.",
     schoenen: "Ja, wij reinigen schoenen en sneakers. Elk materiaal — leer, textiel, suède-look — krijgt de gepaste behandeling, zodat uw schoenen er weer als nieuw uitzien. Breng ze gerust langs in ons atelier in Borgerhout.",
     contact: "U kan ons bereiken op 0494 40 38 41 of via info@crystal-services.be. Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    prijzen: "Onze prijzen zijn per stuk. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.",
+    prijzen: "Onze prijzen zijn per stuk en steeds indicatief — de definitieve prijs spreken wij bij afgifte met u af. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.",
     afspraak: "Een afspraak is meestal niet nodig — u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
     adres: "Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
     btw: "Ons BTW-nummer is BE 0691.912.876.",
@@ -949,8 +962,8 @@
 
     const priceMatches = findPriceMatches(t);
     if(priceMatches.length){
-      const more = priceMatches.length === 6 ? '\n\nMeer kledingstukken? Typ gerust een andere naam.' : '';
-      return "Hier zijn onze prijzen (per stuk):\n" + priceMatches.map(formatItem).join('\n') + more;
+      const more = priceMatches.length === 6 ? '\n\nDit zijn indicatieve prijzen — de definitieve prijs hangt af van het stuk zelf.\n\nMeer kledingstukken? Typ gerust een andere naam.' : '';
+      return "Hier zijn onze richtprijzen (per stuk):\n" + priceMatches.map(formatItem).join('\n') + more;
     }
     if(/prijs|tarief|kost|kosten|hoeveel/.test(t)) return answers.prijzen;
     if(/schoen|sneaker|veter|laars|bottine/.test(t)) return answers.schoenen;
