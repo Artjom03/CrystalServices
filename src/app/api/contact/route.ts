@@ -1,15 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { keurToken, keurInhoud, teLang, teVaak, ipVan } from './spam';
 
 // Waar contactberichten naartoe gaan. De env-variabelen mogen dit overschrijven,
 // maar zonder die instelling komt de mail nog steeds op het juiste adres aan.
 const TO_EMAIL = process.env.TO_EMAIL || 'info@crystal-services.be';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@crystal-services.be';
 
+// Bots krijgen hetzelfde antwoord als een geslaagde verzending. Zo merken ze
+// niet dat ze tegengehouden worden en gaan ze niet op zoek naar een omweg.
+// Let op: dit moet een functie zijn. Eén gedeeld Response-object werkt niet,
+// want de body daarvan kan maar één keer uitgelezen worden.
+const doenAlsofOk = () =>
+  NextResponse.json({ message: 'Bericht succesvol verzonden' }, { status: 200 });
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, phone, message } = body;
+
+    // --- Spambescherming ---------------------------------------------------
+    // 1. Honeypot: een veld dat onzichtbaar is voor bezoekers. Alleen bots
+    //    vullen het in.
+    if (typeof body.bedrijfsnaam === 'string' && body.bedrijfsnaam.trim() !== '') {
+      console.warn('Spam geweigerd: honeypot ingevuld', { ip: ipVan(request.headers) });
+      return doenAlsofOk();
+    }
+
+    // 2. Token: wordt door /api/contact-token uitgegeven wanneer de pagina
+    //    laadt. Ontbreekt het, is het verzonnen, of kwam het binnen minder dan
+    //    drie seconden terug, dan is dit geen mens.
+    const oordeel = keurToken(body.token);
+    if (oordeel !== 'ok') {
+      console.warn('Spam geweigerd: token', oordeel, { ip: ipVan(request.headers) });
+      // Bij 'te-snel' en 'verlopen' kan het ook om een echte bezoeker gaan —
+      // iemand die autofill gebruikt, of het formulier lang liet openstaan.
+      // Die krijgt een duidelijke melding zodat hij opnieuw kan proberen; bij
+      // een tweede poging is er genoeg tijd verstreken. Alleen bij een
+      // ontbrekend of vervalst token doen we alsof het gelukt is, want daar is
+      // geen enkele legitieme verklaring voor.
+      if (oordeel === 'te-snel') {
+        return NextResponse.json(
+          { error: 'Uw bericht kwam wel erg snel binnen. Klik nog eens op versturen.' },
+          { status: 400 }
+        );
+      }
+      if (oordeel === 'verlopen') {
+        return NextResponse.json(
+          { error: 'Uw sessie is verlopen. Herlaad de pagina en probeer opnieuw.' },
+          { status: 400 }
+        );
+      }
+      return doenAlsofOk();
+    }
+
+    // 3. Niet meer dan een paar berichten per IP binnen tien minuten.
+    if (teVaak(ipVan(request.headers))) {
+      return NextResponse.json(
+        { error: 'U hebt net al een bericht verstuurd. Probeer het over enkele minuten opnieuw.' },
+        { status: 429 }
+      );
+    }
+    // -----------------------------------------------------------------------
 
     // Validate required fields
     if (!name || !email || !message) {
@@ -27,6 +79,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 4. Veldlengtes begrenzen.
+    const telang = teLang({ name, email, phone, message });
+    if (telang) {
+      return NextResponse.json(
+        { error: `Uw ${telang} is te lang.` },
+        { status: 400 }
+      );
+    }
+
+    // 5. Inhoud met links of bekende spamtermen tegenhouden.
+    const inhoud = keurInhoud({ name, email, phone, message });
+    if (inhoud.spam) {
+      console.warn('Spam geweigerd:', inhoud.reden, { ip: ipVan(request.headers) });
+      return doenAlsofOk();
+    }
+
 
     // Check if API key is configured
     if (!process.env.RESEND_API_KEY) {
