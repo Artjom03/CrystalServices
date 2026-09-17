@@ -528,6 +528,9 @@
   .form-status.ok{display:block;background:rgba(45,106,63,.08);border:1px solid rgba(45,106,63,.35);color:#2d6a3f;}
   .form-status.err{display:block;background:rgba(150,40,40,.07);border:1px solid rgba(150,40,40,.3);color:#962828;}
   .form-klein{font-size:.8rem;color:var(--ink-soft);margin:16px 0 0;}
+  /* Honeypot: onzichtbaar voor bezoekers, wel vindbaar voor bots. Niet met
+     display:none, want sommige bots slaan verborgen velden dan over. */
+  .hp-veld{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;}
   .hero .contact-cards{align-content:center;}
   @media (max-width: 900px){
     .veld-rij{grid-template-columns:1fr;gap:0;}
@@ -678,6 +681,10 @@
           <div class="veld">
             <label for="veld-bericht">Uw bericht <span class="req">*</span></label>
             <textarea id="veld-bericht" name="message" required placeholder="Waarmee kunnen wij u helpen?"></textarea>
+          </div>
+          <div class="hp-veld" aria-hidden="true">
+            <label for="veld-bedrijf">Bedrijfsnaam</label>
+            <input type="text" id="veld-bedrijf" name="bedrijfsnaam" tabindex="-1" autocomplete="off">
           </div>
           <button type="submit" class="btn btn-primary" id="verzendknop">Bericht versturen</button>
           <p class="form-status" id="formstatus" role="status" aria-live="polite"></p>
@@ -1049,7 +1056,20 @@
     var st = document.getElementById('formstatus');
     var btn = document.getElementById('verzendknop');
     if(!f) return;
+
     function toon(soort, tekst){ st.className = 'form-status ' + soort; st.textContent = tekst; }
+
+    // Token tegen bots: wordt bij het laden opgehaald en bij het versturen
+    // meegestuurd. De server weigert berichten zonder geldig token.
+    var token = null;
+    function haalToken(){
+      return fetch('/api/contact-token', { cache: 'no-store' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){ if(j && j.token) token = j.token; return token; })
+        .catch(function(){ return null; });
+    }
+    haalToken();
+
     f.addEventListener('submit', function(e){
       e.preventDefault();
       var data = {};
@@ -1061,16 +1081,22 @@
       st.className = 'form-status'; st.textContent = '';
       var label = btn.textContent;
       btn.disabled = true; btn.textContent = 'Versturen...';
-      fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+
+      // Ontbreekt het token nog (trage verbinding), dan halen we het nu alsnog.
+      (token ? Promise.resolve(token) : haalToken()).then(function(t){
+        data.token = t || '';
+        return fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
       }).then(function(r){
         return r.json().catch(function(){ return {}; }).then(function(j){ return { ok: r.ok, body: j }; });
       }).then(function(res){
         if(res.ok){
           toon('ok', 'Bedankt! Uw bericht is verstuurd. Wij nemen zo snel mogelijk contact met u op.');
           f.reset();
+          token = null; haalToken();   // vers token voor een volgend bericht
         } else {
           toon('err', (res.body && res.body.error) || 'Het bericht kon niet verstuurd worden. Bel ons gerust op 0494 40 38 41.');
         }
