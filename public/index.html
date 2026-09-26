@@ -848,137 +848,13 @@
 
   // ---- Volledige prijslijst (bron: prijzenlijst wasserij) ----
   // iron = prijs strijken, wash = prijs wassen + strijken (null = niet van toepassing)
-  const priceList = [
-    // Dames en heren kleding
-    {cat:'volwassen', name:'T-shirt/topje', aliases:['t-shirt','tshirt','t shirt'], iron:1.20, wash:3.70},
-    {cat:'volwassen', name:'T-shirt lux', aliases:['t-shirt lux','tshirt lux'], iron:1.30, wash:5.30},
-    {cat:'volwassen', name:'Topje', aliases:['topje'], iron:1.00, wash:2.90},
-    {cat:'volwassen', name:'Polo', aliases:['polo'], iron:1.70, wash:5.20},
-    {cat:'volwassen', name:'Golf/sweater (met kap of rits)', aliases:['golf','sweater','hoodie'], iron:1.90, wash:5.50},
-    {cat:'volwassen', name:'Bermuda', aliases:['bermuda','short'], iron:2.10, wash:4.70},
-    {cat:'volwassen', name:'Broek', aliases:['broek','pantalon'], iron:2.70, wash:7.40},
-    {cat:'volwassen', name:'Broek met plooien', aliases:['broek met pl','geplooide broek'], iron:3.50, wash:8.20},
-    {cat:'volwassen', name:'Broek jogging', aliases:['joggingbroek','jogging broek'], iron:1.50, wash:3.70},
-    {cat:'volwassen', name:'Broek jogging (extra)', aliases:['joggingbroek extra'], iron:2.00, wash:6.00},
-    {cat:'volwassen', name:'Broek extra', aliases:['broek extra'], iron:3.60, wash:8.30},
-    {cat:'volwassen', name:'Bloes', aliases:['bloes','blouse'], iron:2.70, wash:5.20},
-    {cat:'volwassen', name:'Bloes (2)', aliases:[], iron:2.90, wash:5.30},
-    {cat:'volwassen', name:'Bloes opvouwen', aliases:['bloes opvouwen'], iron:2.90, wash:5.20},
-    {cat:'volwassen', name:'Bloes linnen', aliases:['linnen bloes'], iron:3.00, wash:5.60},
-    {cat:'volwassen', name:'Hemd', aliases:['hemd','overhemd'], iron:2.80, wash:5.30},
-    {cat:'volwassen', name:'Hemd opvouwen', aliases:['hemd opvouwen'], iron:3.00, wash:5.30},
-    {cat:'volwassen', name:'Hemd lux', aliases:['hemd lux'], iron:2.90, wash:6.00},
-    {cat:'volwassen', name:'Rok', aliases:['rok'], iron:1.90, wash:7.60},
-    {cat:'volwassen', name:'Rok extra', aliases:['rok extra'], iron:2.40, wash:8.20},
-    {cat:'volwassen', name:'Bolero', aliases:['bolero'], iron:1.40, wash:3.80},
-    {cat:'volwassen', name:'Trui', aliases:['trui','pull'], iron:1.70, wash:5.20},
-    {cat:'volwassen', name:'Trui wol', aliases:['wollen trui','trui wal'], iron:1.90, wash:6.00},
-    {cat:'volwassen', name:'Kleed', aliases:['kleed','jurk'], iron:3.50, wash:10.00},
-    {cat:'volwassen', name:'Kleed lang', aliases:['kleed lang','lange jurk'], iron:4.60, wash:11.60},
-    {cat:'volwassen', name:'Koksvest', aliases:['koksvest'], iron:2.70, wash:5.20},
-    {cat:'volwassen', name:'Sjaal', aliases:['sjaal'], iron:1.20, wash:2.60},
-    {cat:'volwassen', name:'Overall', aliases:['overall'], iron:5.10, wash:12.00},
-    {cat:'volwassen', name:'Werkjas of overall', aliases:['werkjas'], iron:4.80, wash:9.70},
-    {cat:'volwassen', name:'Pyjama lang (2-delig)', aliases:['pyjama','pyj lang'], iron:2.70, wash:5.20},
-    {cat:'volwassen', name:'Nachtkleed', aliases:['nachtkleed','nachthemd'], iron:1.20, wash:3.00},
-    {cat:'volwassen', name:'Kamerjas', aliases:['kamerjas'], iron:1.80, wash:5.20},
-    {cat:'volwassen', name:'Badjas', aliases:['badjas'], iron:2.30, wash:4.70},
-    {cat:'volwassen', name:'Voorbindschort', aliases:['schort','voorbindschort'], iron:1.00, wash:1.50},
-    {cat:'volwassen', name:'Keukenhanddoek', aliases:['keukenhanddoek'], iron:0.50, wash:1.00},
-    {cat:'volwassen', name:'Zakdoek', aliases:['zakdoek'], iron:0.30, wash:0.50},
-    {cat:'volwassen', name:'Anorak met kap', aliases:['anorak'], iron:2.90, wash:6.80},
-    {cat:'volwassen', name:'Badhanddoek', aliases:['badhanddoek'], iron:null, wash:2.00},
-    {cat:'volwassen', name:'Badhanddoek klein', aliases:['badhanddoek klein'], iron:null, wash:1.50},
-    {cat:'volwassen', name:'Washandje', aliases:['washandje'], iron:null, wash:0.80},
-    {cat:'volwassen', name:'Short/onderbroek', aliases:['onderbroek'], iron:null, wash:0.80},
-    {cat:'volwassen', name:'Sokken', aliases:['sokken','kousen'], iron:null, wash:0.80},
-    // Kinderkleding t.e.m. maat 152 (enkel strijkprijs vermeld)
-    {cat:'kind', name:'T-shirt/topje', aliases:['t-shirt','tshirt','topje'], iron:1.10, wash:null},
-    {cat:'kind', name:'Golf/sweater (met kap of rits)', aliases:['golf','sweater','hoodie'], iron:1.20, wash:null},
-    {cat:'kind', name:'Bermuda', aliases:['bermuda'], iron:1.30, wash:null},
-    {cat:'kind', name:'Broek', aliases:['broek'], iron:2.30, wash:null},
-    {cat:'kind', name:'Bloes/Hemd', aliases:['bloes','hemd'], iron:1.90, wash:null},
-    {cat:'kind', name:'Rok', aliases:['rok'], iron:1.30, wash:null},
-    {cat:'kind', name:'Vest', aliases:['vest'], iron:2.80, wash:null},
-    {cat:'kind', name:'Bolero', aliases:['bolero'], iron:1.20, wash:null},
-    {cat:'kind', name:'Trui', aliases:['trui'], iron:3.00, wash:null},
-    {cat:'kind', name:'Overall', aliases:['overall'], iron:2.50, wash:null},
-    {cat:'kind', name:'Anorak', aliases:['anorak'], iron:2.50, wash:null},
-    {cat:'kind', name:'Pyjama kort (2-delig)', aliases:['pyjama kort'], iron:1.80, wash:null},
-    {cat:'kind', name:'Jogging/pyjama lang (2-delig)', aliases:['jogging','pyjama lang'], iron:2.90, wash:null},
-    {cat:'kind', name:'Nachtkleed', aliases:['nachtkleed'], iron:1.10, wash:null},
-    // Linnen
-    {cat:'linnen', name:'Dekbed 1 persoon', aliases:['dekbed 1p','dekbed 1 persoon','dekbedovertrek'], iron:5.00, wash:8.10},
-    {cat:'linnen', name:'Dekbed 2 personen', aliases:['dekbed 2p','dekbed 2 personen'], iron:5.80, wash:9.70},
-    {cat:'linnen', name:'Hoeslaken 1 persoon', aliases:['hoeslaken 1p'], iron:3.40, wash:6.50},
-    {cat:'linnen', name:'Hoeslaken 2 personen', aliases:['hoeslaken 2p'], iron:4.60, wash:7.60},
-    {cat:'linnen', name:'Laken 1 persoon', aliases:['laken 1p'], iron:3.50, wash:6.20},
-    {cat:'linnen', name:'Laken 2 personen', aliases:['laken 2p'], iron:4.80, wash:7.80},
-    {cat:'linnen', name:'Kussensloop', aliases:['kussensloop','kussenhoes'], iron:1.20, wash:1.90},
-    // Tafelkleding
-    {cat:'tafel', name:'Tafelkleed klein', aliases:['tafelkleed klein'], iron:4.00, wash:8.10},
-    {cat:'tafel', name:'Tafelkleed groot', aliases:['tafelkleed groot'], iron:5.50, wash:9.70},
-    {cat:'tafel', name:'Tafelkleed XL', aliases:['tafelkleed xl'], iron:6.50, wash:12.00},
-    {cat:'tafel', name:'Tafelkleed XXL', aliases:['tafelkleed xxl'], iron:7.00, wash:15.00},
-    {cat:'tafel', name:'Servet', aliases:['servet','serviette'], iron:0.60, wash:1.90},
-    {cat:'tafel', name:'Theedoek', aliases:['theedoek','theenap'], iron:3.30, wash:6.50},
-  ];
-
-  function formatEUR(v){
-    return '€' + v.toFixed(2).replace('.', ',');
-  }
-
-  function normalize(s){
-    return s.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[.,;:!?()/]/g,' ')
-      .replace(/\s+/g,' ')
-      .trim();
-  }
-
-  const stopwords = ['wat','kan','kost','kosten','prijs','prijzen','voor','met','van','een','het','de','ik','wil','wilt','graag','hoeveel','strijken','wassen','laten','jullie','uw','deze','dit','die','tarief'];
-
-  function findPriceMatches(text){
-    const t = normalize(text);
-    const words = t.split(' ').filter(w => w.length >= 3 && !stopwords.includes(w));
-    if(!words.length) return [];
-    const wantsKind = /\bkind|kinderen|kinderkleding|jongen|meisje|baby|maat ?152\b/.test(t);
-    const seen = new Set();
-    const matches = [];
-    priceList.forEach(item=>{
-      const hayWords = normalize(item.name + ' ' + (item.aliases||[]).join(' ')).split(' ');
-      const hit = words.some(w => hayWords.some(hw => hw.includes(w) || w.includes(hw)));
-      const key = item.cat + '|' + item.name;
-      if(hit && !seen.has(key)){
-        seen.add(key);
-        matches.push(item);
-      }
-    });
-    if(wantsKind){
-      matches.sort((a,b) => (a.cat === 'kind' ? 0 : 1) - (b.cat === 'kind' ? 0 : 1));
-    }
-    return matches.slice(0, 6);
-  }
-
-  function formatItem(item){
-    let line = item.name + (item.cat === 'kind' ? ' (kind)' : '');
-    const parts = [];
-    if(item.iron != null) parts.push('strijken ' + formatEUR(item.iron));
-    if(item.wash != null) parts.push('wassen+strijken ' + formatEUR(item.wash));
-    return '• ' + line + ': ' + parts.join(', ');
-  }
-
-  function kiloPriceAnswer(){
-    return "Onze prijzen worden per stuk berekend, niet per kilo, en zijn steeds indicatief. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.";
-  }
-
   const answers = {
     openingsuren: "Onze uren zijn tijdelijk aangepast: wij zijn open van maandag tot vrijdag, van 8:00 tot 11:00 en van 13:00 tot 17:00 uur. Tussen 11:00 en 13:00 zijn wij gesloten, net als in het weekend en op feestdagen.",
     dienstencheques: "Ja, u kan bij ons betalen met dienstencheques voor strijkwerk. Breng ze gerust mee langs of vraag ernaar bij afgifte.",
     diensten: "Wij bieden strijkservice, was- en droogdiensten, droogkuis en wetcleaning, reiniging van bedrijfskleding, en gespecialiseerde reiniging van schoenen en sneakers, handtassen, motorkleding en leer.",
     schoenen: "Ja, wij reinigen schoenen en sneakers. Elk materiaal — leer, textiel, suède-look — krijgt de gepaste behandeling, zodat uw schoenen er weer als nieuw uitzien. Breng ze gerust langs in ons atelier in Borgerhout.",
     contact: "U kan ons bereiken op 0494 40 38 41 of via info@crystal-services.be. Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    prijzen: "Onze prijzen zijn per stuk en steeds indicatief — de definitieve prijs spreken wij bij afgifte met u af. Typ gerust de naam van een kledingstuk (bijv. 'hemd', 'dekbed' of 'tafelkleed') en ik toon u de prijs voor strijken en voor wassen+strijken.",
+    prijzen: "Onze prijzen hangen af van het stuk en de behandeling, dus bespreken wij ze liever even persoonlijk. Bel 0494 40 38 41, mail info@crystal-services.be of breng uw stuk gerust langs — dan weet u meteen waar u aan toe bent. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
     afspraak: "Een afspraak is meestal niet nodig — u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
     adres: "Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
     btw: "Ons BTW-nummer is BE 0691.912.876.",
@@ -989,14 +865,9 @@
     const t = text.toLowerCase();
     if(/open|uren|tijden|wanneer|hoe laat/.test(t)) return answers.openingsuren;
     if(/dienstencheque/.test(t)) return answers.dienstencheques;
-    if(/kilo|per kg|kiloprijs/.test(t)) return kiloPriceAnswer();
+    if(/kilo|per kg|kiloprijs/.test(t)) return answers.prijzen;
     if(/btw|vat|ondernemingsnummer/.test(t)) return answers.btw;
 
-    const priceMatches = findPriceMatches(t);
-    if(priceMatches.length){
-      const more = priceMatches.length === 6 ? '\n\nDit zijn indicatieve prijzen — de definitieve prijs hangt af van het stuk zelf.\n\nMeer kledingstukken? Typ gerust een andere naam.' : '';
-      return "Hier zijn onze richtprijzen (per stuk):\n" + priceMatches.map(formatItem).join('\n') + more;
-    }
     if(/prijs|tarief|kost|kosten|hoeveel/.test(t)) return answers.prijzen;
     if(/schoen|sneaker|veter|laars|bottine/.test(t)) return answers.schoenen;
     if(/dienst|strijk|was|droog|reinig|kleding|wetclean|handtas|motorkl|leer/.test(t)) return answers.diensten;
