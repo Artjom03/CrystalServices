@@ -18,7 +18,8 @@
     --navy:#0E1F42;
     --navy-deep:#081430;
     --gold:#B98D4A;
-    --gold-deep:#96712F;
+    --gold-deep:#8A6829;      /* 4,65:1 op de achtergrond; #96712F haalde net geen 4,5:1 */
+    --gold-hover:#C9A062;
     --line:#DCD5C4;
     --white:#FFFFFF;
     --radius:14px;
@@ -108,8 +109,8 @@
   .btn-primary:hover{background:var(--navy-deep);}
   .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
   .btn-ghost:hover{border-color:var(--ink);}
-  .btn-copper{background:var(--gold);color:var(--white);}
-  .btn-copper:hover{background:var(--gold-deep);}
+  .btn-copper{background:var(--gold);color:var(--ink);}
+  .btn-copper:hover{background:var(--gold-hover);}
 
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;}
   .menu-toggle span{display:block;width:22px;height:2px;background:var(--ink);margin:5px 0;}
@@ -465,6 +466,69 @@
     font-size:.93rem;margin-bottom:3px;
   }
   .hours-ticket .ticket-head .tijdelijk{color:var(--gold);}
+
+  /* ================= Donkere modus =================
+     Volgt de instelling van het toestel (prefers-color-scheme). Het palet blijft
+     in de huisstijl: navy-zwart als ondergrond, warm gebroken wit voor tekst,
+     goud als enige accent.
+
+     Een aantal tokens wordt in de lichte modus voor twee dingen gebruikt, bv.
+     --navy als tekstkleur én als knopachtergrond. De tokens hieronder zijn
+     afgestemd op hun rol als TEKST; elke plek waar ze als achtergrond (of
+     omgekeerd) dienen, krijgt verderop een eigen regel. */
+  @media (prefers-color-scheme: dark){
+    :root{
+      color-scheme: dark;
+      --bg:#0D131C;
+      --bg-soft:#121A26;
+      --white:#172131;          /* kaartoppervlak */
+      --ink:#EDEAE3;
+      --ink-soft:#A7AFBC;
+      --line:#263244;
+      --navy:#C8D3EA;           /* als tekst: bleek navy */
+      --navy-deep:#DCE3F2;
+      --gold:#C9A062;
+      --gold-deep:#D9B478;      /* als tekst moet 'diep' goud hier lichter zijn */
+      --gold-hover:#E3C38D;
+      --shadow: 0 12px 32px -14px rgba(0,0,0,0.6);
+      --surface-navy:#16223A;   /* voor blokken die in licht navy-donker zijn */
+      --surface-raised:#1D2A3F;
+    }
+
+    header{background:rgba(13,19,28,0.9);}
+    .hero-tag{background:rgba(23,33,49,0.94);}
+
+    /* Knoppen: navy op navy-zwart valt weg, dus de hoofdknop wordt licht. */
+    .btn-primary{background:var(--ink);color:#0D131C;}
+    .btn-primary:hover{background:#D8D2C6;}
+    .btn-copper{color:#0D131C;}
+    .pkg-flag{color:#0D131C;}
+
+    /* Blokken die in de lichte modus donker navy zijn */
+    .why, .icon-tile{background:var(--surface-navy);}
+    .why, .why h2{color:var(--ink);}
+    .hero-visual{background:linear-gradient(160deg,var(--surface-navy) 0%, #0F1829 100%);}
+    .banner-visual[style*="--navy-deep"]{background:var(--surface-navy) !important;}
+    .hours-ticket .ticket-head{background:var(--surface-raised);color:var(--ink);}
+
+    /* Formulier */
+    .form-status.ok{background:rgba(143,211,163,.10);border-color:rgba(143,211,163,.4);color:#8FD3A3;}
+    .form-status.err{background:rgba(240,163,163,.10);border-color:rgba(240,163,163,.4);color:#F0A3A3;}
+
+    /* Chatvenster */
+    #cs-chat-launcher{background:var(--gold);color:#0D131C;}
+    #cs-chat-launcher:hover{background:#D9B478;}
+    .cs-chat-head{background:var(--surface-navy);}
+    .cs-msg.bot{background:var(--surface-raised);color:var(--ink);}
+    .cs-msg.user{background:#2B3B57;color:#fff;}
+    .cs-chip{background:var(--white);color:var(--ink);}
+    .cs-chat-input{background:var(--white);}
+    .cs-chat-input input{background:var(--bg-soft);color:var(--ink);}
+    .cs-chat-input button{color:#0D131C;}
+
+    /* Logo's zijn donkerblauwe lijntekeningen op transparant; in het donker licht maken. */
+    .logo-mark, .footer-logo{filter:brightness(0) invert(0.9);}
+  }
 </style>
 </head>
 <body>
@@ -505,7 +569,7 @@
       <div>
         <p class="eyebrow">Zelfbedieningswassalon · Borgerhout</p>
         <h1>Was klaar binnen 60 minuten.</h1>
-        <p class="lede">Vooraan in onze zaak vindt u onze Amerikaanse Speed Queen wasmachines: krachtige, commerciële machines die uw was in amper 60 minuten klaar hebben. Geen afspraak nodig — gewoon binnenlopen tijdens de openingsuren.</p>
+        <p class="lede">Onze Amerikaanse Speed Queen machines hebben uw was in amper 60 minuten klaar. Geen afspraak nodig, gewoon binnenlopen.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="#praktisch">Bekijk openingsuren</a>
           <a class="btn btn-ghost" href="tel:0494403841">Vraag naar prijzen</a>
@@ -529,30 +593,28 @@
     </div>
   </section>
 
-  <svg class="fold-divider wrap" viewBox="0 0 1140 34" preserveAspectRatio="none"><path d="M0 17 Q 40 2, 80 17 T 160 17 T 240 17 T 320 17 T 400 17 T 480 17 T 560 17 T 640 17 T 720 17 T 800 17 T 880 17 T 960 17 T 1040 17 T 1120 17"/></svg>
 
   <!-- HOE HET WERKT -->
   <section>
     <div class="wrap">
       <div class="section-head reveal">
-        <p class="eyebrow">Hoe het werkt</p>
         <h2>Vier stappen naar frisse was</h2>
       </div>
       <div class="steps-grid reveal">
         <div class="step-tile">
           <span class="num">01</span>
           <h3>Kom binnen</h3>
-          <p>Geen reservatie nodig — loop gewoon binnen tijdens de openingsuren.</p>
+          <p>Geen reservatie nodig, loop gewoon binnen tijdens de openingsuren.</p>
         </div>
         <div class="step-tile">
           <span class="num">02</span>
           <h3>Kies uw machine</h3>
-          <p>7 kg en 14 kg machines beschikbaar — van een gewone was tot dekens en dekbedden.</p>
+          <p>7 kg en 14 kg machines beschikbaar, van een gewone was tot dekens en dekbedden.</p>
         </div>
         <div class="step-tile">
           <span class="num">03</span>
           <h3>Was &amp; droog</h3>
-          <p>Onze Speed Queen machines wassen snel en krachtig — klaar in ± 60 minuten.</p>
+          <p>Onze Speed Queen machines wassen snel en krachtig. Klaar in ± 60 minuten.</p>
         </div>
         <div class="step-tile">
           <span class="num">04</span>
@@ -563,7 +625,6 @@
     </div>
   </section>
 
-  <svg class="fold-divider copper wrap" viewBox="0 0 1140 34" preserveAspectRatio="none"><path d="M0 17 Q 40 32, 80 17 T 160 17 T 240 17 T 320 17 T 400 17 T 480 17 T 560 17 T 640 17 T 720 17 T 800 17 T 880 17 T 960 17 T 1040 17 T 1120 17"/></svg>
 
   <!-- WAAROM SPEED QUEEN -->
   <section>
@@ -571,15 +632,14 @@
       <div class="why reveal">
         <div>
           <div class="section-head" style="margin-bottom:0;">
-            <p class="eyebrow" style="color:var(--gold);">Onze machines</p>
             <h2>Amerikaanse Speed Queen kwaliteit</h2>
             <p>Speed Queen is een gevestigd Amerikaans merk, bekend van commerciële wasserettes wereldwijd. Robuust gebouwd voor intensief gebruik, met een hoge centrifugesnelheid die uw droogtijd flink verkort.</p>
           </div>
         </div>
         <ul class="why-list">
-          <li><span class="num">01</span><span>Snelle, krachtige wasbeurten — klaar binnen ± 60 minuten.</span></li>
+          <li><span class="num">01</span><span>Snelle, krachtige wasbeurten, klaar binnen ± 60 minuten.</span></li>
           <li><span class="num">02</span><span>Commerciële, robuuste machines voor een consistent resultaat.</span></li>
-          <li><span class="num">03</span><span>7 kg en 14 kg machines — ook geschikt voor grote lading: dekens, dekbedden, grote lakens.</span></li>
+          <li><span class="num">03</span><span>7 kg en 14 kg machines, ook geschikt voor grote lading: dekens, dekbedden, grote lakens.</span></li>
           <li><span class="num">04</span><span>Hulp nodig? Wij staan vooraan in de zaak en helpen graag even.</span></li>
         </ul>
       </div>
@@ -590,10 +650,9 @@
   <section id="praktisch">
     <div class="wrap hours-wrap">
       <div class="reveal">
-        <p class="eyebrow">Praktisch</p>
         <h2>Kom gerust langs</h2>
-        <p style="color:var(--ink-soft);">Voor de zelfbediening is het wassalon 7 dagen op 7 open, van 8:00 tot 22:00 uur — ook in het weekend en op feestdagen. Geen afspraak nodig.</p>
-        <a class="btn btn-copper" href="index.html#contact" style="margin-top:8px;">Contactgegevens</a>
+        <p style="color:var(--ink-soft);">Voor de zelfbediening is het wassalon 7 dagen op 7 open, van 8:00 tot 22:00 uur, ook in het weekend en op feestdagen. Geen afspraak nodig.</p>
+        <a class="btn btn-copper" href="/contact" style="margin-top:8px;">Contacteer ons</a>
       </div>
       <div class="hours-ticket reveal">
         <div class="ticket-head"><span>Crystal Services</span><span>Wassalon</span></div>
@@ -610,7 +669,6 @@
     </div>
   </section>
 
-  <svg class="fold-divider copper wrap" viewBox="0 0 1140 34" preserveAspectRatio="none"><path d="M0 17 Q 40 32, 80 17 T 160 17 T 240 17 T 320 17 T 400 17 T 480 17 T 560 17 T 640 17 T 720 17 T 800 17 T 880 17 T 960 17 T 1040 17 T 1120 17"/></svg>
 
   <!-- CROSS-LINKS -->
   <section>
@@ -618,7 +676,7 @@
       <div class="reveal">
         <p class="eyebrow">Liever dat wij het overnemen?</p>
         <h2>Wij wassen en strijken het ook volledig voor u</h2>
-        <p style="color:var(--ink-soft);">Geen zin om zelf te wassen? Breng uw kleding of linnen naar onze wasserij — wij wassen, drogen en strijken alles voor u, ook met dienstencheques. En voor horeca, salons of B&amp;B's werken wij ook zakelijk, met vaste ophaal- en brengdagen.</p>
+        <p style="color:var(--ink-soft);">Geen zin om zelf te wassen? Breng uw kleding of linnen naar onze wasserij. Wij wassen, drogen en strijken alles voor u, ook met dienstencheques. En voor horeca, salons of B&amp;B's werken wij ook zakelijk, met vaste ophaal- en brengdagen.</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a class="btn btn-primary" href="index.html#diensten">Bekijk onze was- en strijkservice</a>
           <a class="btn btn-ghost" href="zakelijk.html">Zakelijke klanten</a>
@@ -760,12 +818,12 @@
   // ---- Volledige prijslijst (bron: prijzenlijst wasserij) ----
   // iron = prijs strijken, wash = prijs wassen + strijken (null = niet van toepassing)
   const answers = {
-    openingsuren: "Ons zelfbedieningswassalon is 7 dagen op 7 open, van 8:00 tot 22:00 uur — ook in het weekend en op feestdagen. De uren van onze wasserij/strijkatelier zijn tijdelijk aangepast: maandag tot vrijdag van 8:00 tot 11:00 en van 13:00 tot 17:00 uur.",
+    openingsuren: "Ons zelfbedieningswassalon is 7 dagen op 7 open, van 8:00 tot 22:00 uur, ook in het weekend en op feestdagen. De uren van onze wasserij/strijkatelier zijn tijdelijk aangepast: maandag tot vrijdag van 8:00 tot 11:00 en van 13:00 tot 17:00 uur.",
     dienstencheques: "Ja, u kan bij ons betalen met dienstencheques voor strijkwerk. Breng ze gerust mee langs of vraag ernaar bij afgifte.",
     diensten: "Wij bieden strijkservice, was- en droogdiensten, reiniging van delicate kledingstukken en professionele reiniging van bedrijfskleding.",
     contact: "U kan ons bereiken op 0494 40 38 41 of via info@crystal-services.be. Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    prijzen: "Onze prijzen hangen af van het stuk en de behandeling. Stuur ons gerust een e-mail op info@crystal-services.be met een korte omschrijving — een foto mag ook — dan laten wij u weten wat het kost. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
-    afspraak: "Een afspraak is meestal niet nodig — u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
+    prijzen: "Onze prijzen hangen af van het stuk en de behandeling. Stuur ons gerust een e-mail op info@crystal-services.be met een korte omschrijving (een foto mag ook), dan laten wij u weten wat het kost. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
+    afspraak: "Een afspraak is meestal niet nodig, u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
     adres: "Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
     btw: "Ons BTW-nummer is BE 0691.912.876.",
     default: "Daar kan ik u niet meteen mee helpen, maar ons team beantwoordt uw vraag graag persoonlijk: bel 0494 40 38 41 of mail info@crystal-services.be."

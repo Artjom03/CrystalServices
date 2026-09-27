@@ -19,7 +19,8 @@
     --navy:#0E1F42;
     --navy-deep:#081430;
     --gold:#B98D4A;
-    --gold-deep:#96712F;
+    --gold-deep:#8A6829;      /* 4,65:1 op de achtergrond; #96712F haalde net geen 4,5:1 */
+    --gold-hover:#C9A062;
     --line:#DCD5C4;
     --white:#FFFFFF;
     --radius:14px;
@@ -109,8 +110,8 @@
   .btn-primary:hover{background:var(--navy-deep);}
   .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
   .btn-ghost:hover{border-color:var(--ink);}
-  .btn-copper{background:var(--gold);color:var(--white);}
-  .btn-copper:hover{background:var(--gold-deep);}
+  .btn-copper{background:var(--gold);color:var(--ink);}
+  .btn-copper:hover{background:var(--gold-hover);}
 
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;}
   .menu-toggle span{display:block;width:22px;height:2px;background:var(--ink);margin:5px 0;}
@@ -391,7 +392,7 @@
   .pkg-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
   .pkg-card.featured{border-color:var(--gold);box-shadow:var(--shadow);}
   .pkg-flag{
-    position:absolute;top:-12px;left:26px;background:var(--gold);color:#fff;
+    position:absolute;top:-12px;left:26px;background:var(--gold);color:var(--ink);
     font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;
     text-transform:uppercase;padding:5px 12px;border-radius:99px;
   }
@@ -465,6 +466,93 @@
     font-size:.93rem;margin-bottom:3px;
   }
   .hours-ticket .ticket-head .tijdelijk{color:var(--gold);}
+
+  /* ---------- Stappen (ontbrak sinds de pagina gebouwd werd) ---------- */
+  .steps-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  }
+  .steps-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .step-tile{padding:30px 26px;border-right:1px solid var(--line);}
+  .step-tile:last-child{border-right:none;}
+  .step-tile .num{
+    font-family:'IBM Plex Mono',monospace;color:var(--gold-deep);
+    font-size:.8rem;letter-spacing:.08em;display:block;margin-bottom:10px;
+  }
+  .step-tile h3{font-size:1.02rem;margin-bottom:6px;}
+  .step-tile p{font-size:.88rem;color:var(--ink-soft);margin:0;}
+
+
+  @media (max-width:900px){
+    .steps-grid{grid-template-columns:1fr 1fr;}
+    .step-tile{border-bottom:1px solid var(--line);}
+  }
+  @media (max-width:560px){
+    .steps-grid, .steps-grid.cols-3{grid-template-columns:1fr;}
+  }
+
+  /* ================= Donkere modus =================
+     Volgt de instelling van het toestel (prefers-color-scheme). Het palet blijft
+     in de huisstijl: navy-zwart als ondergrond, warm gebroken wit voor tekst,
+     goud als enige accent.
+
+     Een aantal tokens wordt in de lichte modus voor twee dingen gebruikt, bv.
+     --navy als tekstkleur én als knopachtergrond. De tokens hieronder zijn
+     afgestemd op hun rol als TEKST; elke plek waar ze als achtergrond (of
+     omgekeerd) dienen, krijgt verderop een eigen regel. */
+  @media (prefers-color-scheme: dark){
+    :root{
+      color-scheme: dark;
+      --bg:#0D131C;
+      --bg-soft:#121A26;
+      --white:#172131;          /* kaartoppervlak */
+      --ink:#EDEAE3;
+      --ink-soft:#A7AFBC;
+      --line:#263244;
+      --navy:#C8D3EA;           /* als tekst: bleek navy */
+      --navy-deep:#DCE3F2;
+      --gold:#C9A062;
+      --gold-deep:#D9B478;      /* als tekst moet 'diep' goud hier lichter zijn */
+      --gold-hover:#E3C38D;
+      --shadow: 0 12px 32px -14px rgba(0,0,0,0.6);
+      --surface-navy:#16223A;   /* voor blokken die in licht navy-donker zijn */
+      --surface-raised:#1D2A3F;
+    }
+
+    header{background:rgba(13,19,28,0.9);}
+    .hero-tag{background:rgba(23,33,49,0.94);}
+
+    /* Knoppen: navy op navy-zwart valt weg, dus de hoofdknop wordt licht. */
+    .btn-primary{background:var(--ink);color:#0D131C;}
+    .btn-primary:hover{background:#D8D2C6;}
+    .btn-copper{color:#0D131C;}
+    .pkg-flag{color:#0D131C;}
+
+    /* Blokken die in de lichte modus donker navy zijn */
+    .why, .icon-tile{background:var(--surface-navy);}
+    .why, .why h2{color:var(--ink);}
+    .hero-visual{background:linear-gradient(160deg,var(--surface-navy) 0%, #0F1829 100%);}
+    .banner-visual[style*="--navy-deep"]{background:var(--surface-navy) !important;}
+    .hours-ticket .ticket-head{background:var(--surface-raised);color:var(--ink);}
+
+    /* Formulier */
+    .form-status.ok{background:rgba(143,211,163,.10);border-color:rgba(143,211,163,.4);color:#8FD3A3;}
+    .form-status.err{background:rgba(240,163,163,.10);border-color:rgba(240,163,163,.4);color:#F0A3A3;}
+
+    /* Chatvenster */
+    #cs-chat-launcher{background:var(--gold);color:#0D131C;}
+    #cs-chat-launcher:hover{background:#D9B478;}
+    .cs-chat-head{background:var(--surface-navy);}
+    .cs-msg.bot{background:var(--surface-raised);color:var(--ink);}
+    .cs-msg.user{background:#2B3B57;color:#fff;}
+    .cs-chip{background:var(--white);color:var(--ink);}
+    .cs-chat-input{background:var(--white);}
+    .cs-chat-input input{background:var(--bg-soft);color:var(--ink);}
+    .cs-chat-input button{color:#0D131C;}
+
+    /* Logo's zijn donkerblauwe lijntekeningen op transparant; in het donker licht maken. */
+    .logo-mark, .footer-logo{filter:brightness(0) invert(0.9);}
+  }
 </style>
 <link rel="canonical" href="https://crystal-services.be/schoenen">
 <script type="application/ld+json">
@@ -559,7 +647,7 @@
       <div>
         <p class="eyebrow">Schoenreiniging · Borgerhout, Antwerpen</p>
         <h1>Uw schoenen weer als nieuw.</h1>
-        <p class="lede">Sneakers, leren schoenen of bottines — wij reinigen ze vakkundig, met producten die passen bij het materiaal. Kies zelf hoe grondig: enkel de buitenkant, binnen én buiten, of compleet met veters en ozonbehandeling.</p>
+        <p class="lede">Sneakers, leren schoenen of bottines: wij reinigen ze vakkundig, met producten die passen bij het materiaal.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="#pakketten">Bekijk de pakketten</a>
           <a class="btn btn-ghost" href="tel:0494403841">Bel 0494 40 38 41</a>
@@ -575,7 +663,6 @@
   <section id="pakketten">
     <div class="wrap">
       <div class="section-head reveal">
-        <p class="eyebrow">Pakketten</p>
         <h2>Drie pakketten, u kiest</h2>
         <p>Van een snelle opfrisbeurt tot een volledige behandeling. Twijfelt u welk pakket uw schoenen nodig hebben? Breng ze langs, wij kijken er even naar.</p>
       </div>
@@ -590,7 +677,7 @@
             <li>Zool en tussenzool aangepakt</li>
             <li>Producten afgestemd op het materiaal</li>
           </ul>
-          <a class="btn btn-ghost" href="index.html#contact">Contacteer ons</a>
+          <a class="btn btn-ghost" href="/contact">Contacteer ons</a>
         </div>
 
         <div class="pkg-card featured">
@@ -603,7 +690,7 @@
             <li>Ook de binnenkant van de schoen gereinigd</li>
             <li>Fris resultaat van binnen en van buiten</li>
           </ul>
-          <a class="btn btn-primary" href="index.html#contact">Contacteer ons</a>
+          <a class="btn btn-primary" href="/contact">Contacteer ons</a>
         </div>
 
         <div class="pkg-card">
@@ -615,7 +702,7 @@
             <li>Veters apart gereinigd</li>
             <li>Ozonbehandeling tegen geurtjes en bacteriën</li>
           </ul>
-          <a class="btn btn-ghost" href="index.html#contact">Contacteer ons</a>
+          <a class="btn btn-ghost" href="/contact">Contacteer ons</a>
         </div>
 
       </div>
@@ -627,10 +714,9 @@
   <section>
     <div class="wrap">
       <div class="section-head reveal">
-        <p class="eyebrow">Hoe het werkt</p>
         <h2>Drie stappen</h2>
       </div>
-      <div class="steps-grid reveal">
+      <div class="steps-grid cols-3 reveal">
         <div class="step-tile">
           <span class="num">01</span>
           <h3>Breng uw schoenen langs</h3>
@@ -644,7 +730,7 @@
         <div class="step-tile">
           <span class="num">03</span>
           <h3>Klaar om op te halen</h3>
-          <p>Wij laten weten wanneer uw schoenen klaarstaan — gereinigd en opgefrist.</p>
+          <p>Wij laten weten wanneer uw schoenen klaarstaan, gereinigd en opgefrist.</p>
         </div>
       </div>
     </div>
@@ -659,7 +745,7 @@
         <p style="color:var(--ink-soft);">Naast schoenreiniging verzorgen wij ook uw was en strijk, droogkuis en wetcleaning, en de reiniging van handtassen, motorkleding en leren kledij. Alles op één adres in Borgerhout, vlot bereikbaar vanuit heel Antwerpen.</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a class="btn btn-primary" href="index.html#diensten">Bekijk alle diensten</a>
-          <a class="btn btn-ghost" href="index.html#contact">Contactgegevens</a>
+          <a class="btn btn-ghost" href="/contact">Contacteer ons</a>
         </div>
       </div>
       <div class="banner-visual reveal" style="background:var(--navy-deep);display:flex;align-items:center;justify-content:center;">
@@ -820,10 +906,10 @@
     openingsuren: "Onze uren zijn tijdelijk aangepast: wij zijn open van maandag tot vrijdag, van 8:00 tot 11:00 en van 13:00 tot 17:00 uur. Tussen 11:00 en 13:00 zijn wij gesloten, net als in het weekend en op feestdagen.",
     dienstencheques: "Ja, u kan bij ons betalen met dienstencheques voor strijkwerk. Breng ze gerust mee langs of vraag ernaar bij afgifte.",
     diensten: "Wij bieden strijkservice, was- en droogdiensten, droogkuis en wetcleaning, reiniging van bedrijfskleding, en gespecialiseerde reiniging van schoenen en sneakers, handtassen, motorkleding en leer.",
-    schoenen: "Ja, wij reinigen schoenen en sneakers. Elk materiaal — leer, textiel, suède-look — krijgt de gepaste behandeling, zodat uw schoenen er weer als nieuw uitzien. Breng ze gerust langs in ons atelier in Borgerhout.",
+    schoenen: "Ja, wij reinigen schoenen en sneakers. Elk materiaal (leer, textiel, suède-look) krijgt de gepaste behandeling, zodat uw schoenen er weer als nieuw uitzien. Breng ze gerust langs in ons atelier in Borgerhout.",
     contact: "U kan ons bereiken op 0494 40 38 41 of via info@crystal-services.be. Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    prijzen: "Onze prijzen hangen af van het stuk en de behandeling. Stuur ons gerust een e-mail op info@crystal-services.be met een korte omschrijving — een foto mag ook — dan laten wij u weten wat het kost. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
-    afspraak: "Een afspraak is meestal niet nodig — u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
+    prijzen: "Onze prijzen hangen af van het stuk en de behandeling. Stuur ons gerust een e-mail op info@crystal-services.be met een korte omschrijving (een foto mag ook), dan laten wij u weten wat het kost. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
+    afspraak: "Een afspraak is meestal niet nodig, u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
     adres: "Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
     btw: "Ons BTW-nummer is BE 0691.912.876.",
     default: "Daar kan ik u niet meteen mee helpen, maar ons team beantwoordt uw vraag graag persoonlijk: bel 0494 40 38 41 of mail info@crystal-services.be."
