@@ -2,37 +2,42 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crystal-services.be/</loc>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-10-05</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://crystal-services.be/over-ons</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://crystal-services.be/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://crystal-services.be/zakelijk</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://crystal-services.be/schoenen</loc>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-10-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crystal-services.be/motorkleding</loc>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-10-05</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://crystal-services.be/wassalon</loc>
+    <lastmod>2026-10-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crystal-services.be/zakelijk</loc>
+    <lastmod>2026-10-05</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://crystal-services.be/contact</loc>
+    <lastmod>2026-10-05</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crystal-services.be/over-ons</loc>
+    <lastmod>2026-10-05</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://crystal-services.be/algemene-voorwaarden</loc>
-    <changefreq>yearly</changefreq>
+    <lastmod>2026-10-05</lastmod>
     <priority>0.3</priority>
   </url>
 </urlset>
