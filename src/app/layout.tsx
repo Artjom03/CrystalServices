@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-export const metadata = {
+export const metadata: Metadata = {
+  metadataBase: new URL("https://crystal-services.be"),
+  alternates: { canonical: "./" },
+  icons: { icon: "/favicon-48.png", apple: "/apple-touch-icon.png" },
   title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
   description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook schoenen en sneakers, handtassen, motorkleding en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
   keywords: [
@@ -24,7 +27,9 @@ export const metadata = {
     siteName: "Crystal Services",
     locale: "nl_BE",
     type: "website",
+    images: [{ url: "/images/deelbeeld.jpg", width: 1200, height: 630 }],
   },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
