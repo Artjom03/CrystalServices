@@ -3,6 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Google-tag. Standaard staat meten met cookies UIT; pas na "Akkoord"
+     in de cookiemelding wordt het aangezet (Google Consent Mode v2). -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied', wait_for_update:500});
+  try {
+    if (localStorage.getItem('cs-cookies') === 'ja') {
+      gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+    }
+  } catch (e) {}
+  gtag('js', new Date());
+  gtag('config', 'G-FZ10NJFRPN');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN"></script>
 <title>Motorkleding reinigen in Antwerpen | Crystal Services</title>
 <meta name="description" content="Motorkleding laten reinigen in Antwerpen: leren motorjas €59, broek €49, racepak €99. Reinigen én voeden, impregneren en ozon tegen zweetgeur. In Borgerhout.">
 <link rel="canonical" href="https://crystal-services.be/motorkleding">
@@ -1031,6 +1046,57 @@
   input.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){ sendBtn.click(); }
   });
+</script>
+<!-- Cookiemelding -->
+<style>
+  #cs-cookies{
+    position:fixed;left:20px;bottom:20px;z-index:1100;max-width:400px;
+    background:var(--white);color:var(--ink);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:18px 20px;font-size:.9rem;line-height:1.5;
+  }
+  #cs-cookies[hidden]{display:none;}
+  #cs-cookies p{margin:0 0 14px;color:var(--ink-soft);}
+  #cs-cookies .cs-cookies-knoppen{display:flex;gap:10px;justify-content:flex-end;}
+  #cs-cookies button{
+    font:inherit;font-weight:600;cursor:pointer;border-radius:999px;padding:9px 18px;
+    border:1px solid var(--line);background:transparent;color:var(--ink);
+  }
+  #cs-cookies button.ja{background:var(--navy);border-color:var(--navy);color:#fff;}
+  @media (prefers-color-scheme: dark){
+    #cs-cookies button.ja{background:var(--ink);border-color:var(--ink);color:#0D131C;}
+  }
+  @media (max-width:560px){
+    #cs-cookies{left:16px;right:16px;bottom:16px;max-width:none;}
+    body.cs-cookies-open #cs-chat-launcher{display:none;}
+  }
+</style>
+<div id="cs-cookies" role="dialog" aria-label="Cookies" hidden>
+  <p>Mogen wij met cookies meten hoe bezoekers onze website vinden? Zo zien wij welke advertenties werken. Wij gebruiken hiervoor Google Analytics.</p>
+  <div class="cs-cookies-knoppen">
+    <button type="button" class="nee">Weigeren</button>
+    <button type="button" class="ja">Akkoord</button>
+  </div>
+</div>
+<script>
+  (function(){
+    var box = document.getElementById('cs-cookies');
+    var keuze = null;
+    try { keuze = localStorage.getItem('cs-cookies'); } catch (e) {}
+    if (!keuze) { box.hidden = false; document.body.classList.add('cs-cookies-open'); }
+    function kies(ja){
+      try { localStorage.setItem('cs-cookies', ja ? 'ja' : 'nee'); } catch (e) {}
+      if (ja) gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+      box.hidden = true; document.body.classList.remove('cs-cookies-open');
+    }
+    box.querySelector('.ja').addEventListener('click', function(){ kies(true); });
+    box.querySelector('.nee').addEventListener('click', function(){ kies(false); });
+
+    // Bellen of mailen telt ook als contact voor de advertentie.
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"]');
+      if (a) gtag('event', 'contact', {method: a.href.indexOf('tel:') === 0 ? 'telefoon' : 'e-mail'});
+    });
+  })();
 </script>
 </body>
 </html>
