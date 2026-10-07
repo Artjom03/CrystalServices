@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Over ons - Crystal Services",
-  description: "Leer meer over Crystal Services, een familiebedrijf met meer dan 25 jaar ervaring in professionele was- en strijkdiensten in Borgerhout.",
+  description: "Leer meer over Crystal Services, een familiebedrijf in Borgerhout, gebouwd op meer dan 30 jaar ervaring met professionele wasserijapparatuur.",
   keywords: "over ons, Crystal Services, familiebedrijf, ervaring, wasserij, strijkservice",
 };
 
@@ -41,7 +41,7 @@ export default function OverOns() {
                   </p>
                   
                   <p>
-                    Met meer dan 25 jaar ervaring als technicus en programmeur van 
+                    Met meer dan 30 jaar ervaring als technicus en programmeur van 
                     professionele en industriële wasserijaparatuur, heb ik een grondige 
                     expertise opgebouwd in deze sector. Mijn vrouw brengt daarnaast meer 
                     dan 15 jaar ervaring in de wasserij- en strijkbranche met zich mee. 
