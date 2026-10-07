@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,6 +41,17 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
+        {/* Google-tag met toestemmingsmodus: zonder "Akkoord" in de cookiemelding
+            van de statische pagina's blijft meten met cookies uit. */}
+        <Script id="ga-consent" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied'});
+try { if (localStorage.getItem('cs-cookies') === 'ja') gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'}); } catch (e) {}
+gtag('js', new Date());
+gtag('config', 'G-FZ10NJFRPN');`}
+        </Script>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN" strategy="afterInteractive" />
         <script
   type="application/ld+json"
   dangerouslySetInnerHTML={{
