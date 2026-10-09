@@ -48,6 +48,10 @@ De chat rechtsonder op elke pagina (`public/chat.js`) stuurt vragen naar `/api/c
 - **Nodig op de server:** de omgevingsvariabele `ANTHROPIC_API_KEY` (aan te maken op console.anthropic.com).
 - Zonder sleutel, of als de AI even niet bereikbaar is, antwoordt de chat met eenvoudige regels (`src/app/api/chat/regels.ts`), maar wel met dezelfde prijzen.
 
+## 🧺 Winkel-app
+
+In `winkel-app/` staat een aparte app voor de winkel zelf: bonnen voor strijk, was en droogkuis bijhouden, de klant verwittigen als het klaar is, en ophaling en betaling noteren. Ze staat los van de website en heeft een eigen Vercel-project. Zie `winkel-app/README.md`.
+
 ## 🚀 Getting Started
 
 ### Prerequisites

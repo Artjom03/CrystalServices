@@ -1,0 +1,13 @@
+{
+  "name": "crystal-winkel",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node dev.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.1"
+  }
+}

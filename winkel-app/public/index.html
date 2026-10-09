@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crystal Winkel</title>
+<meta name="theme-color" content="#0E1F42">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Winkel">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<!-- Pincode -->
+<section id="slot" hidden>
+  <form id="slot-form" class="slot-kaart">
+    <img src="/apple-touch-icon.png" alt="" width="64" height="64">
+    <h1>Crystal Winkel</h1>
+    <p>Geef de pincode van de winkel in.</p>
+    <input id="slot-pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Pincode" required>
+    <button class="knop hoofd" type="submit">Openen</button>
+    <p id="slot-fout" class="fout" role="alert"></p>
+  </form>
+</section>
+
+<!-- App -->
+<div id="app" hidden>
+  <header class="balk">
+    <div class="balk-binnen">
+      <h1 class="merk">Crystal <span>Winkel</span></h1>
+      <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
+    </div>
+    <div class="balk-binnen">
+      <input id="zoek" type="search" placeholder="Zoek op naam, telefoon of bonnummer" aria-label="Zoeken">
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="binnen" aria-selected="true">In behandeling <b id="n-binnen">0</b></button>
+      <button role="tab" data-tab="klaar" aria-selected="false">Klaar <b id="n-klaar">0</b></button>
+      <button role="tab" data-tab="opgehaald" aria-selected="false">Opgehaald</button>
+    </nav>
+  </header>
+
+  <main>
+    <p id="melding" class="melding" role="status" hidden></p>
+    <ul id="lijst" class="lijst"></ul>
+    <p id="leeg" class="leeg" hidden></p>
+  </main>
+</div>
+
+<!-- Bon bekijken -->
+<dialog id="detail" class="paneel">
+  <div class="paneel-kop">
+    <h2 id="d-titel"></h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div id="d-inhoud" class="paneel-inhoud"></div>
+</dialog>
+
+<!-- Bon maken of wijzigen -->
+<dialog id="formulier" class="paneel">
+  <form id="f" method="dialog" novalidate>
+    <div class="paneel-kop">
+      <h2 id="f-titel">Nieuwe bon</h2>
+      <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
+    </div>
+    <div class="paneel-inhoud">
+      <fieldset>
+        <legend>Klant</legend>
+        <label>Naam *<input name="naam" autocomplete="off" required></label>
+        <div class="rij">
+          <label>Telefoon<input name="telefoon" type="tel" inputmode="tel" autocomplete="off" placeholder="0470 12 34 56"></label>
+          <label>E-mail<input name="email" type="email" autocomplete="off"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Wat</legend>
+        <div class="keuzes" id="f-soort">
+          <button type="button" data-soort="Strijk">Strijk</button>
+          <button type="button" data-soort="Was">Was</button>
+          <button type="button" data-soort="Droogkuis">Droogkuis</button>
+          <button type="button" data-soort="Schoenen">Schoenen</button>
+          <button type="button" data-soort="Motorkleding">Motorkleding</button>
+          <button type="button" data-soort="Ander">Ander</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Stukken <small>(mag ook later, bijvoorbeeld na het strijken)</small></legend>
+        <div class="stuk-toevoegen">
+          <input id="f-stuk" list="f-stukken" placeholder="Typ een stuk: hemd, broek, laken…" aria-label="Stuk zoeken">
+          <datalist id="f-stukken"></datalist>
+          <button type="button" class="knop" id="f-ander">Ander stuk</button>
+        </div>
+        <table class="stukken">
+          <tbody id="f-regels"></tbody>
+          <tfoot><tr><td colspan="2">Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td><td></td></tr></tfoot>
+        </table>
+      </fieldset>
+
+      <fieldset>
+        <legend>Klaar tegen</legend>
+        <div class="rij">
+          <input name="klaarTegen" type="date" aria-label="Klaar tegen">
+          <div class="keuzes klein">
+            <button type="button" data-dagen="1">Morgen</button>
+            <button type="button" data-dagen="2">+2 dagen</button>
+            <button type="button" data-dagen="7">+1 week</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Betaling en opmerking</legend>
+        <div class="rij">
+          <label class="vink"><input name="betaald" type="checkbox"> Al betaald</label>
+          <select name="betaalwijze" aria-label="Betaalwijze">
+            <option value="">Betaalwijze…</option>
+            <option value="cash">Cash</option>
+            <option value="kaart">Kaart</option>
+            <option value="dienstencheques">Dienstencheques</option>
+            <option value="overschrijving">Overschrijving</option>
+          </select>
+        </div>
+        <label>Opmerking<textarea name="opmerking" rows="2" placeholder="Bijvoorbeeld: vlek op linkermouw, geen stijfsel"></textarea></label>
+      </fieldset>
+      <p id="f-fout" class="fout" role="alert"></p>
+    </div>
+    <div class="paneel-voet">
+      <button type="button" class="knop" data-sluit>Annuleren</button>
+      <button type="submit" class="knop hoofd" id="f-bewaar">Bon maken</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Afdruk: wordt enkel bij printen getoond -->
+<div id="afdruk" aria-hidden="true"></div>
+
+<script src="/prijzen.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
