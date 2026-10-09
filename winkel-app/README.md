@@ -15,10 +15,27 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 - De bonnen staan in één **privé**-bestand in Vercel Blob. Wijzigingen worden veilig samengevoegd als twee toestellen tegelijk bewaren.
 - `public/prijzen.js` komt uit de prijslijst van de website (`src/app/api/chat/kennis.ts` in Artjom03/CrystalServices). Verandert een prijs, pas hem dan op beide plaatsen aan.
 
-## Instellingen op Vercel
+## Online
 
-- `APP_PIN`: de pincode van de winkel.
+- Adres: https://crystal-services-winkel.vercel.app (Vercel-project `crystal-winkel` in het team van bogdan-mg).
+- Functies draaien in Frankfurt (fra1), de Blob-opslag `crystal-winkel-bonnen` is privé en staat ook in Frankfurt.
+
+### Instellingen op Vercel
+
+- `APP_PIN`: de pincode van de winkel. Na het wijzigen opnieuw deployen.
 - `BLOB_READ_WRITE_TOKEN`: wordt automatisch gezet door de gekoppelde Blob-opslag.
+
+### Een nieuwe versie online zetten
+
+Het Vercel-project is niet aan deze GitHub-repo gekoppeld: de Vercel-GitHub-koppeling van bogdan-mg kan Artjom03/CrystalServices niet lezen. Daarom is het zo opgezet:
+
+- `api/` en `lib/` worden rechtstreeks naar Vercel geüpload.
+- Het buildcommando haalt `public/` uit deze repo op een vaste commit:
+  `curl -fsSL https://codeload.github.com/Artjom03/CrystalServices/tar.gz/<commit> | tar -xz --strip-components=2 --wildcards '*/winkel-app/public/*'`
+
+Voor een update: commit naar `main`, en deploy daarna opnieuw met de nieuwe commit in dat buildcommando en de nieuwe `api/` en `lib/`.
+
+Eenvoudiger wordt het als bogdan-mg in Vercel de GitHub-koppeling ook toegang geeft tot Artjom03/CrystalServices. Dan kan het project gekoppeld worden met root directory `winkel-app`, en gaat elke push vanzelf online.
 
 ## Lokaal testen
 
