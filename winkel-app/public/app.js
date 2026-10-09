@@ -18,7 +18,19 @@
   let tab = 'binnen';
   let bewerkId = null;
   let regels = [];
-  let soort = 'Strijk';
+  let soorten = new Set(['Strijk']);
+  let autoPrint = true;
+  try { autoPrint = localStorage.getItem('winkel-autoprint') !== 'nee'; } catch (e) {}
+
+  const BEHANDELING = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis', ander: 'Overige' };
+  const VOLGORDE = ['strijk', 'was', 'droogkuis', 'ander'];
+  // Veelvoorkomende droogkuisstukken: zonder prijs, die volgt na het bekijken van het stuk.
+  const DROOGKUIS = ['Mantel', 'Jas', 'Kostuum (2-delig)', 'Colbert', 'Broek', 'Kleed', 'Avondkleed', 'Rok', 'Hemd', 'Bloes', 'Trui', 'Das', 'Donsdeken', 'Deken', 'Gordijn'];
+
+  const bedragOfVolgt = (s) => (s.prijs == null ? '<span class="volgt">prijs volgt</span>' : eur(s.aantal * s.prijs));
+  function groepen(stukken) {
+    return VOLGORDE.map((beh) => [beh, stukken.filter((s) => (s.behandeling || 'ander') === beh)]).filter(([, l]) => l.length);
+  }
 
   // ---------- Server ----------
   async function api(methode, body) {
@@ -183,8 +195,11 @@
 
   function bericht(b) {
     const voornaam = b.klant.naam.split(' ')[0];
-    const wat = { Strijk: 'uw strijkwerk is', Was: 'uw was is', Droogkuis: 'uw droogkuis is', Schoenen: 'uw schoenen zijn', Motorkleding: 'uw motorkleding is' }[b.soort] || 'uw bestelling is';
-    const teBetalen = !b.betaald && b.totaal ? ` Te betalen: ${eur(b.totaal)}.` : '';
+    const woorden = { Strijk: 'strijkwerk', Was: 'was', Droogkuis: 'droogkuis', Schoenen: 'schoenen', Motorkleding: 'motorkleding', Ander: 'bestelling' };
+    const lijst = (b.soorten || [b.soort]).map((x) => woorden[x] || 'bestelling');
+    const meer = lijst.length > 1 || lijst[0] === 'schoenen';
+    const wat = 'uw ' + (lijst.length > 1 ? lijst.slice(0, -1).join(', ') + ' en ' + lijst[lijst.length - 1] : lijst[0]) + (meer ? ' zijn' : ' is');
+    const teBetalen = !b.betaald && b.totaal && !b.prijsOpen ? ` Te betalen: ${eur(b.totaal)}.` : '';
     const portaal = heeftToegang(b) ? ` Al uw bonnen: ${PORTAAL}` : '';
     return `Dag ${voornaam}, ${wat} klaar bij ${WINKEL.naam} (bon ${b.nr}). U kan het ophalen aan de ${WINKEL.adres}, ${WINKEL.uren}.${teBetalen}${portaal} Tot binnenkort!`;
   }
@@ -230,8 +245,10 @@
     const tel = telefoonIntl(b.klant.telefoon);
     const tekst = encodeURIComponent(bericht(b));
     const stukken = b.stukken.length
-      ? `<table class="stukken"><tbody>${b.stukken.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}</td><td class="bedrag">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}</tbody>
-         <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}</td></tr></tfoot></table>`
+      ? `<table class="stukken"><tbody>${groepen(b.stukken).map(([beh, lijst]) =>
+          `<tr class="groep"><td colspan="3">${BEHANDELING[beh]}</td></tr>` +
+          lijst.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}</td><td class="bedrag">${bedragOfVolgt(s)}</td></tr>`).join('')).join('')}</tbody>
+         <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td></tr></tfoot></table>`
       : '<p class="tijdlijn">Nog geen stukken ingevuld.</p>';
 
     let acties = '';
@@ -284,7 +301,8 @@
         ${b.opgehaaldOp ? '<br>Opgehaald: ' + esc(mooiDatum(b.opgehaaldOp, true)) : ''}
       </div>
       <div class="d-knoppen">
-        <button class="knop" data-actie="print">Bon afdrukken</button>
+        <button class="knop" data-actie="print" data-soort="afgifte">Afgiftebon</button>
+        <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
         <button class="knop" data-actie="wijzig">Wijzigen</button>
         <button class="knop gevaar" data-actie="verwijder">Verwijderen</button>
       </div>`;
@@ -309,16 +327,26 @@
         await doe({ op: 'status', id, status: actie });
         openDetail(id);
       } else if (actie === 'opgehaald') {
+        if (b.prijsOpen) {
+          // Bij het ophalen moet alles een prijs hebben, anders klopt de afhaalbon niet.
+          if (confirm('Er staan nog stukken zonder prijs (bv. droogkuis). Nu de prijzen invullen?')) {
+            $('#detail').close();
+            openFormulier(b);
+          }
+          return;
+        }
         // data-betaal="" betekent opgehaald maar nog niet betaald.
         const betaal = knop.dataset.betaal;
-        await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
+        const { bon: na } = await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
         $('#detail').close();
+        if (autoPrint) drukAf(na, 'afhaal');
       } else if (actie === 'klantcode') {
         if (knop.dataset.opnieuw && !confirm('Een nieuwe code maken? De oude code werkt dan niet meer.')) return;
         const data = await doe({ op: 'klantcode', telefoon: b.klant.telefoon, naam: b.klant.naam });
         openDetail(id, data.pin);
       } else if (actie === 'print') {
-        drukAf(b);
+        if (knop.dataset.soort === 'afhaal' && b.prijsOpen && !confirm('Er staan nog stukken zonder prijs. Toch een afhaalbon afdrukken?')) return;
+        drukAf(b, knop.dataset.soort);
       } else if (actie === 'wijzig') {
         $('#detail').close();
         openFormulier(b);
@@ -333,14 +361,13 @@
   });
 
   // ---------- Afdrukken ----------
-  function drukAf(b) {
+  // Afgiftebon: bij het binnenbrengen, wat er binnenkwam, zonder prijzen, met een label voor de mand.
+  // Afhaalbon: bij het ophalen, alle stukken met prijs, totaal en betaling.
+  function drukAf(b, soortBon = 'afgifte') {
+    const afhaal = soortBon === 'afhaal';
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
-    const betaling = b.betaald
-      ? `Betaald${b.betaalwijze ? ' · ' + esc(b.betaalwijze) : ''}`
-      : b.totaal ? `Te betalen bij afhaling: <b>${eur(b.totaal)}</b>` : 'Te betalen bij afhaling';
     const klaar = b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten';
-    $('#afdruk').innerHTML = `
-      <section class="pr-bon">
+    const kop = `
         <header class="pr-kop">
           <img src="/apple-touch-icon.png" alt="">
           <div>
@@ -349,38 +376,67 @@
           </div>
         </header>
         <div class="pr-klein pr-adres">${esc(WINKEL.adres)}<br>Tel. ${esc(WINKEL.telefoon)}</div>
+        <div class="pr-titel">${afhaal ? 'Afhaalbon' : 'Afgiftebon'}</div>
+        <div class="pr-nr"><span>Bon</span>${esc(b.nr)}</div>`;
+    const uren = esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1));
 
-        <div class="pr-nr"><span>Bon</span>${esc(b.nr)}</div>
-
+    let inhoud;
+    if (!afhaal) {
+      // Wat binnenkwam, per soort. Strijk of was zonder stukken: de mand wordt later geteld.
+      const gekozen = b.soorten || [b.soort];
+      const blokken = ['Strijk', 'Was', 'Droogkuis'].filter((x) => gekozen.includes(x))
+        .map((soort) => [soort, b.stukken.filter((s) => s.behandeling === soort.toLowerCase())]);
+      const overig = b.stukken.filter((s) => !['strijk', 'was', 'droogkuis'].includes(s.behandeling));
+      const andere = gekozen.filter((x) => !['Strijk', 'Was', 'Droogkuis'].includes(x));
+      if (overig.length || andere.length) blokken.push([andere.join(', ') || 'Overige', overig]);
+      const perSoort = blokken.map(([titel, lijst]) => {
+        const regels = lijst.length
+          ? lijst.map((s) => `<tr><td class="n">${s.aantal}×</td><td>${esc(s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, ''))}</td></tr>`).join('')
+          : `<tr><td class="n"></td><td>${titel === 'Strijk' ? 'Strijkmand: de stukken worden geteld bij het strijken' : titel === 'Was' ? 'Was: de stukken worden geteld bij het wassen' : ''}</td></tr>`;
+        return `<tr class="pr-groep"><td colspan="2">${esc(titel)}</td></tr>${regels}`;
+      }).join('');
+      inhoud = `
         <table class="pr-info">
           <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b>${b.klant.telefoon ? '<br>' + esc(b.klant.telefoon) : ''}</td></tr>
-          <tr><th>Soort</th><td>${esc(b.soort)}</td></tr>
           <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
         </table>
         <div class="pr-klaar">Klaar tegen<b>${klaar}</b></div>
-
+        <table class="pr-lijst">${perSoort}</table>
+        ${b.opmerking ? `<div class="pr-opm"><b>Opmerking</b><br>${esc(b.opmerking)}</div>` : ''}
+        <div class="pr-betaling">${b.betaald ? 'Betaald' + (b.betaalwijze ? ' · ' + esc(b.betaalwijze) : '') : 'U betaalt bij het ophalen.'}</div>
+        ${heeftToegang(b) ? `<div class="pr-portaal">Volg uw bonnen online:<br><b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></div>` : ''}
+        <footer class="pr-voet">Breng deze bon mee bij het ophalen.<br>${uren}<br>Bedankt en tot binnenkort!</footer>`;
+    } else {
+      const rijen = groepen(b.stukken).map(([beh, lijst]) =>
+        `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
+        lijst.map((s) => `<tr><td>${s.aantal} × ${esc(s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, ''))}${s.aantal > 1 && s.prijs != null ? `<span class="pr-klein"> (${eur(s.prijs)}/st.)</span>` : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
+      ).join('');
+      const betaling = b.betaald
+        ? `Betaald${b.betaalwijze ? ' · ' + esc(b.betaalwijze) : ''}`
+        : `Te betalen: <b>${eur(b.totaal)}</b>`;
+      inhoud = `
+        <table class="pr-info">
+          <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
+          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp))}</td></tr>
+          <tr><th>Opgehaald</th><td>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</td></tr>
+        </table>
         ${b.stukken.length ? `
         <table class="pr-stukken">
-          <thead><tr><th>Stuk</th><th class="r">Bedrag</th></tr></thead>
-          <tbody>${b.stukken.map((s) => `<tr><td>${s.aantal} × ${esc(s.naam)}${s.aantal > 1 ? `<span class="pr-klein"> (${eur(s.prijs)}/st.)</span>` : ''}</td><td class="r">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}</tbody>
+          <tbody>${rijen}</tbody>
           <tfoot><tr><td>Totaal (${aantal} stuk${aantal > 1 ? 's' : ''})</td><td class="r">${eur(b.totaal)}</td></tr></tfoot>
-        </table>` : '<p class="pr-klein">De stukken worden geteld bij het strijken.</p>'}
-
+        </table>` : ''}
         <div class="pr-betaling">${betaling}</div>
-        ${b.opmerking ? `<div class="pr-opm"><b>Opmerking</b><br>${esc(b.opmerking)}</div>` : ''}
-        ${heeftToegang(b) ? `<div class="pr-portaal">Volg uw bonnen online:<br><b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></div>` : ''}
+        <footer class="pr-voet">Bedankt voor uw vertrouwen!<br>${uren}</footer>`;
+    }
 
-        <footer class="pr-voet">Breng deze bon mee bij het ophalen.<br>${esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1))}<br>Bedankt en tot binnenkort!</footer>
-      </section>
-
+    $('#afdruk').innerHTML = `<section class="pr-bon">${kop}${inhoud}</section>` + (afhaal ? '' : `
       <div class="pr-knip">✂ hier knippen · label voor de mand</div>
-
       <section class="pr-label">
         <div class="pr-label-nr">${esc(b.nr)}</div>
         <div class="pr-label-naam">${esc(b.klant.naam)}</div>
         <div class="pr-label-info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' st.' : ''} · klaar ${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</div>
         ${b.opmerking ? `<div class="pr-label-opm">${esc(b.opmerking)}</div>` : ''}
-      </section>`;
+      </section>`);
     // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
     const logo = $('#afdruk img');
     if (logo && !logo.complete) {
@@ -394,37 +450,47 @@
   const stukLijst = [];
   for (const g of window.PRIJSLIJST || []) {
     for (const s of g.stukken) {
-      if (s.prijs != null) stukLijst.push({ label: `${s.naam} · ${eur(s.prijs)}`, naam: s.naam, prijs: s.prijs });
-      if (s.strijken != null) stukLijst.push({ label: `${s.naam} · strijken ${eur(s.strijken)}`, naam: `${s.naam} (strijken)`, prijs: s.strijken });
-      if (s.wassen != null) stukLijst.push({ label: `${s.naam} · ${g.wassenLabel} ${eur(s.wassen)}`, naam: `${s.naam} (${g.wassenLabel})`, prijs: s.wassen });
+      if (s.prijs != null) stukLijst.push({ label: `${s.naam} · ${eur(s.prijs)}`, naam: s.naam, prijs: s.prijs, behandeling: 'ander' });
+      if (s.strijken != null) stukLijst.push({ label: `${s.naam} · strijken ${eur(s.strijken)}`, naam: `${s.naam} (strijken)`, prijs: s.strijken, behandeling: 'strijk' });
+      if (s.wassen != null) stukLijst.push({ label: `${s.naam} · ${g.wassenLabel} ${eur(s.wassen)}`, naam: `${s.naam} (${g.wassenLabel})`, prijs: s.wassen, behandeling: 'was' });
     }
   }
+  for (const naam of DROOGKUIS) stukLijst.push({ label: `${naam} · droogkuis (prijs volgt)`, naam, prijs: null, behandeling: 'droogkuis' });
   $('#f-stukken').innerHTML = stukLijst.map((s) => `<option value="${esc(s.label)}"></option>`).join('');
 
-  function zetSoort(s) {
-    soort = s;
-    $$('#f-soort button').forEach((k) => k.setAttribute('aria-pressed', String(k.dataset.soort === s)));
+  function toonSoorten() {
+    $$('#f-soort button').forEach((k) => k.setAttribute('aria-pressed', String(soorten.has(k.dataset.soort))));
   }
   $('#f-soort').addEventListener('click', (e) => {
     const k = e.target.closest('[data-soort]');
-    if (k) zetSoort(k.dataset.soort);
+    if (!k) return;
+    if (soorten.has(k.dataset.soort)) soorten.delete(k.dataset.soort);
+    else soorten.add(k.dataset.soort);
+    toonSoorten();
   });
+  // Een stuk toevoegen zet ook de soort aan (bv. een droogkuisstuk zet "Droogkuis" aan).
+  function soortVoor(beh) {
+    const soort = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis' }[beh];
+    if (soort && !soorten.has(soort)) { soorten.add(soort); toonSoorten(); }
+  }
   $$('[data-dagen]').forEach((k) => k.addEventListener('click', () => {
     $('#f').klaarTegen.value = plusDagen(Number(k.dataset.dagen));
   }));
 
   function toonRegels() {
+    $('#f-fout').textContent = '';
     $('#f-regels').innerHTML = regels.map((r, i) => `<tr data-i="${i}">
       <td><input class="aantal" type="number" min="1" inputmode="numeric" value="${r.aantal}" aria-label="Aantal" data-veld="aantal"></td>
-      <td><input value="${esc(r.naam)}" aria-label="Stuk" data-veld="naam"></td>
-      <td class="bedrag"><input class="prijs" inputmode="decimal" value="${String(r.prijs.toFixed(2)).replace('.', ',')}" aria-label="Prijs per stuk" data-veld="prijs"></td>
+      <td><input value="${esc(r.naam)}" aria-label="Stuk" data-veld="naam" placeholder="Welk stuk?"></td>
+      <td><select data-veld="behandeling" aria-label="Behandeling">${VOLGORDE.map((b) => `<option value="${b}"${r.behandeling === b ? ' selected' : ''}>${BEHANDELING[b]}</option>`).join('')}</select></td>
+      <td class="bedrag"><input class="prijs" inputmode="decimal" value="${r.prijs == null ? '' : String(r.prijs.toFixed(2)).replace('.', ',')}" placeholder="volgt" aria-label="Prijs per stuk" data-veld="prijs"></td>
       <td><button type="button" class="weg" aria-label="Verwijderen" data-weg>✕</button></td>
     </tr>`).join('');
     toonTotaal();
   }
   function toonTotaal() {
     const t = regels.reduce((som, r) => som + (Number(r.aantal) || 0) * (Number(r.prijs) || 0), 0);
-    $('#f-totaal').textContent = eur(t);
+    $('#f-totaal').innerHTML = eur(t) + (regels.some((r) => r.prijs == null) ? ' <span class="volgt">+ prijs volgt</span>' : '');
   }
   $('#f-regels').addEventListener('input', (e) => {
     const tr = e.target.closest('tr');
@@ -432,8 +498,13 @@
     const veld = e.target.dataset.veld;
     if (veld === 'naam') r.naam = e.target.value;
     if (veld === 'aantal') r.aantal = Math.max(1, Math.round(Number(e.target.value) || 1));
-    if (veld === 'prijs') r.prijs = Number(e.target.value.replace(',', '.')) || 0;
+    if (veld === 'prijs') r.prijs = e.target.value.trim() === '' ? null : Number(e.target.value.replace(',', '.')) || 0;
     toonTotaal();
+  });
+  $('#f-regels').addEventListener('change', (e) => {
+    if (e.target.dataset.veld !== 'behandeling') return;
+    regels[Number(e.target.closest('tr').dataset.i)].behandeling = e.target.value;
+    soortVoor(e.target.value);
   });
   $('#f-regels').addEventListener('click', (e) => {
     if (!e.target.closest('[data-weg]')) return;
@@ -441,25 +512,38 @@
     toonRegels();
   });
 
-  function voegToe(naam, prijs) {
-    const bestaand = regels.find((r) => r.naam === naam && r.prijs === prijs);
+  function voegToe(naam, prijs, behandeling) {
+    const bestaand = regels.find((r) => r.naam === naam && r.prijs === prijs && r.behandeling === behandeling);
     if (bestaand) bestaand.aantal += 1;
-    else regels.push({ naam, prijs, aantal: 1 });
+    else regels.push({ naam, prijs, behandeling, aantal: 1 });
+    soortVoor(behandeling);
     toonRegels();
   }
   $('#f-stuk').addEventListener('change', (e) => {
     const s = stukLijst.find((x) => x.label === e.target.value);
     if (!s) return;
-    voegToe(s.naam, s.prijs);
+    voegToe(s.naam, s.prijs, s.behandeling);
     e.target.value = '';
   });
-  $('#f-ander').addEventListener('click', () => {
-    const naam = $('#f-stuk').value.trim() || 'Ander stuk';
-    regels.push({ naam, prijs: 0, aantal: 1 });
+  // Een stuk dat niet in de lijst staat: naam uit het zoekveld, prijs leeg ("volgt").
+  function nieuweRegel(behandeling) {
+    const naam = $('#f-stuk').value.trim();
+    regels.push({ naam, prijs: null, behandeling, aantal: 1 });
     $('#f-stuk').value = '';
+    soortVoor(behandeling);
     toonRegels();
-    const prijsVeld = $$('#f-regels .prijs').pop();
-    if (prijsVeld) prijsVeld.select();
+    const rij = $$('#f-regels tr').pop();
+    const veld = naam ? rij.querySelector('.prijs') : rij.querySelector('[data-veld="naam"]');
+    if (veld) veld.focus();
+  }
+  $('#f-droogkuis').addEventListener('click', () => nieuweRegel('droogkuis'));
+  $('#f-ander').addEventListener('click', () => {
+    const beh = soorten.size === 1 && soorten.has('Was') ? 'was' : soorten.size === 1 && soorten.has('Strijk') ? 'strijk' : 'ander';
+    nieuweRegel(beh);
+  });
+  $('#f-print').addEventListener('change', (e) => {
+    autoPrint = e.target.checked;
+    try { localStorage.setItem('winkel-autoprint', autoPrint ? 'ja' : 'nee'); } catch (err) {}
   });
 
   function openFormulier(b) {
@@ -476,8 +560,11 @@
     f.betaald.checked = b ? b.betaald : false;
     f.betaalwijze.value = b ? b.betaalwijze : '';
     f.opmerking.value = b ? b.opmerking : '';
-    regels = b ? b.stukken.map((s) => ({ ...s })) : [];
-    zetSoort(b ? b.soort : 'Strijk');
+    regels = b ? b.stukken.map((s) => ({ ...s, behandeling: s.behandeling || 'ander' })) : [];
+    soorten = new Set(b ? (b.soorten || [b.soort]) : ['Strijk']);
+    toonSoorten();
+    $('#f-print').checked = autoPrint;
+    $('#f-print-label').hidden = Boolean(b);
     toonRegels();
     $('#formulier').showModal();
     if (!b) f.naam.focus();
@@ -489,10 +576,16 @@
     e.preventDefault();
     const f = $('#f');
     if (!f.naam.value.trim()) { $('#f-fout').textContent = 'Vul de naam van de klant in.'; f.naam.focus(); return; }
+    const stukken = regels.filter((r) => r.naam.trim());
+    if (soorten.has('Droogkuis') && !stukken.some((r) => r.behandeling === 'droogkuis')) {
+      $('#f-fout').textContent = 'Vul bij droogkuis in welke stukken de klant binnenbrengt (knop "+ Droogkuis-stuk").';
+      return;
+    }
+    if (!soorten.size) { $('#f-fout').textContent = 'Kies wat de klant binnenbrengt.'; return; }
     const bon = {
       klant: { naam: f.naam.value, telefoon: f.telefoon.value, email: f.email.value },
-      soort,
-      stukken: regels.filter((r) => r.naam.trim()),
+      soorten: [...soorten],
+      stukken,
       klaarTegen: f.klaarTegen.value,
       betaald: f.betaald.checked,
       betaalwijze: f.betaalwijze.value,
@@ -508,6 +601,7 @@
         toon();
       }
       openDetail(nieuw.id);
+      if (!bewerkId && autoPrint) drukAf(nieuw, 'afgifte');
     } catch (err) {
       if (err.message !== 'pin') $('#f-fout').textContent = err.message;
     } finally {

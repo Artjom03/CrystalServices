@@ -78,7 +78,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>Wat</legend>
+        <legend>Wat brengt de klant binnen? <small>(meerdere mogelijk)</small></legend>
         <div class="keuzes" id="f-soort">
           <button type="button" data-soort="Strijk">Strijk</button>
           <button type="button" data-soort="Was">Was</button>
@@ -90,15 +90,18 @@
       </fieldset>
 
       <fieldset>
-        <legend>Stukken <small>(mag ook later, bijvoorbeeld na het strijken)</small></legend>
+        <legend>Stukken <small>(droogkuis altijd invullen, zonder prijs; strijk en was mag ook later)</small></legend>
         <div class="stuk-toevoegen">
-          <input id="f-stuk" list="f-stukken" placeholder="Typ een stuk: hemd, broek, laken…" aria-label="Stuk zoeken">
+          <input id="f-stuk" list="f-stukken" placeholder="Typ een stuk: hemd, mantel, laken…" aria-label="Stuk zoeken">
           <datalist id="f-stukken"></datalist>
-          <button type="button" class="knop" id="f-ander">Ander stuk</button>
         </div>
-        <table class="stukken">
+        <div class="d-knoppen" style="margin-bottom:8px">
+          <button type="button" class="knop" id="f-droogkuis">+ Droogkuis-stuk</button>
+          <button type="button" class="knop" id="f-ander">+ Ander stuk</button>
+        </div>
+        <table class="stukken" id="f-tabel">
           <tbody id="f-regels"></tbody>
-          <tfoot><tr><td colspan="2">Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td><td></td></tr></tfoot>
+          <tfoot><tr><td>Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td></tr></tfoot>
         </table>
       </fieldset>
 
@@ -131,6 +134,7 @@
       <p id="f-fout" class="fout" role="alert"></p>
     </div>
     <div class="paneel-voet">
+      <label class="vink" id="f-print-label" style="margin-right:auto;font-size:.9rem"><input type="checkbox" id="f-print"> Afgiftebon afdrukken</label>
       <button type="button" class="knop" data-sluit>Annuleren</button>
       <button type="submit" class="knop hoofd" id="f-bewaar">Bon maken</button>
     </div>

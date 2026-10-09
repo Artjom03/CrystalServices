@@ -48,7 +48,7 @@ test('wijzigen houdt nummer en status, verwijderen haalt de bon weg', () => {
 test('rare invoer wordt begrensd', () => {
   const { bon } = nieuw(LEEG, { klant: { naam: 'x'.repeat(500) }, stukken: [{ naam: 'a', aantal: -5, prijs: -3 }, { naam: '' }], betaalwijze: 'bitcoin' });
   assert.equal(bon.klant.naam.length, 80);
-  assert.deepEqual(bon.stukken, [{ naam: 'a', aantal: 1, prijs: 0 }]);
+  assert.deepEqual(bon.stukken, [{ naam: 'a', aantal: 1, prijs: 0, behandeling: 'ander' }]);
   assert.equal(bon.betaalwijze, '');
   assert.throws(() => pasToe(LEEG, { op: 'status', id: 'nope', status: 'klaar' }, nu), /niet gevonden/);
 });
@@ -96,4 +96,32 @@ test('toegangsbewijs: echt, vervalst en verlopen', () => {
   assert.deepEqual({ ...leesToken(t, 2000), exp: 0 }, { t: '32470123456', v: 1, exp: 0 });
   assert.equal(leesToken(t.slice(0, -2) + 'xx', 2000), null);
   assert.equal(leesToken(t, 1000 + 181 * 24 * 3600 * 1000), null);
+});
+
+test('stukken per behandeling, prijs mag leeg blijven, droogkuis vraagt stukken', () => {
+  assert.throws(() => nieuw(LEEG, { klant: { naam: 'A' }, soorten: ['Droogkuis'] }), /droogkuis/i);
+  const { staat, bon } = nieuw(LEEG, {
+    klant: { naam: 'A' },
+    soorten: ['Strijk'],
+    stukken: [
+      { naam: 'Hemd (strijken)', aantal: 2, prijs: 2.3, behandeling: 'strijk' },
+      { naam: 'Mantel', aantal: 1, prijs: '', behandeling: 'droogkuis' },
+    ],
+  });
+  assert.deepEqual(bon.soorten, ['Strijk', 'Droogkuis']);
+  assert.equal(bon.soort, 'Strijk + Droogkuis');
+  assert.equal(bon.stukken[1].prijs, null);
+  assert.equal(bon.totaal, 4.6);
+  assert.equal(bon.prijsOpen, true);
+  // Bij het ophalen de prijs invullen
+  const { bon: na } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { stukken: [bon.stukken[0], { ...bon.stukken[1], prijs: '14,50' }] } }, nu);
+  assert.equal(na.totaal, 19.1);
+  assert.equal(na.prijsOpen, false);
+});
+
+test('oudere bonnen zonder behandeling blijven werken', () => {
+  const oud = { bonnen: [{ id: 'x', nr: '26-001', klant: { naam: 'A' }, soort: 'Strijk', stukken: [{ naam: 'Hemd (strijken)', aantal: 1, prijs: 2.3 }] }], teller: { 26: 1 } };
+  const { bon } = pasToe(oud, { op: 'wijzig', id: 'x', bon: {} }, nu);
+  assert.equal(bon.stukken[0].behandeling, 'strijk');
+  assert.deepEqual(bon.soorten, ['Strijk']);
 });

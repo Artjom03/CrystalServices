@@ -100,6 +100,24 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-of
 .bedrag{text-align:right;white-space:nowrap;}
 .weg{border:0;background:none;color:var(--rood);font-size:1.1rem;cursor:pointer;padding:4px 8px;}
 
+.stukken select{padding:6px 4px;font-size:.88rem;width:auto;}
+.stukken .prijs::placeholder{color:var(--ink-soft);font-style:italic;}
+.stukken tr.groep td{border-bottom:0;padding-top:12px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);}
+.volgt{color:var(--gold-deep);font-style:italic;}
+/* Stukken in het formulier: per stuk twee regels, zodat de naam ook op een gsm leesbaar blijft. */
+#f-tabel,#f-tabel tbody,#f-tabel tfoot{display:block;}
+#f-regels tr{display:grid;grid-template-columns:64px 1fr 1fr 36px;grid-template-areas:"aantal naam naam weg" "beh beh prijs weg";gap:6px;padding:8px 0;border-bottom:1px solid var(--lijn);align-items:center;}
+#f-regels td{border:0;padding:0;}
+#f-regels td:nth-child(1){grid-area:aantal;}
+#f-regels td:nth-child(2){grid-area:naam;}
+#f-regels td:nth-child(3){grid-area:beh;}
+#f-regels td:nth-child(4){grid-area:prijs;}
+#f-regels td:nth-child(5){grid-area:weg;}
+#f-regels .aantal,#f-regels select,#f-regels .prijs{width:100%;max-width:none;}
+#f-tabel tfoot tr{display:flex;justify-content:space-between;padding-top:10px;font-weight:800;}
+#f-tabel tfoot td{border:0;padding:0;}
+@media (max-width:600px){ .paneel-voet{flex-wrap:wrap;} }
+
 /* Detail */
 .d-blok{margin-bottom:16px;}
 .d-blok h3{margin:0 0 6px;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
@@ -145,4 +163,9 @@ a{color:var(--navy);}
   .pr-label-info{font-size:9pt;margin-top:1mm;}
   .pr-label-opm{font-size:8.5pt;margin-top:1.5mm;font-style:italic;}
   .pr-bon{break-inside:avoid;}
+  .pr-titel{text-align:center;font-size:9pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin:2.5mm 0 0;}
+  .pr-groep td{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding-top:2mm!important;border-bottom:.3mm solid #000!important;}
+  .pr-lijst{width:100%;border-collapse:collapse;margin:3mm 0 1mm;}
+  .pr-lijst td{padding:.7mm 0;vertical-align:top;}
+  .pr-lijst td.n{width:9mm;font-weight:700;}
 }
