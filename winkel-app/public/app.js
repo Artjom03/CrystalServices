@@ -46,9 +46,9 @@
 
   async function doe(actie) {
     const data = await api('POST', actie);
-    staat = { bonnen: data.bonnen, teller: data.teller };
+    staat = { bonnen: data.bonnen, teller: data.teller, klanten: data.klanten || {} };
     toon();
-    return data.bon;
+    return data;
   }
 
   function melding(t) {
@@ -185,13 +185,45 @@
     const voornaam = b.klant.naam.split(' ')[0];
     const wat = { Strijk: 'uw strijkwerk is', Was: 'uw was is', Droogkuis: 'uw droogkuis is', Schoenen: 'uw schoenen zijn', Motorkleding: 'uw motorkleding is' }[b.soort] || 'uw bestelling is';
     const teBetalen = !b.betaald && b.totaal ? ` Te betalen: ${eur(b.totaal)}.` : '';
-    return `Dag ${voornaam}, ${wat} klaar bij ${WINKEL.naam} (bon ${b.nr}). U kan het ophalen aan de ${WINKEL.adres}, ${WINKEL.uren}.${teBetalen} Tot binnenkort!`;
+    const portaal = heeftToegang(b) ? ` Al uw bonnen: ${PORTAAL}` : '';
+    return `Dag ${voornaam}, ${wat} klaar bij ${WINKEL.naam} (bon ${b.nr}). U kan het ophalen aan de ${WINKEL.adres}, ${WINKEL.uren}.${teBetalen}${portaal} Tot binnenkort!`;
+  }
+
+  // ---------- Klantenportaal ----------
+  const PORTAAL = location.origin + '/klant/';
+  function heeftToegang(b) {
+    const sleutel = telefoonIntl(b.klant.telefoon);
+    return Boolean(sleutel && staat.klanten && staat.klanten[sleutel]);
+  }
+  function uitnodiging(b, pin) {
+    const voornaam = b.klant.naam.split(' ')[0];
+    return `Dag ${voornaam}, via ${PORTAAL} kan u voortaan al uw bonnen bij ${WINKEL.naam} volgen: wat er klaar is en wat u nog moet ophalen. Meld u aan met uw gsm-nummer en deze code: ${pin}`;
+  }
+  function portaalBlok(b, nieuwePin) {
+    const tel = telefoonIntl(b.klant.telefoon);
+    if (!tel) return '<p class="tijdlijn">Vul een gsm-nummer in (via Wijzigen) om de klant toegang te geven.</p>';
+    if (nieuwePin) {
+      const tekst = encodeURIComponent(uitnodiging(b, nieuwePin));
+      return `<p>Code voor ${esc(b.klant.naam)}: <strong style="font-size:1.4rem;letter-spacing:.15em">${esc(nieuwePin)}</strong></p>
+        <p class="tijdlijn">Stuur ze nu door. De code wordt maar één keer getoond; kwijt is een nieuwe maken.</p>
+        <div class="d-knoppen">
+          <a class="knop wa" href="https://wa.me/${tel}?text=${tekst}" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="knop" href="sms:+${tel}?&body=${tekst}">SMS</a>
+        </div>`;
+    }
+    const k = staat.klanten && staat.klanten[tel];
+    if (k) {
+      return `<p class="tijdlijn">Heeft toegang sinds ${esc(mooiDatum(k.sinds))}${k.laatsteLogin ? ', laatst gekeken ' + esc(mooiDatum(k.laatsteLogin, true)) : ', nog niet aangemeld'}.</p>
+        <div class="d-knoppen"><button class="knop" data-actie="klantcode" data-opnieuw="1">Nieuwe code</button></div>`;
+    }
+    return `<p class="tijdlijn">De klant kan met gsm-nummer en een code al zijn bonnen online volgen.</p>
+      <div class="d-knoppen"><button class="knop goud" data-actie="klantcode">Toegang geven</button></div>`;
   }
 
   // ---------- Detail ----------
   function bonVan(id) { return (staat.bonnen || []).find((b) => b.id === id); }
 
-  function openDetail(id) {
+  function openDetail(id, nieuwePin) {
     const b = bonVan(id);
     if (!b) return;
     $('#d-titel').textContent = `Bon ${b.nr} · ${b.klant.naam}`;
@@ -241,6 +273,10 @@
         <h3>${b.status === 'klaar' ? 'Klant verwittigen' : 'Status'}</h3>
         <div class="d-knoppen">${acties}</div>
       </div>
+      <div class="d-blok">
+        <h3>Klantenportaal</h3>
+        ${portaalBlok(b, nieuwePin)}
+      </div>
       <div class="d-blok tijdlijn">
         Binnen: ${esc(mooiDatum(b.binnenOp, true))}
         ${b.klaarOp ? '<br>Klaar: ' + esc(mooiDatum(b.klaarOp, true)) : ''}
@@ -277,6 +313,10 @@
         const betaal = knop.dataset.betaal;
         await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
         $('#detail').close();
+      } else if (actie === 'klantcode') {
+        if (knop.dataset.opnieuw && !confirm('Een nieuwe code maken? De oude code werkt dan niet meer.')) return;
+        const data = await doe({ op: 'klantcode', telefoon: b.klant.telefoon, naam: b.klant.naam });
+        openDetail(id, data.pin);
       } else if (actie === 'print') {
         drukAf(b);
       } else if (actie === 'wijzig') {
@@ -302,7 +342,8 @@
       ${b.stukken.length ? `<table>${b.stukken.map((s) => `<tr><td>${s.aantal} × ${esc(s.naam)}</td><td style="text-align:right">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}
         <tr><td><strong>Totaal</strong></td><td style="text-align:right"><strong>${eur(b.totaal)}</strong></td></tr></table>` : ''}
       ${b.opmerking ? '<p>' + esc(b.opmerking) + '</p>' : ''}
-      <p>${b.betaald ? 'Betaald' : 'Te betalen bij afhaling'}</p>`;
+      <p>${b.betaald ? 'Betaald' : 'Te betalen bij afhaling'}</p>
+      ${heeftToegang(b) ? '<p>Volg uw bonnen online:<br>' + esc(PORTAAL) + '</p>' : ''}`;
     window.print();
   }
 
@@ -416,7 +457,7 @@
     };
     $('#f-bewaar').disabled = true;
     try {
-      const nieuw = await doe(bewerkId ? { op: 'wijzig', id: bewerkId, bon } : { op: 'nieuw', bon });
+      const { bon: nieuw } = await doe(bewerkId ? { op: 'wijzig', id: bewerkId, bon } : { op: 'nieuw', bon });
       $('#formulier').close();
       if (!bewerkId) {
         tab = 'binnen';

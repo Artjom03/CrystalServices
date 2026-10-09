@@ -4,6 +4,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import handler from './api/bonnen.js';
+import klant from './api/klant.js';
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const poort = Number(process.env.PORT) || 3000;
@@ -11,8 +12,9 @@ const poort = Number(process.env.PORT) || 3000;
 http.createServer(async (req, res) => {
   const pad = new URL(req.url, 'http://x').pathname;
   if (pad === '/api/bonnen') return handler(req, res);
+  if (pad === '/api/klant') return klant(req, res);
   try {
-    const bestand = pad === '/' ? '/index.html' : pad;
+    const bestand = pad.endsWith('/') ? pad + 'index.html' : pad === '/klant' ? '/klant/index.html' : pad;
     const inhoud = await readFile(new URL('./public' + bestand, import.meta.url));
     res.setHeader('Content-Type', TYPES[extname(bestand)] || 'application/octet-stream');
     res.end(inhoud);

@@ -4,7 +4,22 @@
 export const STATUSSEN = ['binnen', 'klaar', 'opgehaald'];
 export const BETAALWIJZEN = ['', 'cash', 'kaart', 'dienstencheques', 'overschrijving'];
 
-export const LEEG = { bonnen: [], teller: {} };
+export const LEEG = { bonnen: [], teller: {}, klanten: {} };
+
+/**
+ * Een gsm-nummer als sleutel: enkel cijfers, met landcode.
+ * "0470 12 34 56", "+32 470123456" en "0032470123456" worden allemaal "32470123456".
+ */
+export function telefoonSleutel(tel) {
+  let d = String(tel || '').replace(/[^\d+]/g, '');
+  if (d.startsWith('+')) d = d.slice(1);
+  else if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('0')) d = '32' + d.slice(1);
+  return /^\d{8,15}$/.test(d) ? d : '';
+}
+
+const BLOKKEER_NA = 5;
+const BLOKKEER_MS = 15 * 60 * 1000;
 
 const MAX = { naam: 80, telefoon: 30, email: 120, opmerking: 500, stukNaam: 80, stukken: 60 };
 
@@ -75,7 +90,7 @@ export class Fout extends Error {
  * elkaars werk niet overschrijven.
  */
 export function pasToe(oud, actie, nu = new Date()) {
-  const staat = { bonnen: [...(oud.bonnen || [])], teller: { ...(oud.teller || {}) } };
+  const staat = { bonnen: [...(oud.bonnen || [])], teller: { ...(oud.teller || {}) }, klanten: { ...(oud.klanten || {}) } };
   const iso = nu.toISOString();
   const zoek = (id) => {
     const i = staat.bonnen.findIndex((b) => b.id === id);
@@ -135,7 +150,69 @@ export function pasToe(oud, actie, nu = new Date()) {
       const [bon] = staat.bonnen.splice(i, 1);
       return { staat, bon };
     }
+    case 'klantcode': {
+      // De server maakt de code en geeft enkel de hash door; de code zelf bewaren we nooit.
+      const sleutel = telefoonSleutel(actie.telefoon);
+      if (!sleutel) throw new Fout('Vul eerst een geldig gsm-nummer in');
+      if (!actie.hash || !actie.zout) throw new Fout('Code ontbreekt');
+      const vorig = staat.klanten[sleutel];
+      staat.klanten[sleutel] = {
+        naam: tekst(actie.naam, MAX.naam) || vorig?.naam || '',
+        hash: actie.hash,
+        zout: actie.zout,
+        v: (vorig?.v || 0) + 1, // oude aanmeldingen vervallen bij een nieuwe code
+        sinds: vorig?.sinds || iso,
+        laatsteLogin: vorig?.laatsteLogin || '',
+        fouten: 0,
+        geblokkeerdTot: '',
+      };
+      return { staat, sleutel };
+    }
+    case 'loginFout': {
+      const k = staat.klanten[actie.sleutel];
+      if (!k) throw new Fout('Onbekende klant', 404);
+      const fouten = (k.fouten || 0) + 1;
+      staat.klanten[actie.sleutel] = fouten >= BLOKKEER_NA
+        ? { ...k, fouten: 0, geblokkeerdTot: new Date(nu.getTime() + BLOKKEER_MS).toISOString() }
+        : { ...k, fouten };
+      return { staat };
+    }
+    case 'loginOk': {
+      const k = staat.klanten[actie.sleutel];
+      if (!k) throw new Fout('Onbekende klant', 404);
+      staat.klanten[actie.sleutel] = { ...k, fouten: 0, geblokkeerdTot: '', laatsteLogin: iso };
+      return { staat };
+    }
     default:
       throw new Fout('Onbekende handeling');
   }
+}
+
+/** Wat de winkel te zien krijgt: alles, behalve de geheime delen van de klantcodes. */
+export function voorWinkel(staat) {
+  const klanten = {};
+  for (const [sleutel, k] of Object.entries(staat.klanten || {})) {
+    klanten[sleutel] = { naam: k.naam, sinds: k.sinds, laatsteLogin: k.laatsteLogin };
+  }
+  return { bonnen: staat.bonnen || [], teller: staat.teller || {}, klanten };
+}
+
+/** Wat een klant te zien krijgt: enkel de eigen bonnen, zonder interne opmerkingen. */
+export function voorKlant(staat, sleutel) {
+  const bonnen = (staat.bonnen || [])
+    .filter((b) => telefoonSleutel(b.klant?.telefoon) === sleutel)
+    .map((b) => ({
+      nr: b.nr,
+      soort: b.soort,
+      stukken: b.stukken,
+      totaal: b.totaal,
+      status: b.status,
+      binnenOp: b.binnenOp,
+      klaarTegen: b.klaarTegen,
+      klaarOp: b.klaarOp,
+      opgehaaldOp: b.opgehaaldOp,
+      betaald: b.betaald,
+    }))
+    .sort((a, b) => b.binnenOp.localeCompare(a.binnenOp));
+  return { naam: staat.klanten?.[sleutel]?.naam || '', bonnen };
 }

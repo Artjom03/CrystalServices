@@ -7,11 +7,12 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 - **Opgehaald:** meteen noteren hoe er betaald is (cash, kaart, dienstencheques).
 - **Zoeken** op naam, telefoon of bonnummer; **bon afdrukken** om aan de mand te hangen.
 - Te installeren op gsm, tablet of computer ("Toevoegen aan beginscherm"), achter een pincode.
+- **Klantenportaal** (`/klant/`): klanten melden zich aan met hun gsm-nummer en een code van 6 cijfers en zien al hun eigen bonnen (klaar, in behandeling, eerder). In de winkel-app tik je bij een bon op "Toegang geven"; de code verschijnt één keer en gaat via WhatsApp of sms naar de klant. Bewaard wordt enkel een hash van de code. Na 5 foute codes is het gsm-nummer 15 minuten geblokkeerd, en een nieuwe code meldt oude sessies af.
 
 ## Hoe het werkt
 
 - `public/` is de app (gewone HTML, CSS en JavaScript, geen build nodig).
-- `api/bonnen.js` is de enige server-functie: controleert de pincode en bewaart de bonnen.
+- `api/bonnen.js` is de server-functie voor de winkel (achter de winkelpincode), `api/klant.js` die voor het klantenportaal.
 - De bonnen staan in één **privé**-bestand in Vercel Blob. Wijzigingen worden veilig samengevoegd als twee toestellen tegelijk bewaren.
 - `public/prijzen.js` komt uit de prijslijst van de website (`src/app/api/chat/kennis.ts` in Artjom03/CrystalServices). Verandert een prijs, pas hem dan op beide plaatsen aan.
 
