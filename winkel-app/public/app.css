@@ -215,7 +215,7 @@ a{color:var(--navy);}
   .pr-nr{border-top:.4mm solid #000;border-bottom:.4mm solid #000;padding:2mm 0;text-align:center;font-size:26pt;font-weight:800;letter-spacing:.04em;line-height:1.1;}
   .pr-nr span{display:block;font-size:8pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;}
   .pr-info{width:100%;border-collapse:collapse;margin:3mm 0 2mm;}
-  .pr-info th{text-align:left;font-weight:400;font-size:8pt;width:15mm;vertical-align:top;padding:.6mm 0;}
+  .pr-info th{text-align:left;font-weight:400;font-size:8pt;width:18mm;vertical-align:top;padding:.6mm 2mm .6mm 0;white-space:nowrap;}
   .pr-info td{padding:.6mm 0;}
   .pr-klaar{border:.4mm solid #000;border-radius:1.5mm;padding:1.5mm 2.5mm;display:flex;justify-content:space-between;align-items:baseline;gap:2mm;font-size:8.5pt;}
   .pr-klaar b{font-size:11pt;}
