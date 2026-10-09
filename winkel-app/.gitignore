@@ -1,3 +1,6 @@
 node_modules/
 .data/
 .vercel/
+desktop/node_modules/
+desktop/app/
+desktop/dist/

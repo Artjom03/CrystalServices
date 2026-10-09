@@ -7,6 +7,10 @@
     uren: 'ma–vr van 8 tot 11 en van 13 tot 17 uur',
   };
 
+  // In het Windows-programma (Electron) staat alles op de pc: geen klantenportaal, en afdrukken
+  // gaat rechtstreeks naar de gekozen printer.
+  const DESKTOP = Boolean(window.crystal && window.crystal.desktop);
+
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -41,7 +45,7 @@
       cache: 'no-store',
     });
     const data = await res.json().catch(() => ({}));
-    if (res.status === 401) { vergrendel('Verkeerde pincode'); throw new Error('pin'); }
+    if (res.status === 401) { vergrendel(data.error || 'Verkeerde pincode'); throw new Error('pin'); }
     if (!res.ok) throw new Error(data.error || 'Er ging iets mis');
     return data;
   }
@@ -71,6 +75,13 @@
 
   // ---------- Pincode ----------
   function vergrendel(fout) {
+    if (DESKTOP) {
+      window.crystal.eersteKeer().then((eerste) => {
+        if (!eerste) return;
+        $('#slot p').textContent = 'Welkom! Kies een pincode van 4 tot 8 cijfers. Die vraagt het programma voortaan bij het openen.';
+        $('#slot-form button').textContent = 'Pincode instellen';
+      });
+    }
     pin = '';
     try { localStorage.removeItem('winkel-pin'); } catch (e) {}
     $('#app').hidden = true;
@@ -207,6 +218,7 @@
   // ---------- Klantenportaal ----------
   const PORTAAL = location.origin + '/klant/';
   function heeftToegang(b) {
+    if (DESKTOP) return false;
     const sleutel = telefoonIntl(b.klant.telefoon);
     return Boolean(sleutel && staat.klanten && staat.klanten[sleutel]);
   }
@@ -290,10 +302,10 @@
         <h3>${b.status === 'klaar' ? 'Klant verwittigen' : 'Status'}</h3>
         <div class="d-knoppen">${acties}</div>
       </div>
-      <div class="d-blok">
+      ${DESKTOP ? '' : `<div class="d-blok">
         <h3>Klantenportaal</h3>
         ${portaalBlok(b, nieuwePin)}
-      </div>
+      </div>`}
       <div class="d-blok tijdlijn">
         Binnen: ${esc(mooiDatum(b.binnenOp, true))}
         ${b.klaarOp ? '<br>Klaar: ' + esc(mooiDatum(b.klaarOp, true)) : ''}
@@ -440,10 +452,19 @@
     // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
     const logo = $('#afdruk img');
     if (logo && !logo.complete) {
-      logo.onload = logo.onerror = () => window.print();
+      logo.onload = logo.onerror = afdrukken;
     } else {
-      window.print();
+      afdrukken();
     }
+  }
+
+  function afdrukken() {
+    if (!DESKTOP) return window.print();
+    window.crystal.afdrukken().then((r) => {
+      if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
+        alert('Afdrukken lukte niet' + (r.fout ? ' (' + r.fout + ')' : '') + '. Kies de printer via Bestand → Printer kiezen.');
+      }
+    });
   }
 
   // ---------- Formulier ----------
@@ -627,5 +648,5 @@
   setInterval(() => { if (pin && document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) laad(true); }, 30000);
   document.addEventListener('visibilitychange', () => { if (pin && document.visibilityState === 'visible') laad(true); });
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (!DESKTOP && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 })();

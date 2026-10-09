@@ -45,3 +45,23 @@ npm install
 APP_PIN=1234 npm run dev   # http://localhost:3000, bonnen in .data/
 npm test
 ```
+
+## Windows-programma (volledig offline)
+
+In `desktop/` staat dezelfde app als Windows-programma. Alles staat op de pc zelf, zonder internet:
+
+- **Gegevens:** de bonnen staan in `%APPDATA%\Crystal Winkel\bonnen.json`, met elke dag een automatische back-up in `back-ups\` (de laatste 60 dagen). Via **Bestand → Back-up opslaan** maak je zelf een kopie, bv. op een USB-stick.
+- **Afdrukken:** gaat rechtstreeks naar de printer die je kiest via **Bestand → Printer kiezen**, zonder afdrukvenster.
+- **Pincode:** de eerste keer kies je een pincode van 4 tot 8 cijfers.
+- **Wat er niet in zit:** geen klantenportaal (dat heeft internet nodig). WhatsApp- en e-maillinks openen in de programma's van Windows.
+
+Het installatiebestand bouwen (op Linux is daarvoor Wine nodig, ook de 32-bitversie):
+
+```bash
+cd desktop
+npm install
+npm run dist     # maakt dist/Crystal-Winkel-Setup-<versie>.exe
+npm start        # het programma meteen openen om te testen
+```
+
+`npm run dist` neemt eerst `public/` en `lib/bonnen.js` over, zodat web en Windows dezelfde app gebruiken. Verhoog `version` in `desktop/package.json` bij elke nieuwe versie.
