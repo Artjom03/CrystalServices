@@ -6,7 +6,12 @@ export const BETAALWIJZEN = ['', 'cash', 'kaart', 'dienstencheques', 'overschrij
 export const SOORTEN = ['Strijk', 'Was', 'Droogkuis', 'Schoenen', 'Motorkleding', 'Ander'];
 export const BEHANDELINGEN = ['strijk', 'was', 'droogkuis', 'ander'];
 
-export const LEEG = { bonnen: [], teller: {}, klanten: {} };
+// Hoe lang opgehaalde bonnen bewaard blijven, in maanden; de winkel kiest zelf tussen 1 en 24.
+export const BEWAAR_MIN = 1;
+export const BEWAAR_MAX = 24;
+export const STANDAARD_INSTELLINGEN = { bewaarMaanden: 12 };
+
+export const LEEG = { bonnen: [], teller: {}, klanten: {}, instellingen: STANDAARD_INSTELLINGEN };
 
 /**
  * Een gsm-nummer als sleutel: enkel cijfers, met landcode.
@@ -23,7 +28,7 @@ export function telefoonSleutel(tel) {
 const BLOKKEER_NA = 5;
 const BLOKKEER_MS = 15 * 60 * 1000;
 
-const MAX = { naam: 80, telefoon: 30, email: 120, opmerking: 500, stukNaam: 80, stukken: 60 };
+const MAX = { naam: 80, telefoon: 30, email: 120, opmerking: 500, stukNaam: 80, stukken: 60, locatie: 40 };
 
 function tekst(v, max) {
   return String(v ?? '').trim().slice(0, max);
@@ -101,10 +106,51 @@ function velden(invoer) {
     totaal: totaal(stukken),
     prijsOpen: prijsOpen(stukken),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
+    locatie: tekst(invoer.locatie, MAX.locatie),
     klaarTegen: datum(invoer.klaarTegen),
     betaald: Boolean(invoer.betaald),
     betaalwijze: BETAALWIJZEN.includes(invoer.betaalwijze) ? invoer.betaalwijze : '',
   };
+}
+
+/**
+ * De eigen prijslijst van de winkel, in dezelfde vorm als prijzen.js:
+ * groepen met stukken (prijs per behandeling) en de namen van de droogkuisstukken.
+ */
+export function schoonPrijslijst(p) {
+  if (!p || typeof p !== 'object') return null;
+  const groepen = (Array.isArray(p.groepen) ? p.groepen : []).slice(0, 30).map((g) => ({
+    titel: tekst(g?.titel, 60) || 'Overige',
+    wassenLabel: tekst(g?.wassenLabel, 30),
+    stukken: (Array.isArray(g?.stukken) ? g.stukken : []).slice(0, 200).flatMap((s) => {
+      const naam = tekst(s?.naam, MAX.stukNaam);
+      if (!naam) return [];
+      const stuk = { naam };
+      for (const k of ['strijken', 'wassen', 'prijs']) {
+        const v = prijsOfLeeg(s?.[k]);
+        if (v !== null) stuk[k] = v;
+      }
+      return [stuk];
+    }),
+  }));
+  const droogkuis = [...new Set((Array.isArray(p.droogkuis) ? p.droogkuis : []).map((n) => tekst(n, MAX.stukNaam)).filter(Boolean))].slice(0, 100);
+  return { groepen, droogkuis };
+}
+
+export function instellingenVan(staat) {
+  const m = Math.round(Number(staat?.instellingen?.bewaarMaanden));
+  return { bewaarMaanden: m >= BEWAAR_MIN && m <= BEWAAR_MAX ? m : STANDAARD_INSTELLINGEN.bewaarMaanden };
+}
+
+/**
+ * De bonnen die blijven: opgehaalde bonnen verdwijnen na de gekozen bewaartermijn,
+ * gerekend vanaf het ophalen. Wat nog niet opgehaald is, blijft altijd staan.
+ */
+export function teBewaren(staat, nu = new Date()) {
+  const grens = new Date(nu);
+  grens.setMonth(grens.getMonth() - instellingenVan(staat).bewaarMaanden);
+  const iso = grens.toISOString();
+  return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso));
 }
 
 /** Bonnummers per jaar: 26-001, 26-002, ... */
@@ -128,7 +174,20 @@ export class Fout extends Error {
  * elkaars werk niet overschrijven.
  */
 export function pasToe(oud, actie, nu = new Date()) {
-  const staat = { bonnen: [...(oud.bonnen || [])], teller: { ...(oud.teller || {}) }, klanten: { ...(oud.klanten || {}) } };
+  const resultaat = handeling(oud, actie, nu);
+  // Bij elke wijziging meteen opruimen wat over de bewaartermijn is.
+  resultaat.staat.bonnen = teBewaren(resultaat.staat, nu);
+  return resultaat;
+}
+
+function handeling(oud, actie, nu) {
+  const staat = {
+    bonnen: [...(oud.bonnen || [])],
+    teller: { ...(oud.teller || {}) },
+    klanten: { ...(oud.klanten || {}) },
+    instellingen: instellingenVan(oud),
+    prijslijst: oud.prijslijst || null,
+  };
   const iso = nu.toISOString();
   const zoek = (id) => {
     const i = staat.bonnen.findIndex((b) => b.id === id);
@@ -177,6 +236,24 @@ export function pasToe(oud, actie, nu = new Date()) {
       }
       staat.bonnen[i] = b;
       return { staat, bon: b };
+    }
+    case 'locatie': {
+      // Waar de kleren liggen of hangen (rek, plank, mand), los van de rest van de bon.
+      const i = zoek(actie.id);
+      staat.bonnen[i] = { ...staat.bonnen[i], locatie: tekst(actie.locatie, MAX.locatie), gewijzigdOp: iso };
+      return { staat, bon: staat.bonnen[i] };
+    }
+    case 'instellingen': {
+      const m = Math.round(Number(actie.bewaarMaanden));
+      if (!(m >= BEWAAR_MIN && m <= BEWAAR_MAX)) throw new Fout(`Kies een bewaartermijn van ${BEWAAR_MIN} tot ${BEWAAR_MAX} maanden`);
+      staat.instellingen = { ...staat.instellingen, bewaarMaanden: m };
+      return { staat };
+    }
+    case 'prijslijst': {
+      // null zet de standaardprijzen terug.
+      staat.prijslijst = actie.prijslijst === null ? null : schoonPrijslijst(actie.prijslijst);
+      if (actie.prijslijst !== null && !staat.prijslijst) throw new Fout('Ongeldige prijslijst');
+      return { staat };
     }
     case 'verwittigd': {
       const i = zoek(actie.id);
@@ -227,17 +304,23 @@ export function pasToe(oud, actie, nu = new Date()) {
 }
 
 /** Wat de winkel te zien krijgt: alles, behalve de geheime delen van de klantcodes. */
-export function voorWinkel(staat) {
+export function voorWinkel(staat, nu = new Date()) {
   const klanten = {};
   for (const [sleutel, k] of Object.entries(staat.klanten || {})) {
     klanten[sleutel] = { naam: k.naam, sinds: k.sinds, laatsteLogin: k.laatsteLogin };
   }
-  return { bonnen: staat.bonnen || [], teller: staat.teller || {}, klanten };
+  return {
+    bonnen: teBewaren(staat, nu),
+    teller: staat.teller || {},
+    klanten,
+    instellingen: instellingenVan(staat),
+    prijslijst: staat.prijslijst || null,
+  };
 }
 
-/** Wat een klant te zien krijgt: enkel de eigen bonnen, zonder interne opmerkingen. */
-export function voorKlant(staat, sleutel) {
-  const bonnen = (staat.bonnen || [])
+/** Wat een klant te zien krijgt: enkel de eigen bonnen, zonder interne opmerkingen of locatie. */
+export function voorKlant(staat, sleutel, nu = new Date()) {
+  const bonnen = teBewaren(staat, nu)
     .filter((b) => telefoonSleutel(b.klant?.telefoon) === sleutel)
     .map((b) => ({
       nr: b.nr,

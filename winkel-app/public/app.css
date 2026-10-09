@@ -36,6 +36,9 @@ button,input,select,textarea{font:inherit;color:inherit;}
 .merk{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:.01em;}
 .merk span{color:var(--gold);}
 .balk .knop.hoofd{background:var(--gold);border-color:var(--gold);}
+.balk-knoppen{display:flex;gap:8px;align-items:center;}
+.knop.icoon{width:44px;padding:0;background:transparent;color:#fff;border-color:rgba(255,255,255,.35);font-size:1.25rem;}
+.knop.icoon:hover{border-color:#fff;}
 #zoek{width:100%;border:0;border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.12);color:#fff;}
 #zoek::placeholder{color:rgba(255,255,255,.65);}
 .tabs{max-width:860px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;}
@@ -52,6 +55,12 @@ main{max-width:860px;margin:0 auto;padding:14px 16px 40px;}
 .bon .nr{grid-row:span 2;font-weight:800;font-size:1.05rem;color:var(--navy);background:var(--bg);border-radius:10px;padding:8px 10px;text-align:center;min-width:70px;}
 .bon .naam{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .bon .info{color:var(--ink-soft);font-size:.9rem;}
+.bon .tel{font-weight:400;color:var(--ink-soft);font-size:.88rem;margin-left:6px;}
+.bon .loc{color:var(--navy);}
+.zoek-kop{color:var(--ink-soft);font-size:.9rem;padding:0 4px;}
+.zoek-kop.klant-kaart{background:var(--geel-zacht);border:1px solid #EBD9B4;border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--ink);font-size:1rem;}
+.voetnoot{text-align:center;color:var(--ink-soft);font-size:.85rem;margin:18px 0 0;}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50;background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;box-shadow:var(--schaduw);font-weight:600;max-width:calc(100% - 32px);}
 .bon .rechts{grid-row:span 2;text-align:right;font-size:.88rem;display:grid;gap:4px;justify-items:end;}
 .label{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;background:var(--bg);color:var(--ink-soft);}
 .label.laat{background:var(--rood-zacht);color:var(--rood);}
@@ -106,14 +115,54 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-of
 .volgt{color:var(--gold-deep);font-style:italic;}
 /* Stukken in het formulier: per stuk twee regels, zodat de naam ook op een gsm leesbaar blijft. */
 #f-tabel,#f-tabel tbody,#f-tabel tfoot{display:block;}
-#f-regels tr{display:grid;grid-template-columns:64px 1fr 1fr 36px;grid-template-areas:"aantal naam naam weg" "beh beh prijs weg";gap:6px;padding:8px 0;border-bottom:1px solid var(--lijn);align-items:center;}
+#f-regels tr{display:grid;grid-template-columns:auto 1fr 1fr 40px;grid-template-areas:"naam naam naam weg" "aantal beh prijs weg";gap:6px;padding:8px 0;border-bottom:1px solid var(--lijn);align-items:center;}
+#f-regels tr.net{animation:net 1.2s ease-out;}
+@keyframes net{from{background:var(--geel-zacht);}to{background:transparent;}}
 #f-regels td{border:0;padding:0;}
 #f-regels td:nth-child(1){grid-area:aantal;}
 #f-regels td:nth-child(2){grid-area:naam;}
 #f-regels td:nth-child(3){grid-area:beh;}
 #f-regels td:nth-child(4){grid-area:prijs;}
 #f-regels td:nth-child(5){grid-area:weg;}
-#f-regels .aantal,#f-regels select,#f-regels .prijs{width:100%;max-width:none;}
+#f-regels select,#f-regels .prijs{width:100%;max-width:none;}
+.teller{display:flex;align-items:center;gap:4px;}
+.teller button{width:38px;height:38px;flex:0 0 38px;border-radius:999px;border:1px solid var(--lijn);background:#fff;font-size:1.2rem;line-height:1;cursor:pointer;}
+.teller button:active{background:var(--bg);}
+#f-regels .teller .aantal{width:52px;text-align:center;padding:6px 2px;-moz-appearance:textfield;}
+.teller .aantal::-webkit-inner-spin-button,.teller .aantal::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.prijs-veld{display:flex;align-items:center;gap:4px;color:var(--ink-soft);}
+.weg{min-width:40px;min-height:40px;}
+
+/* Stukken toevoegen: tegels om op te tikken */
+.sug-titel{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:10px 0 6px;}
+.tegels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+.tegel{border:1px solid var(--lijn);background:#fff;border-radius:12px;padding:8px 12px;text-align:left;cursor:pointer;min-height:54px;display:grid;gap:2px;align-content:center;font-weight:600;}
+.tegel small{font-weight:400;color:var(--ink-soft);font-size:.8rem;}
+.tegel:hover{border-color:var(--navy);}
+.tegel:active{background:var(--bg);}
+.tegels.nieuw .tegel{border-style:dashed;}
+#f-suggesties{margin-bottom:10px;}
+
+/* Gekende klanten in het formulier */
+.klant-sug{margin-top:10px;display:grid;gap:6px;}
+.klant-knop{border:1px solid var(--lijn);background:var(--geel-zacht);border-radius:12px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;min-height:48px;}
+.klant-knop span{color:var(--ink-soft);font-size:.9rem;}
+
+/* Prijslijst aanpassen */
+dialog.paneel.breed{width:min(820px,calc(100% - 24px));}
+#p-zoek{margin:8px 0 4px;}
+.p-groep{margin-top:16px;}
+.p-groep h3{margin:0 0 6px;font-size:1rem;color:var(--navy);}
+.p-groep h3 small{font-weight:400;color:var(--ink-soft);font-size:.82rem;}
+.p-rij{display:grid;gap:6px;align-items:center;margin-bottom:6px;}
+.p-rij.k2{grid-template-columns:1fr 92px 92px 40px;}
+.p-rij.k1{grid-template-columns:1fr 92px 40px;}
+.p-rij.k0{grid-template-columns:1fr 40px;}
+.p-rij .prijs{text-align:right;}
+.p-kop{margin-bottom:2px;}
+.p-kop span{font-size:.75rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+.p-kop span:not(:first-child){text-align:right;}
+.knop.klein{min-height:36px;padding:6px 14px;font-size:.9rem;}
 #f-tabel tfoot tr{display:flex;justify-content:space-between;padding-top:10px;font-weight:800;}
 #f-tabel tfoot td{border:0;padding:0;}
 @media (max-width:600px){ .paneel-voet{flex-wrap:wrap;} }
@@ -124,16 +173,39 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-of
 .d-blok p{margin:2px 0;}
 .d-knoppen{display:flex;flex-wrap:wrap;gap:8px;}
 .tijdlijn{color:var(--ink-soft);font-size:.88rem;}
+.d-melding{background:var(--geel-zacht);border:1px solid #EBD9B4;border-radius:12px;padding:10px 14px;margin:0 0 14px;font-weight:600;}
+#d-ophalen.licht{background:var(--groen-zacht);border-radius:14px;padding:12px;margin-left:-12px;margin-right:-12px;}
+.paneel form.d-locatie{display:flex;flex-direction:row;gap:8px;max-height:none;}
+#instellingen .vink + p, #instellingen .vink + p + .d-knoppen, #instellingen .vink ~ .d-knoppen{margin-top:10px;}
+.d-locatie input{flex:1;}
+
+/* Touchscherm: alles wat groter om op te tikken */
+@media (any-pointer:coarse){
+  .knop{min-height:50px;padding:12px 20px;}
+  .knop.klein{min-height:44px;}
+  .tabs button{padding:15px 8px;}
+  .keuzes button{min-height:48px;padding:10px 16px;}
+  .keuzes.klein button{min-height:44px;}
+  input:not([type=checkbox]),select,textarea{padding:12px 14px;}
+  .vink input{width:26px;height:26px;}
+  .teller button{width:46px;height:46px;flex-basis:46px;}
+  .tegel{min-height:62px;}
+  .sluit{width:48px;height:48px;}
+  .bon{padding:16px 18px;}
+}
 a{color:var(--navy);}
 
-/* Afdruk: een bon van 72 mm breed (past op een bonnenprinter van 80 mm en op A4),
+/* Afdruk: een bon van maximaal 72 mm breed (de printbreedte van een bonnenprinter van 80 mm; op A4 in het midden),
    met onderaan een label om af te knippen en aan de mand te hangen. Enkel zwart-wit. */
 #afdruk{display:none;}
 @media print{
   @page{margin:5mm;}
   html,body{background:#fff!important;}
   body > *:not(#afdruk){display:none!important;}
-  #afdruk{display:block;width:72mm;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  #afdruk{display:block;width:100%;max-width:72mm;margin:0 auto;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .pr-streepjes{display:block;height:12mm;max-width:100%;margin:2mm auto 0;}
+  .pr-label .pr-streepjes{height:10mm;}
+  .pr-label-loc{font-size:10pt;font-weight:700;margin-top:1mm;}
   #afdruk b{font-weight:700;}
   .pr-klein{font-size:8pt;color:#000;}
   .pr-kop{display:flex;align-items:center;gap:3mm;}

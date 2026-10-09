@@ -32,10 +32,13 @@
   <header class="balk">
     <div class="balk-binnen">
       <h1 class="merk">Crystal <span>Winkel</span></h1>
-      <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
+      <div class="balk-knoppen">
+        <button id="instellingen-knop" class="knop icoon" aria-label="Instellingen" title="Instellingen">⚙</button>
+        <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
+      </div>
     </div>
     <div class="balk-binnen">
-      <input id="zoek" type="search" placeholder="Zoek op naam, telefoon of bonnummer" aria-label="Zoeken">
+      <input id="zoek" type="search" placeholder="Zoek op naam, telefoon, bonnummer of locatie" aria-label="Zoeken" enterkeyhint="search">
     </div>
     <nav class="tabs" role="tablist">
       <button role="tab" data-tab="binnen" aria-selected="true">In behandeling <b id="n-binnen">0</b></button>
@@ -48,6 +51,7 @@
     <p id="melding" class="melding" role="status" hidden></p>
     <ul id="lijst" class="lijst"></ul>
     <p id="leeg" class="leeg" hidden></p>
+    <p id="voetnoot" class="voetnoot" hidden></p>
   </main>
 </div>
 
@@ -75,6 +79,7 @@
           <label>Telefoon<input name="telefoon" type="tel" inputmode="tel" autocomplete="off" placeholder="0470 12 34 56"></label>
           <label>E-mail<input name="email" type="email" autocomplete="off"></label>
         </div>
+        <div id="f-klanten" class="klant-sug" hidden></div>
       </fieldset>
 
       <fieldset>
@@ -90,15 +95,11 @@
       </fieldset>
 
       <fieldset>
-        <legend>Stukken <small>(droogkuis altijd invullen, zonder prijs; strijk en was mag ook later)</small></legend>
+        <legend>Stukken <small>(droogkuis altijd invullen; strijk en was mag ook later)</small></legend>
         <div class="stuk-toevoegen">
-          <input id="f-stuk" list="f-stukken" placeholder="Typ een stuk: hemd, mantel, laken…" aria-label="Stuk zoeken">
-          <datalist id="f-stukken"></datalist>
+          <input id="f-stuk" placeholder="Zoek of typ een stuk: hemd, mantel, laken…" aria-label="Stuk zoeken" autocomplete="off" enterkeyhint="done">
         </div>
-        <div class="d-knoppen" style="margin-bottom:8px">
-          <button type="button" class="knop" id="f-droogkuis">+ Droogkuis-stuk</button>
-          <button type="button" class="knop" id="f-ander">+ Ander stuk</button>
-        </div>
+        <div id="f-suggesties"></div>
         <table class="stukken" id="f-tabel">
           <tbody id="f-regels"></tbody>
           <tfoot><tr><td>Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td></tr></tfoot>
@@ -115,6 +116,11 @@
             <button type="button" data-dagen="7">+1 week</button>
           </div>
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Locatie in de winkel <small>(waar liggen of hangen de kleren?)</small></legend>
+        <input name="locatie" list="locaties" maxlength="40" autocomplete="off" placeholder="Bijvoorbeeld: rek 3, plank B, mand 12" aria-label="Locatie">
       </fieldset>
 
       <fieldset>
@@ -140,6 +146,67 @@
     </div>
   </form>
 </dialog>
+
+<!-- Instellingen -->
+<dialog id="instellingen" class="paneel">
+  <div class="paneel-kop">
+    <h2>Instellingen</h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div class="paneel-inhoud">
+    <fieldset>
+      <legend>Bonnen bewaren</legend>
+      <label>Opgehaalde bonnen bewaren gedurende
+        <select id="i-bewaar"></select>
+      </label>
+      <p class="tijdlijn">Gerekend vanaf het ophalen; daarna worden ze automatisch gewist. Bonnen die nog niet opgehaald zijn, blijven altijd staan.</p>
+      <p id="i-bewaar-info" class="tijdlijn"></p>
+    </fieldset>
+    <fieldset>
+      <legend>Afdrukken</legend>
+      <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de afgiftebon bij een nieuwe bon, de afhaalbon bij het ophalen</label>
+      <p id="i-printer" class="tijdlijn" hidden></p>
+      <div class="d-knoppen">
+        <button type="button" class="knop" id="i-kies-printer" hidden>Printer kiezen</button>
+        <button type="button" class="knop" id="i-testbon">Testbon afdrukken</button>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Prijslijst</legend>
+      <p class="tijdlijn">De prijzen van de gekende stukken, en welke droogkuisstukken in de lijst staan. Op een bon kan je een prijs altijd nog aanpassen.</p>
+      <div class="d-knoppen"><button type="button" class="knop" id="i-prijzen">Prijzen aanpassen</button></div>
+    </fieldset>
+    <fieldset>
+      <legend>Streepjescode</legend>
+      <p class="tijdlijn">Op elke afgiftebon en elk mandlabel staat een streepjescode. Scan die met een USB-scanner en de bon gaat meteen open, klaar om af te rekenen; daarna komt de afhaalbon uit de printer. Zonder scanner: typ het bonnummer in het zoekveld en druk op Enter. Scan de testbon om de scanner te proberen.</p>
+    </fieldset>
+    <p id="i-fout" class="fout" role="alert"></p>
+  </div>
+</dialog>
+
+<!-- Prijslijst aanpassen -->
+<dialog id="prijslijst" class="paneel breed">
+  <form id="p" method="dialog" novalidate>
+    <div class="paneel-kop">
+      <h2>Prijslijst</h2>
+      <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
+    </div>
+    <div class="paneel-inhoud">
+      <p class="tijdlijn">Pas een prijs aan, voeg een stuk toe of haal er een weg. Een leeg prijsvak betekent: niet aangeboden. Nieuwe prijzen gelden voor nieuwe bonnen; bestaande bonnen houden hun prijs.</p>
+      <input id="p-zoek" type="search" placeholder="Zoek een stuk in de lijst" aria-label="Zoek in de prijslijst" autocomplete="off">
+      <div id="p-groepen"></div>
+      <p id="p-fout" class="fout" role="alert"></p>
+    </div>
+    <div class="paneel-voet">
+      <button type="button" class="knop gevaar" id="p-standaard" style="margin-right:auto">Standaardprijzen</button>
+      <button type="button" class="knop" data-sluit>Annuleren</button>
+      <button type="submit" class="knop hoofd" id="p-bewaar">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="locaties"></datalist>
+<div id="toast" role="status" hidden></div>
 
 <!-- Afdruk: wordt enkel bij printen getoond -->
 <div id="afdruk" aria-hidden="true"></div>
