@@ -52,3 +52,48 @@ test('rare invoer wordt begrensd', () => {
   assert.equal(bon.betaalwijze, '');
   assert.throws(() => pasToe(LEEG, { op: 'status', id: 'nope', status: 'klaar' }, nu), /niet gevonden/);
 });
+
+import { telefoonSleutel, voorWinkel, voorKlant } from '../lib/bonnen.js';
+import { maakPin, hashPin, pinKlopt, maakToken, leesToken } from '../lib/klant.js';
+
+test('gsm-nummers in elke schrijfwijze geven dezelfde sleutel', () => {
+  for (const t of ['0470 12 34 56', '+32 470 12 34 56', '0032470123456', '0470/12.34.56']) {
+    assert.equal(telefoonSleutel(t), '32470123456');
+  }
+  assert.equal(telefoonSleutel('12'), '');
+});
+
+test('klantcode: enkel de hash wordt bewaard en de winkel ziet die niet', () => {
+  const pin = maakPin();
+  assert.match(pin, /^\d{6}$/);
+  let { staat } = nieuw(LEEG, { klant: { naam: 'Lauren', telefoon: '0497 31 96 09' } });
+  ({ staat } = nieuw(staat, { klant: { naam: 'Ander', telefoon: '0470 00 00 00' } }));
+  ({ staat } = pasToe(staat, { op: 'klantcode', telefoon: '+32497319609', naam: 'Lauren', ...hashPin(pin) }, nu));
+  const k = staat.klanten['32497319609'];
+  assert.ok(pinKlopt(pin, k));
+  assert.ok(!pinKlopt('000000' === pin ? '111111' : '000000', k));
+  assert.ok(!JSON.stringify(staat).includes(`"${pin}"`));
+  assert.deepEqual(Object.keys(voorWinkel(staat).klanten['32497319609']).sort(), ['laatsteLogin', 'naam', 'sinds']);
+  // De klant ziet enkel de eigen bon.
+  const zicht = voorKlant(staat, '32497319609');
+  assert.equal(zicht.bonnen.length, 1);
+  assert.equal(zicht.bonnen[0].nr, '26-001');
+  assert.equal('opmerking' in zicht.bonnen[0], false);
+});
+
+test('na 5 foute codes 15 minuten geblokkeerd, nieuwe code verhoogt de versie', () => {
+  let { staat } = pasToe(LEEG, { op: 'klantcode', telefoon: '0470123456', ...hashPin('123456') }, nu);
+  for (let i = 0; i < 5; i++) ({ staat } = pasToe(staat, { op: 'loginFout', sleutel: '32470123456' }, nu));
+  assert.ok(staat.klanten['32470123456'].geblokkeerdTot > nu.toISOString());
+  ({ staat } = pasToe(staat, { op: 'klantcode', telefoon: '0470123456', ...hashPin('654321') }, nu));
+  assert.equal(staat.klanten['32470123456'].v, 2);
+  assert.equal(staat.klanten['32470123456'].geblokkeerdTot, '');
+});
+
+test('toegangsbewijs: echt, vervalst en verlopen', () => {
+  process.env.KLANT_GEHEIM = 'test';
+  const t = maakToken('32470123456', 1, 1000);
+  assert.deepEqual({ ...leesToken(t, 2000), exp: 0 }, { t: '32470123456', v: 1, exp: 0 });
+  assert.equal(leesToken(t.slice(0, -2) + 'xx', 2000), null);
+  assert.equal(leesToken(t, 1000 + 181 * 24 * 3600 * 1000), null);
+});

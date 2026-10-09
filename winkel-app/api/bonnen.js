@@ -1,6 +1,10 @@
 import { timingSafeEqual } from 'node:crypto';
-import { pasToe, Fout } from '../lib/bonnen.js';
+import { pasToe, voorWinkel, Fout } from '../lib/bonnen.js';
 import { lees, wijzig } from '../lib/opslag.js';
+import { maakPin, hashPin } from '../lib/klant.js';
+
+// Wat de winkel mag doen. Aanmeldingen van klanten lopen via api/klant.js.
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'verwittigd', 'verwijder', 'klantcode'];
 
 // Alles achter de pincode: de bonnen bevatten namen en telefoonnummers.
 const pogingen = new Map();
@@ -56,12 +60,20 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      return json(res, 200, await lees());
+      return json(res, 200, voorWinkel(await lees()));
     }
     if (req.method === 'POST') {
-      const actie = await leesBody(req);
+      const invoer = await leesBody(req);
+      if (!TOEGESTAAN.includes(invoer?.op)) throw new Fout('Onbekende handeling');
+      let actie = invoer;
+      let pin;
+      if (invoer.op === 'klantcode') {
+        // De code wordt hier gemaakt en maar één keer teruggegeven; bewaard wordt enkel de hash.
+        pin = maakPin();
+        actie = { op: 'klantcode', telefoon: invoer.telefoon, naam: invoer.naam, ...hashPin(pin) };
+      }
       const { staat, bon } = await wijzig((huidig) => pasToe(huidig, actie));
-      return json(res, 200, { ...staat, bon });
+      return json(res, 200, { ...voorWinkel(staat), bon, ...(pin ? { pin } : {}) });
     }
     return json(res, 405, { error: 'Niet toegestaan' });
   } catch (e) {
