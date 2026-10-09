@@ -125,3 +125,68 @@ test('oudere bonnen zonder behandeling blijven werken', () => {
   assert.equal(bon.stukken[0].behandeling, 'strijk');
   assert.deepEqual(bon.soorten, ['Strijk']);
 });
+
+test('locatie: bij het maken, apart te wijzigen, en niet zichtbaar voor de klant', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A', telefoon: '0470 12 34 56' }, locatie: '  Rek 3 ' });
+  assert.equal(bon.locatie, 'Rek 3');
+  ({ staat, bon } = pasToe(staat, { op: 'locatie', id: bon.id, locatie: 'Plank B'.repeat(10) }, nu));
+  assert.equal(bon.locatie.length, 40);
+  ({ staat, bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { klant: { naam: 'A', telefoon: '0470 12 34 56' } } }, nu));
+  assert.ok(bon.locatie.startsWith('Plank B'), 'wijzigen zonder locatie houdt de oude');
+  assert.equal(voorKlant(staat, '32470123456').bonnen[0].locatie, undefined);
+});
+
+test('bewaartermijn: opgehaalde bonnen verdwijnen na de gekozen maanden, de rest blijft', () => {
+  const toen = new Date('2025-09-01T09:00:00Z');
+  let { staat, bon: oud } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'Oud' } } }, toen);
+  ({ staat } = pasToe(staat, { op: 'status', id: oud.id, status: 'opgehaald' }, toen));
+  let nietOpgehaald;
+  ({ staat, bon: nietOpgehaald } = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Vergeten' } } }, toen));
+  assert.equal(staat.instellingen.bewaarMaanden, 12);
+
+  // 13 maanden later: de opgehaalde bon is weg, de vergeten bon niet.
+  ({ staat } = nieuw(staat, { klant: { naam: 'Nieuw' } }));
+  assert.deepEqual(staat.bonnen.map((b) => b.klant.naam), ['Vergeten', 'Nieuw']);
+  assert.equal(staat.bonnen[0].id, nietOpgehaald.id);
+});
+
+test('bewaartermijn instellen: 1 tot 24 maanden, en de winkel ziet meteen het resultaat', () => {
+  assert.throws(() => pasToe(LEEG, { op: 'instellingen', bewaarMaanden: 0 }, nu), /1 tot 24/);
+  assert.throws(() => pasToe(LEEG, { op: 'instellingen', bewaarMaanden: 25 }, nu), /1 tot 24/);
+  const tweeMaandenGeleden = new Date('2026-08-01T09:00:00Z');
+  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'A' } } }, tweeMaandenGeleden);
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, tweeMaandenGeleden));
+  assert.equal(voorWinkel(staat, nu).bonnen.length, 1);
+  ({ staat } = pasToe(staat, { op: 'instellingen', bewaarMaanden: 1 }, nu));
+  assert.equal(staat.instellingen.bewaarMaanden, 1);
+  assert.equal(staat.bonnen.length, 0);
+  assert.equal(voorWinkel(staat, nu).instellingen.bewaarMaanden, 1);
+  // Zonder schrijven ziet de winkel ook niets meer dat over tijd is.
+  const zonderOpruimen = { ...staat, bonnen: [{ ...bon, status: 'opgehaald', opgehaaldOp: tweeMaandenGeleden.toISOString() }] };
+  assert.equal(voorWinkel(zonderOpruimen, nu).bonnen.length, 0);
+});
+
+test('eigen prijslijst: wordt opgeschoond, blijft bewaard bij andere wijzigingen, null zet terug', () => {
+  let { staat } = pasToe(LEEG, {
+    op: 'prijslijst',
+    prijslijst: {
+      groepen: [{ titel: 'Kleding', wassenLabel: 'wassen + strijken', stukken: [
+        { naam: ' Hemd ', strijken: '2,50', wassen: 4.5 },
+        { naam: '', strijken: 1 },
+        { naam: 'Sjaal', strijken: '' },
+      ] }],
+      droogkuis: ['Mantel', 'Mantel', ' ', 'Jas'],
+    },
+  }, nu);
+  assert.deepEqual(staat.prijslijst, {
+    groepen: [{ titel: 'Kleding', wassenLabel: 'wassen + strijken', stukken: [{ naam: 'Hemd', strijken: 2.5, wassen: 4.5 }, { naam: 'Sjaal' }] }],
+    droogkuis: ['Mantel', 'Jas'],
+  });
+  ({ staat } = nieuw(staat, { klant: { naam: 'A' } }));
+  assert.equal(staat.prijslijst.groepen[0].stukken[0].strijken, 2.5);
+  ({ staat } = pasToe(staat, { op: 'instellingen', bewaarMaanden: 6 }, nu));
+  assert.ok(staat.prijslijst, 'blijft bij instellingen');
+  ({ staat } = pasToe(staat, { op: 'prijslijst', prijslijst: null }, nu));
+  assert.equal(staat.prijslijst, null);
+  assert.throws(() => pasToe(LEEG, { op: 'prijslijst', prijslijst: 'onzin' }, nu), /Ongeldige/);
+});

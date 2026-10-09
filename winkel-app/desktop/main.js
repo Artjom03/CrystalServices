@@ -1,11 +1,11 @@
 // Crystal Winkel voor Windows: dezelfde winkel-app, maar volledig offline.
 // De bonnen staan in een bestand op deze pc; afdrukken gaat rechtstreeks naar de gekozen printer.
-import { app, BrowserWindow, Menu, dialog, ipcMain, protocol, shell } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, protocol, screen, shell } from 'electron';
 import { readFile, writeFile, rename, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pasToe, voorWinkel, Fout, LEEG } from './app/lib/bonnen.js';
+import { pasToe, voorWinkel, teBewaren, Fout, LEEG } from './app/lib/bonnen.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
@@ -15,7 +15,7 @@ const BACKUPS = () => path.join(app.getPath('userData'), 'back-ups');
 const BEWAAR_BACKUPS = 60;
 
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'verwittigd', 'verwijder'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -44,7 +44,7 @@ async function schrijfJson(bestand, data) {
   await rename(tijdelijk, bestand);
 }
 
-const instellingen = { pin: '', printer: '' };
+const instellingen = { pin: '', printer: '', zoom: 1 };
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
 }
@@ -61,6 +61,12 @@ function wijzig(fn) {
   });
   rij = klus.catch(() => {});
   return klus;
+}
+
+/** Opgehaalde bonnen die over de bewaartermijn zijn, echt uit het bestand halen. */
+async function ruimOp() {
+  if (!existsSync(DATA())) return;
+  await wijzig((staat) => ({ staat: { ...staat, bonnen: teBewaren(staat) } }));
 }
 
 /** Eén back-up per dag, de laatste 60 dagen. */
@@ -132,8 +138,9 @@ function drukAf(webContents) {
       .then(() => ({ ok: true }));
   }
   return new Promise((resolve) => {
+    // printableArea: de bon begint waar de printer kan drukken, zodat er links of rechts niets wegvalt.
     webContents.print(
-      { silent: Boolean(instellingen.printer), deviceName: instellingen.printer || undefined, printBackground: false, margins: { marginType: 'none' } },
+      { silent: Boolean(instellingen.printer), deviceName: instellingen.printer || undefined, printBackground: false, margins: { marginType: 'printableArea' } },
       (ok, fout) => resolve({ ok, fout: ok ? '' : String(fout || '') }),
     );
   });
@@ -201,6 +208,14 @@ async function backupTerugzetten(venster) {
 
 // ---------- Venster en menu ----------
 
+/** Groter of kleiner zetten en onthouden, handig op een touchscherm. */
+async function zoom(venster, stap) {
+  const nieuw = stap === 0 ? 1 : Math.min(2, Math.max(0.6, Math.round((instellingen.zoom + stap) * 10) / 10));
+  instellingen.zoom = nieuw;
+  venster.webContents.setZoomFactor(nieuw);
+  await bewaarInstellingen();
+}
+
 function maakMenu(venster) {
   return Menu.buildFromTemplate([
     {
@@ -219,9 +234,9 @@ function maakMenu(venster) {
       label: 'Beeld',
       submenu: [
         { label: 'Vernieuwen', role: 'reload' },
-        { label: 'Groter', role: 'zoomIn' },
-        { label: 'Kleiner', role: 'zoomOut' },
-        { label: 'Normale grootte', role: 'resetZoom' },
+        { label: 'Groter', accelerator: 'CmdOrCtrl+=', click: () => zoom(venster, 0.1) },
+        { label: 'Kleiner', accelerator: 'CmdOrCtrl+-', click: () => zoom(venster, -0.1) },
+        { label: 'Normale grootte', accelerator: 'CmdOrCtrl+0', click: () => zoom(venster, 0) },
         { type: 'separator' },
         { label: 'Volledig scherm', role: 'togglefullscreen' },
       ],
@@ -240,11 +255,14 @@ function maakMenu(venster) {
 }
 
 function maakVenster() {
+  // Zo groot als het scherm (zonder taakbalk), en daarna ook echt gemaximaliseerd.
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const venster = new BrowserWindow({
-    width: 1200,
-    height: 820,
+    width,
+    height,
     minWidth: 380,
     title: 'Crystal Winkel',
+    show: false,
     icon: path.join(HIER, 'build', 'icon.png'),
     backgroundColor: '#F5F3EE',
     webPreferences: { preload: path.join(HIER, 'preload.cjs'), contextIsolation: true, sandbox: true },
@@ -263,6 +281,13 @@ function maakVenster() {
     }
   });
 
+  // Meteen schermvullend openen (handig op een touchscherm), op de onthouden grootte.
+  venster.once('ready-to-show', () => {
+    venster.maximize();
+    venster.show();
+  });
+  venster.webContents.on('did-finish-load', () => venster.webContents.setZoomFactor(instellingen.zoom || 1));
+
   venster.loadURL('app://winkel/');
   return venster;
 }
@@ -278,12 +303,18 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     await laadInstellingen();
     await maakBackup().catch((e) => console.error('Back-up mislukt', e));
+    await ruimOp().catch((e) => console.error('Opruimen mislukt', e));
     protocol.handle('app', (request) => {
       const { pathname } = new URL(request.url);
       return pathname === '/api/bonnen' ? api(request) : bestand(pathname);
     });
     ipcMain.handle('afdrukken', (e) => drukAf(e.sender));
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
+    ipcMain.handle('printer', () => instellingen.printer);
+    ipcMain.handle('kies-printer', async (e) => {
+      await kiesPrinter(BrowserWindow.fromWebContents(e.sender));
+      return instellingen.printer;
+    });
     maakVenster();
   });
 

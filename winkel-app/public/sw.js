@@ -1,6 +1,6 @@
 // Bewaart het scherm van de app zodat ze snel opent. De bonnen zelf komen
 // altijd vers van de server en worden nooit in de cache bewaard.
-const CACHE = 'winkel-v4';
+const CACHE = 'winkel-v5';
 const BESTANDEN = ['/', '/app.css', '/app.js', '/prijzen.js', '/manifest.webmanifest', '/apple-touch-icon.png', '/icon-192.png'];
 
 self.addEventListener('install', (e) => {

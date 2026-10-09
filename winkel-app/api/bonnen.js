@@ -4,7 +4,7 @@ import { lees, wijzig } from '../lib/opslag.js';
 import { maakPin, hashPin } from '../lib/klant.js';
 
 // Wat de winkel mag doen. Aanmeldingen van klanten lopen via api/klant.js.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'verwittigd', 'verwijder', 'klantcode'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'klantcode', 'instellingen', 'prijslijst'];
 
 // Alles achter de pincode: de bonnen bevatten namen en telefoonnummers.
 const pogingen = new Map();
