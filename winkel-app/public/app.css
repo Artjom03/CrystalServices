@@ -1,0 +1,120 @@
+:root{
+  --navy:#0E1F42; --navy-deep:#081430; --gold:#B98D4A; --gold-deep:#8A6829;
+  --bg:#F5F3EE; --kaart:#FFFFFF; --ink:#1B2422; --ink-soft:#565B63; --lijn:#E3DED3;
+  --rood:#B3261E; --rood-zacht:#FBE9E7; --groen:#1E6B3A; --groen-zacht:#E6F2EA; --geel-zacht:#FBF3E2;
+  --radius:14px; --schaduw:0 6px 24px rgba(8,20,48,.08);
+  color-scheme: light;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;}
+button,input,select,textarea{font:inherit;color:inherit;}
+[hidden]{display:none!important;}
+
+/* Knoppen */
+.knop{border:1px solid var(--lijn);background:var(--kaart);border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer;min-height:44px;}
+.knop:hover{border-color:var(--navy);}
+.knop.hoofd{background:var(--navy);border-color:var(--navy);color:#fff;}
+.knop.hoofd:hover{background:var(--navy-deep);}
+.knop.goud{background:var(--gold);border-color:var(--gold);color:#fff;}
+.knop.wa{background:#1F7A45;border-color:#1F7A45;color:#fff;}
+.knop.gevaar{color:var(--rood);border-color:#E9C2BE;}
+.knop:disabled{opacity:.5;cursor:default;}
+
+/* Pincode */
+#slot{min-height:100vh;display:grid;place-items:center;padding:16px;}
+.slot-kaart{background:var(--kaart);border-radius:20px;box-shadow:var(--schaduw);padding:32px 28px;width:min(360px,100%);text-align:center;display:grid;gap:12px;}
+.slot-kaart img{margin:0 auto;border-radius:14px;}
+.slot-kaart h1{margin:0;font-size:1.4rem;color:var(--navy);}
+.slot-kaart p{margin:0;color:var(--ink-soft);}
+.slot-kaart input{text-align:center;font-size:1.4rem;letter-spacing:.3em;padding:12px;border:1px solid var(--lijn);border-radius:12px;}
+.fout{color:var(--rood);min-height:1.2em;margin:0;font-size:.92rem;}
+
+/* Balk */
+.balk{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding:10px 16px 0;padding-top:max(10px,env(safe-area-inset-top));}
+.balk-binnen{max-width:860px;margin:0 auto 10px;display:flex;gap:12px;align-items:center;justify-content:space-between;}
+.merk{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:.01em;}
+.merk span{color:var(--gold);}
+.balk .knop.hoofd{background:var(--gold);border-color:var(--gold);}
+#zoek{width:100%;border:0;border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.12);color:#fff;}
+#zoek::placeholder{color:rgba(255,255,255,.65);}
+.tabs{max-width:860px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;}
+.tabs button{flex:1;border:0;background:transparent;color:rgba(255,255,255,.75);padding:12px 8px;font-weight:600;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;}
+.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:var(--gold);}
+.tabs b{display:inline-block;min-width:22px;padding:0 6px;margin-left:4px;border-radius:999px;background:rgba(255,255,255,.18);font-size:.8rem;}
+
+/* Lijst */
+main{max-width:860px;margin:0 auto;padding:14px 16px 40px;}
+.melding{background:var(--geel-zacht);border:1px solid #EBD9B4;border-radius:12px;padding:10px 14px;margin:0 0 12px;}
+.lijst{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.bon{background:var(--kaart);border:1px solid var(--lijn);border-radius:var(--radius);padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:center;cursor:pointer;}
+.bon:hover{border-color:var(--navy);}
+.bon .nr{grid-row:span 2;font-weight:800;font-size:1.05rem;color:var(--navy);background:var(--bg);border-radius:10px;padding:8px 10px;text-align:center;min-width:70px;}
+.bon .naam{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bon .info{color:var(--ink-soft);font-size:.9rem;}
+.bon .rechts{grid-row:span 2;text-align:right;font-size:.88rem;display:grid;gap:4px;justify-items:end;}
+.label{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;background:var(--bg);color:var(--ink-soft);}
+.label.laat{background:var(--rood-zacht);color:var(--rood);}
+.label.vandaag{background:var(--geel-zacht);color:var(--gold-deep);}
+.label.ok{background:var(--groen-zacht);color:var(--groen);}
+.leeg{text-align:center;color:var(--ink-soft);padding:40px 0;}
+
+/* Panelen */
+dialog.paneel{border:0;padding:0;border-radius:20px;width:min(640px,calc(100% - 24px));max-height:calc(100% - 24px);box-shadow:0 20px 60px rgba(8,20,48,.3);background:var(--kaart);color:var(--ink);}
+dialog.paneel::backdrop{background:rgba(8,20,48,.45);}
+.paneel form{display:flex;flex-direction:column;max-height:calc(100vh - 24px);}
+.paneel-kop{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--lijn);position:sticky;top:0;background:var(--kaart);z-index:1;}
+.paneel-kop h2{margin:0;font-size:1.15rem;color:var(--navy);}
+.sluit{border:0;background:var(--bg);border-radius:999px;width:40px;height:40px;cursor:pointer;font-size:1rem;}
+.paneel-inhoud{padding:16px 20px;overflow:auto;}
+.paneel-voet{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--lijn);}
+@media (max-width:600px){
+  dialog.paneel{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;margin:0;}
+  .paneel form{max-height:100vh;height:100%;}
+  .paneel-inhoud{flex:1;}
+}
+
+/* Formulier */
+fieldset{border:0;margin:0 0 18px;padding:0;}
+legend{font-weight:700;color:var(--navy);margin-bottom:8px;padding:0;}
+legend small{font-weight:400;color:var(--ink-soft);}
+label{display:grid;gap:4px;font-size:.88rem;color:var(--ink-soft);flex:1;}
+input:not([type=checkbox]),select,textarea{width:100%;border:1px solid var(--lijn);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink);font-size:1rem;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transparent;}
+.rij{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.rij > *{flex:1 1 180px;}
+.vink{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:1rem;flex:0 0 auto;}
+.vink input{width:20px;height:20px;}
+.keuzes{display:flex;flex-wrap:wrap;gap:8px;}
+.keuzes button{border:1px solid var(--lijn);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;min-height:40px;}
+.keuzes button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;}
+.keuzes.klein button{padding:6px 12px;min-height:36px;font-size:.9rem;}
+.stuk-toevoegen{display:flex;gap:8px;margin-bottom:8px;}
+.stuk-toevoegen input{flex:1;}
+.stukken{width:100%;border-collapse:collapse;font-size:.95rem;}
+.stukken td{padding:6px 4px;border-bottom:1px solid var(--lijn);vertical-align:middle;}
+.stukken tfoot td{border:0;font-weight:800;padding-top:10px;}
+.stukken input{padding:6px 8px;}
+.stukken .aantal{width:64px;}
+.stukken .prijs{width:90px;}
+.bedrag{text-align:right;white-space:nowrap;}
+.weg{border:0;background:none;color:var(--rood);font-size:1.1rem;cursor:pointer;padding:4px 8px;}
+
+/* Detail */
+.d-blok{margin-bottom:16px;}
+.d-blok h3{margin:0 0 6px;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
+.d-blok p{margin:2px 0;}
+.d-knoppen{display:flex;flex-wrap:wrap;gap:8px;}
+.tijdlijn{color:var(--ink-soft);font-size:.88rem;}
+a{color:var(--navy);}
+
+/* Afdruk */
+#afdruk{display:none;}
+@media print{
+  body > *:not(#afdruk){display:none!important;}
+  #afdruk{display:block;font:12pt/1.35 system-ui,sans-serif;color:#000;width:72mm;}
+  #afdruk .groot{font-size:28pt;font-weight:800;margin:4mm 0;}
+  #afdruk table{width:100%;border-collapse:collapse;}
+  #afdruk td{padding:1mm 0;}
+  @page{margin:6mm;}
+}
