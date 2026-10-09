@@ -1,4 +1,4 @@
-import { ACTIE, CONTACT, OPENINGSUREN, OPENINGSUREN_WASSALON, PRIJSLIJST, actieLoopt, prijsRegel } from './kennis';
+import { ACTIE, CONTACT, OPENINGSUREN, OPENINGSUREN_WASSALON, PRIJSLIJST, WELKOM, actieLoopt, prijsRegel } from './kennis';
 
 /**
  * Eenvoudige antwoorden op basis van zoekwoorden. Die gebruiken we als de AI
@@ -52,11 +52,11 @@ export function regelAntwoord(vraag: string, nu = new Date()): string {
   const actie = actieLoopt(nu);
   const actieZin = actie ? '\n\nGoed om te weten: in oktober krijgt u 15% korting op alle strijkprijzen.' : '';
 
-  if (/droogkuis|stomen|wetclean|kostuum|maatpak|mantel/.test(t)) {
+  if (/droogkuis|stomen|wetclean|kostuum|maatpak|mantel|colbert|trouwjurk|trouwkleed|vlek/.test(t)) {
     if (/dons|deken|dekbed/.test(t)) {
-      return 'Ja, wij nemen donsdekens aan voor de droogkuis. De prijs ligt tussen € 39,50 en € 49,00 per donsdeken, afhankelijk van de stof. Gewoon wassen kost € 25,00 (klein) of € 30,00 (groot).';
+      return `Ja, wij nemen donsdekens aan voor de droogkuis. De prijs ligt tussen € 39,50 en € 49,00 per donsdeken, afhankelijk van de stof. Breng de deken gerust even langs in de winkel: dan bekijken we de stof en geven we u meteen de juiste prijs. ${WELKOM}`;
     }
-    return 'Voor droogkuis hangt de prijs af van het soort kledingstuk, de stof en eventuele vlekken. Daarom komt u het best even langs in de winkel. Dan kunnen we alles goed bekijken en u meteen een correcte prijs geven.';
+    return `Voor droogkuis hangt de prijs af van het soort kledingstuk, de stof en eventuele vlekken. Daarom komt u het best even langs in de winkel. Dan kunnen we alles goed bekijken en u meteen een correcte prijs geven. ${WELKOM}`;
   }
   if (/wassalon|zelfbediening|speed queen|wasmachine/.test(t)) {
     return `${OPENINGSUREN_WASSALON} U kan gewoon binnenlopen; uw was is klaar in ongeveer 60 minuten. Voor de prijzen van het wassalon: ${BEL}.`;
