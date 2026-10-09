@@ -29,13 +29,13 @@
       ? 'Klaar tegen ' + datum(b.klaarTegen)
       : b.status === 'opgehaald' ? 'Opgehaald ' + datum(b.opgehaaldOp) : 'Binnengebracht ' + datum(b.binnenOp);
     const stukken = b.stukken.length
-      ? `<table class="stukken"><tbody>${b.stukken.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}</td><td class="bedrag">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}</tbody>
-         <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}</td></tr></tfoot></table>`
+      ? `<table class="stukken"><tbody>${b.stukken.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}</td><td class="bedrag">${s.prijs == null ? 'prijs volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')}</tbody>
+         <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' + prijs volgt' : ''}</td></tr></tfoot></table>`
       : '<p class="tijdlijn">De stukken worden geteld bij het strijken.</p>';
     return `<details class="k-bon ${b.status === 'klaar' ? 'klaar' : ''}">
       <summary>
         <span class="titel">Bon ${esc(b.nr)} · ${esc(b.soort)}</span>
-        <span class="rechts">${status}<span>${b.totaal ? eur(b.totaal) : ''}${b.totaal ? (b.betaald ? ' · betaald' : ' · nog te betalen') : ''}</span></span>
+        <span class="rechts">${status}<span>${b.prijsOpen ? 'prijs volgt' : b.totaal ? eur(b.totaal) + (b.betaald ? ' · betaald' : ' · nog te betalen') : ''}</span></span>
         <span class="sub">${esc(sub)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ''}</span>
       </summary>
       <div class="meer">

@@ -3,6 +3,8 @@
 
 export const STATUSSEN = ['binnen', 'klaar', 'opgehaald'];
 export const BETAALWIJZEN = ['', 'cash', 'kaart', 'dienstencheques', 'overschrijving'];
+export const SOORTEN = ['Strijk', 'Was', 'Droogkuis', 'Schoenen', 'Motorkleding', 'Ander'];
+export const BEHANDELINGEN = ['strijk', 'was', 'droogkuis', 'ander'];
 
 export const LEEG = { bonnen: [], teller: {}, klanten: {} };
 
@@ -32,6 +34,20 @@ function bedrag(v) {
   return Number.isFinite(n) && n >= 0 && n < 10000 ? n : 0;
 }
 
+/** Een prijs mag leeg blijven ("prijs volgt"), bijvoorbeeld bij droogkuis. */
+function prijsOfLeeg(v) {
+  return v === null || v === undefined || String(v).trim() === '' ? null : bedrag(v);
+}
+
+/** Oudere bonnen hebben nog geen behandeling per stuk: afleiden uit de naam. */
+function behandelingVan(s) {
+  if (BEHANDELINGEN.includes(s?.behandeling)) return s.behandeling;
+  const naam = String(s?.naam || '').toLowerCase();
+  if (naam.includes('(strijken)')) return 'strijk';
+  if (naam.includes('(wassen')) return 'was';
+  return 'ander';
+}
+
 function datum(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
 }
@@ -43,25 +59,47 @@ export function schoonStukken(stukken) {
     const naam = tekst(s?.naam, MAX.stukNaam);
     if (!naam) return [];
     const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
-    return [{ naam, aantal, prijs: bedrag(s?.prijs) }];
+    return [{ naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) }];
   });
 }
 
+/** Totaal van de stukken met een prijs; stukken zonder prijs tellen (nog) niet mee. */
 export function totaal(stukken) {
-  return Math.round(stukken.reduce((som, s) => som + s.aantal * s.prijs, 0) * 100) / 100;
+  return Math.round(stukken.reduce((som, s) => som + s.aantal * (s.prijs ?? 0), 0) * 100) / 100;
+}
+
+export function prijsOpen(stukken) {
+  return stukken.some((s) => s.prijs === null);
+}
+
+const SOORT_VAN = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis' };
+
+/** Wat de klant binnenbracht: de gekozen soorten, aangevuld met wat uit de stukken blijkt. */
+function soortenVan(invoer, stukken) {
+  const gekozen = Array.isArray(invoer.soorten) ? invoer.soorten : invoer.soort ? String(invoer.soort).split(' + ') : [];
+  const set = new Set(gekozen.filter((x) => SOORTEN.includes(x)));
+  for (const st of stukken) if (SOORT_VAN[st.behandeling]) set.add(SOORT_VAN[st.behandeling]);
+  if (!set.size) set.add('Strijk');
+  return SOORTEN.filter((x) => set.has(x));
 }
 
 function velden(invoer) {
   const stukken = schoonStukken(invoer.stukken);
+  const soorten = soortenVan(invoer, stukken);
+  if (soorten.includes('Droogkuis') && !stukken.some((st) => st.behandeling === 'droogkuis')) {
+    throw new Fout('Vul bij droogkuis in welke stukken de klant binnenbrengt');
+  }
   return {
     klant: {
       naam: tekst(invoer.klant?.naam, MAX.naam),
       telefoon: tekst(invoer.klant?.telefoon, MAX.telefoon),
       email: tekst(invoer.klant?.email, MAX.email),
     },
-    soort: tekst(invoer.soort, 40) || 'Strijk',
+    soorten,
+    soort: soorten.join(' + '),
     stukken,
     totaal: totaal(stukken),
+    prijsOpen: prijsOpen(stukken),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
     klaarTegen: datum(invoer.klaarTegen),
     betaald: Boolean(invoer.betaald),
@@ -206,6 +244,7 @@ export function voorKlant(staat, sleutel) {
       soort: b.soort,
       stukken: b.stukken,
       totaal: b.totaal,
+      prijsOpen: Boolean(b.prijsOpen),
       status: b.status,
       binnenOp: b.binnenOp,
       klaarTegen: b.klaarTegen,
