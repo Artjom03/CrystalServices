@@ -334,17 +334,60 @@
 
   // ---------- Afdrukken ----------
   function drukAf(b) {
+    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const betaling = b.betaald
+      ? `Betaald${b.betaalwijze ? ' · ' + esc(b.betaalwijze) : ''}`
+      : b.totaal ? `Te betalen bij afhaling: <b>${eur(b.totaal)}</b>` : 'Te betalen bij afhaling';
+    const klaar = b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten';
     $('#afdruk').innerHTML = `
-      <div><strong>${esc(WINKEL.naam)}</strong><br>${esc(WINKEL.adres)}<br>Tel. ${esc(WINKEL.telefoon)}</div>
-      <div class="groot">${esc(b.nr)}</div>
-      <div><strong>${esc(b.klant.naam)}</strong>${b.klant.telefoon ? '<br>' + esc(b.klant.telefoon) : ''}</div>
-      <p>${esc(b.soort)} · binnen ${esc(mooiDatum(b.binnenOp))}${b.klaarTegen ? '<br>Klaar tegen: <strong>' + esc(mooiDatum(b.klaarTegen)) + '</strong>' : ''}</p>
-      ${b.stukken.length ? `<table>${b.stukken.map((s) => `<tr><td>${s.aantal} × ${esc(s.naam)}</td><td style="text-align:right">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}
-        <tr><td><strong>Totaal</strong></td><td style="text-align:right"><strong>${eur(b.totaal)}</strong></td></tr></table>` : ''}
-      ${b.opmerking ? '<p>' + esc(b.opmerking) + '</p>' : ''}
-      <p>${b.betaald ? 'Betaald' : 'Te betalen bij afhaling'}</p>
-      ${heeftToegang(b) ? '<p>Volg uw bonnen online:<br>' + esc(PORTAAL) + '</p>' : ''}`;
-    window.print();
+      <section class="pr-bon">
+        <header class="pr-kop">
+          <img src="/apple-touch-icon.png" alt="">
+          <div>
+            <div class="pr-merk">${esc(WINKEL.naam)}</div>
+            <div class="pr-klein">Strijkatelier · Wasserij · Droogkuis</div>
+          </div>
+        </header>
+        <div class="pr-klein pr-adres">${esc(WINKEL.adres)}<br>Tel. ${esc(WINKEL.telefoon)}</div>
+
+        <div class="pr-nr"><span>Bon</span>${esc(b.nr)}</div>
+
+        <table class="pr-info">
+          <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b>${b.klant.telefoon ? '<br>' + esc(b.klant.telefoon) : ''}</td></tr>
+          <tr><th>Soort</th><td>${esc(b.soort)}</td></tr>
+          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
+        </table>
+        <div class="pr-klaar">Klaar tegen<b>${klaar}</b></div>
+
+        ${b.stukken.length ? `
+        <table class="pr-stukken">
+          <thead><tr><th>Stuk</th><th class="r">Bedrag</th></tr></thead>
+          <tbody>${b.stukken.map((s) => `<tr><td>${s.aantal} × ${esc(s.naam)}${s.aantal > 1 ? `<span class="pr-klein"> (${eur(s.prijs)}/st.)</span>` : ''}</td><td class="r">${eur(s.aantal * s.prijs)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td>Totaal (${aantal} stuk${aantal > 1 ? 's' : ''})</td><td class="r">${eur(b.totaal)}</td></tr></tfoot>
+        </table>` : '<p class="pr-klein">De stukken worden geteld bij het strijken.</p>'}
+
+        <div class="pr-betaling">${betaling}</div>
+        ${b.opmerking ? `<div class="pr-opm"><b>Opmerking</b><br>${esc(b.opmerking)}</div>` : ''}
+        ${heeftToegang(b) ? `<div class="pr-portaal">Volg uw bonnen online:<br><b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></div>` : ''}
+
+        <footer class="pr-voet">Breng deze bon mee bij het ophalen.<br>${esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1))}<br>Bedankt en tot binnenkort!</footer>
+      </section>
+
+      <div class="pr-knip">✂ hier knippen · label voor de mand</div>
+
+      <section class="pr-label">
+        <div class="pr-label-nr">${esc(b.nr)}</div>
+        <div class="pr-label-naam">${esc(b.klant.naam)}</div>
+        <div class="pr-label-info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' st.' : ''} · klaar ${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</div>
+        ${b.opmerking ? `<div class="pr-label-opm">${esc(b.opmerking)}</div>` : ''}
+      </section>`;
+    // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
+    const logo = $('#afdruk img');
+    if (logo && !logo.complete) {
+      logo.onload = logo.onerror = () => window.print();
+    } else {
+      window.print();
+    }
   }
 
   // ---------- Formulier ----------
