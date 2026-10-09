@@ -172,6 +172,8 @@
     box-shadow:var(--shadow);
   }
   .hero-visual img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  /* Label op foto's die met AI gemaakt zijn (AI-wet, art. 50). Vaste kleuren: leesbaar op elke foto, in licht en donker thema. */
+  .ai-label{position:absolute;left:16px;bottom:16px;z-index:2;padding:3px 9px;border-radius:999px;background:rgba(8,20,48,.75);color:#fff;font-size:.7rem;font-weight:600;line-height:1.5;letter-spacing:.01em;pointer-events:none;}
   .hero-visual::after{
     content:"";position:absolute;left:0;right:0;bottom:0;height:45%;
     background:linear-gradient(to top, rgba(8,20,48,0.55), rgba(8,20,48,0));
@@ -713,7 +715,8 @@
         </div>
       </div>
       <div class="hero-visual reveal">
-        <img src="/images/motorpak_reinigen_hero.webp" width="900" height="1125" alt="Leren motorpak dat met de hand gereinigd en gevoed wordt bij Crystal Services in Antwerpen">
+        <img src="/images/motorpak_reinigen_hero.webp" width="900" height="1125" alt="Illustratie gemaakt met AI: een leren motorpak dat met de hand gereinigd wordt">
+        <span class="ai-label">Illustratie · gemaakt met AI</span>
       </div>
     </div>
   </section>

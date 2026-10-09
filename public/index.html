@@ -241,7 +241,9 @@
     transition:transform .18s ease, box-shadow .18s ease;
   }
   .service-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
-  .service-photo{aspect-ratio:4/3;overflow:hidden;background:var(--bg-soft);}
+  .service-photo{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg-soft);}
+  /* Label op foto's die met AI gemaakt zijn (AI-wet, art. 50). Vaste kleuren: leesbaar op elke foto, in licht en donker thema. */
+  .ai-label{position:absolute;left:10px;bottom:10px;z-index:2;padding:3px 9px;border-radius:999px;background:rgba(8,20,48,.75);color:#fff;font-size:.7rem;font-weight:600;line-height:1.5;letter-spacing:.01em;pointer-events:none;}
   .service-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease;}
   .service-card:hover .service-photo img{transform:scale(1.05);}
   .service-card h3{font-size:1.1rem;padding:18px 22px 0;}
@@ -764,12 +766,12 @@
           <p>Professionele droogkuis met oplosmiddel of milieuvriendelijke wetcleaning op waterbasis, voor pakken, mantels, jurken en andere kledij die geen gewone was verdraagt.</p>
         </div>
         <div class="service-card reveal">
-          <div class="service-photo"><img src="/images/motorpak_reinigen.webp" width="1000" height="750" alt="Reiniging van een leren motorpak, handtassen en leren kledij" loading="lazy"></div>
+          <div class="service-photo"><img src="/images/motorpak_reinigen.webp" width="1000" height="750" alt="Illustratie gemaakt met AI: een leren motorpak dat gereinigd wordt" loading="lazy"><span class="ai-label">Illustratie · gemaakt met AI</span></div>
           <h3>Speciale reiniging</h3>
           <p>Ook voor bijzondere stukken bent u bij ons aan het juiste adres: handtassen, motorkleding en leren kledij worden vakkundig gereinigd en opgefrist. <a href="/motorkleding" style="color:var(--gold-deep);font-weight:600;white-space:nowrap;">Motorkleding &amp; prijzen →</a></p>
         </div>
         <div class="service-card reveal">
-          <div class="service-photo"><img src="/images/sneaker_cleaning.webp" alt="Schoenen en sneakers reinigen in Antwerpen" loading="lazy"></div>
+          <div class="service-photo"><img src="/images/sneaker_cleaning.webp" alt="Illustratie gemaakt met AI: sneakers die gereinigd worden" loading="lazy"><span class="ai-label">Illustratie · gemaakt met AI</span></div>
           <h3>Schoenen &amp; sneakers</h3>
           <p>Vuile sneakers of doffe leren schoenen? Wij reinigen ze met de juiste producten per materiaal, zodat ze er weer als nieuw uitzien. <a href="/schoenen" style="color:var(--gold-deep);font-weight:600;white-space:nowrap;">Bekijk de pakketten →</a></p>
         </div>
