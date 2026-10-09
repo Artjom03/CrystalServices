@@ -16,11 +16,11 @@ export const CONTACT = {
 
 // Zoals op de website. Worden de uren weer normaal, pas dan ook de pagina's aan.
 export const OPENINGSUREN =
-  'Wasserij en strijkatelier: tijdelijk open van maandag tot vrijdag, van 8:00 tot 11:00 en van 13:00 tot 17:00. ' +
-  'Tussen 11:00 en 13:00 gesloten, net als op zaterdag, zondag en feestdagen.';
+  'Wasserij en strijkatelier: open van maandag tot vrijdag, van 8:00 tot 18:00. ' +
+  'Gesloten op zaterdag, zondag en feestdagen.';
 
 // Korte uitnodiging om langs te komen, zoals onderaan onze mails.
-export const WELKOM = 'U bent welkom van maandag tot vrijdag, van 8 tot 11 uur en van 13 tot 17 uur.';
+export const WELKOM = 'U bent welkom van maandag tot vrijdag, van 8 tot 18 uur.';
 
 export const OPENINGSUREN_WASSALON =
   'Zelfbedieningswassalon: 7 dagen op 7 open, van 8:00 tot 22:00, ook in het weekend en op feestdagen.';
