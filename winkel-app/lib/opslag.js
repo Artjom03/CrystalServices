@@ -1,6 +1,6 @@
 // Waar de bonnen bewaard worden.
 // Online: één privé-bestand in Vercel Blob (alleen de server kan het lezen).
-// Lokaal, zonder BLOB_READ_WRITE_TOKEN: een bestand in .data/, om te testen.
+// Lokaal, zonder Blob-instellingen: een bestand in .data/, om te testen.
 import { get, put, BlobPreconditionFailedError } from '@vercel/blob';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { LEEG } from './bonnen.js';
@@ -38,7 +38,12 @@ async function schrijfLokaal(staat) {
   await writeFile(LOKAAL, JSON.stringify(staat, null, 2));
 }
 
-const online = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+function online() {
+  if (process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID) return true;
+  // Op Vercel zelf nooit naar een lokaal bestand schrijven: dat zou verloren gaan.
+  if (process.env.VERCEL) throw new Error('Geen Blob-opslag gekoppeld aan dit project');
+  return false;
+}
 
 export async function lees() {
   return (online() ? await leesBlob() : await leesLokaal()).staat;
