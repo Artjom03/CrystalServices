@@ -127,8 +127,14 @@ export const PRIJSLIJST: Groep[] = [
       { naam: 'Laken 1 persoon', strijken: 3.2, wassen: 5.8 },
       { naam: 'Laken 2 personen', strijken: 4.2, wassen: 7.2 },
       { naam: 'Kussensloop', strijken: 1.0, wassen: 1.8, ook: ['kussenhoes'] },
-      { naam: 'Donsdeken klein (wassen)', wassen: 25.0, ook: ['dekbed', 'duvet'] },
-      { naam: 'Donsdeken groot (wassen)', wassen: 30.0 },
+    ],
+  },
+  {
+    titel: 'Donsdekens (voor droogkuis: zie Droogkuis)',
+    wassenLabel: 'wassen',
+    stukken: [
+      { naam: 'Donsdeken klein', wassen: 25.0, ook: ['dekbed', 'duvet'] },
+      { naam: 'Donsdeken groot', wassen: 30.0, ook: ['dekbed', 'duvet'] },
     ],
   },
   {
@@ -172,7 +178,7 @@ export function eur(v: number): string {
 }
 
 /** Rondt half naar boven af in centen, zoals in onze mails (€ 2,30 wordt € 1,96). */
-function metKorting(v: number): number {
+export function metKorting(v: number): number {
   return Math.round((Math.round(v * 100) * (100 - ACTIE.kortingStrijken)) / 100) / 100;
 }
 
@@ -248,7 +254,7 @@ Stijl
 - Dit is een chat, geen mail: geen aanhef ("Beste ...") en geen handtekening. Begin meteen met het antwoord.
 - Hou het kort: meestal twee tot vier zinnen. Bij meerdere prijzen mag een korte lijst, elke regel beginnend met "• ".
 - Gewone tekst, geen markdown: geen sterretjes, kopjes of tabellen.
-- Geef prijzen zoals in onze mails: "Het strijken van een hemd kost bij ons € 2,30 per stuk. Wilt u het hemd ook laten wassen en strijken, dan is dat € 4,50 per stuk."
+- Vraagt iemand naar de prijs van een stuk (bijvoorbeeld "prijs strijken t-shirt"), geef dan meteen de prijs per stuk uit de prijslijst, zoals in onze mails: "Het strijken van een T-shirt kost bij ons € 1,20 per stuk. Wilt u het T-shirt ook laten wassen en strijken, dan is dat € 3,00 per stuk." Loopt de oktoberactie, vermeld dan ook de strijkprijs na korting: "Goed om te weten: in oktober krijgt u 15% korting op het strijkwerk. Een T-shirt strijken kost dan maar € 1,02." Verwijs niet naar de prijslijst of naar e-mail als het stuk op de lijst staat.
 - Past het, sluit dan af met iets nuttigs, zoals "${WELKOM}" of een verwijzing naar de telefoon.
 
 Regels

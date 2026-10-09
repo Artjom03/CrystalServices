@@ -1,4 +1,7 @@
-import { ACTIE, CONTACT, OPENINGSUREN, OPENINGSUREN_WASSALON, PRIJSLIJST, WELKOM, actieLoopt, prijsRegel } from './kennis';
+import {
+  ACTIE, CONTACT, OPENINGSUREN, OPENINGSUREN_WASSALON, PRIJSLIJST, WELKOM,
+  actieLoopt, eur, metKorting, prijsRegel, type Groep, type Stuk,
+} from './kennis';
 
 /**
  * Eenvoudige antwoorden op basis van zoekwoorden. Die gebruiken we als de AI
@@ -9,7 +12,8 @@ import { ACTIE, CONTACT, OPENINGSUREN, OPENINGSUREN_WASSALON, PRIJSLIJST, WELKOM
 const STOPWOORDEN = new Set([
   'wat', 'kan', 'kost', 'kosten', 'prijs', 'prijzen', 'voor', 'met', 'van', 'een', 'het', 'de',
   'ik', 'wil', 'wilt', 'graag', 'hoeveel', 'strijken', 'wassen', 'laten', 'jullie', 'uw', 'deze',
-  'dit', 'is', 'zijn', 'mijn', 'per', 'stuk', 'and', 'the', 'hoe', 'bij', 'ook', 'nog',
+  'dit', 'is', 'zijn', 'mijn', 'per', 'stuk', 'stuks', 'and', 'the', 'hoe', 'bij', 'ook', 'nog',
+  'strijk', 'was', 'aub', 'alstublieft', 'dag', 'hallo', 'beste',
 ]);
 
 function normaliseer(s: string): string {
@@ -17,31 +21,110 @@ function normaliseer(s: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
+    // "2 personen", "2p" en "tweepersoons" worden allemaal "2p".
+    .replace(/\b(1|een|eenpersoons)\s*(p|pers|persoon|personen|persoons)\b|\beenpersoons\b/g, ' 1p ')
+    .replace(/\b(2|twee|tweepersoons)\s*(p|pers|persoon|personen|persoons)\b|\btweepersoons\b/g, ' 2p ')
     .replace(/[.,;:!?()/+-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function zoekPrijzen(vraag: string, actie: boolean): string[] {
+type Treffer = { stuk: Stuk; groep: Groep; score: number };
+
+/** Hoe goed een zoekwoord op een woord uit de prijslijst past: 3 exact, 1 begin, 0 niet. */
+function pas(w: string, h: string): number {
+  if (w === h) return 3;
+  if (w.length >= 4 && h.startsWith(w)) return 1;
+  if (h.length >= 4 && w.startsWith(h)) return 1;
+  return 0;
+}
+
+/** De stukken die het best passen bij de vraag, het beste eerst. */
+function zoekStukken(vraag: string): Treffer[] {
   let woorden = normaliseer(vraag)
     .split(' ')
-    .filter((w) => w.length >= 3 && !STOPWOORDEN.has(w));
+    .filter((w) => (w.length >= 3 || /^[12]p$/.test(w)) && !STOPWOORDEN.has(w));
   const kind = woorden.some((w) => w.startsWith('kind'));
   woorden = woorden.filter((w) => !w.startsWith('kind') && w !== 'kleding' && w !== 'kleren');
   if (!woorden.length) return [];
 
-  const regels: string[] = [];
+  const treffers: Treffer[] = [];
   for (const groep of PRIJSLIJST) {
+    // Kinderprijzen alleen tonen als er naar kinderkleding gevraagd wordt.
+    if (groep.titel.startsWith('Kinder') !== kind) continue;
     for (const stuk of groep.stukken) {
-      // Kinderprijzen alleen tonen als er naar kinderkleding gevraagd wordt.
-      if (groep.titel.startsWith('Kinder') !== kind) continue;
       const hooi = normaliseer([stuk.naam, ...(stuk.ook || [])].join(' ')).split(' ');
-      if (woorden.some((w) => hooi.some((h) => h.length >= 3 && (h.startsWith(w) || w.startsWith(h))))) {
-        regels.push('• ' + prijsRegel(stuk, groep, actie));
-      }
+      const score = woorden.reduce((som, w) => som + Math.max(0, ...hooi.map((h) => pas(w, h))), 0);
+      if (score > 0) treffers.push({ stuk, groep, score });
     }
   }
-  return regels.slice(0, 6);
+  const beste = Math.max(0, ...treffers.map((t) => t.score));
+  return treffers.filter((t) => t.score === beste).slice(0, 6);
+}
+
+/** "T-shirt/topje kind (met kap)" wordt "een T-shirt voor kinderen". */
+function metLidwoord(stuk: Stuk, groep: Groep): string {
+  let naam = stuk.naam.replace(/\/[^\s]+/, '').replace(/\s*\(.*\)/, '').replace(/ kind$/, '');
+  if (!/^[A-Z][-A-Z]/.test(naam)) naam = naam[0].toLowerCase() + naam.slice(1);
+  return 'een ' + naam + (groep.titel.startsWith('Kinder') ? ' voor kinderen' : '');
+}
+
+function hoofdletter(s: string): string {
+  return s[0].toUpperCase() + s.slice(1);
+}
+
+/** Een prijs zoals in onze mails: eerst strijken, dan wassen. */
+function prijsZin(stuk: Stuk, groep: Groep): string | null {
+  if (stuk.prijs != null || / per kg/.test(stuk.naam)) return null;
+  const wie = metLidwoord(stuk, groep);
+  const werk = groep.wassenLabel.replace(' + ', ' en ');
+  const zinnen: string[] = [];
+  if (stuk.strijken != null) {
+    zinnen.push(`Het strijken van ${wie} kost bij ons ${eur(stuk.strijken)} per stuk.`);
+    if (stuk.wassen != null) zinnen.push(`Wilt u het ook laten ${werk}, dan is dat ${eur(stuk.wassen)} per stuk.`);
+  } else if (stuk.wassen != null) {
+    zinnen.push(`${hoofdletter(wie)} ${werk} kost bij ons ${eur(stuk.wassen)} per stuk.`);
+  }
+  return zinnen.join(' ');
+}
+
+function prijsAntwoord(vraag: string, actie: boolean): string | null {
+  const treffers = zoekStukken(vraag);
+  if (!treffers.length) return null;
+
+  // Eén stuk, of een stuk met varianten (hemd, hemd lux, ...): antwoord zoals in een mail.
+  const basis = normaliseer(treffers[0].stuk.naam).split(' ')[0];
+  const varianten = treffers.every((t) => normaliseer(t.stuk.naam).split(' ')[0] === basis);
+  const zin = varianten ? prijsZin(treffers[0].stuk, treffers[0].groep) : null;
+  const regels = (lijst: Treffer[]) => lijst.map((t) => '• ' + prijsRegel(t.stuk, t.groep, actie)).join('\n');
+
+  let tekst: string;
+  if (zin) {
+    const rest = treffers.slice(1);
+    tekst = rest.length ? `${zin}\n\nAndere varianten:\n${regels(rest)}` : zin;
+  } else {
+    tekst = 'Onze prijzen per stuk:\n' + regels(treffers);
+  }
+
+  // De oktoberkorting geldt enkel op strijkwerk.
+  const eerste = treffers[0].stuk;
+  if (actie && zin && eerste.strijken != null) {
+    tekst += `\n\nGoed om te weten: in oktober krijgt u 15% korting op het strijkwerk. ${hoofdletter(metLidwoord(eerste, treffers[0].groep))} strijken kost dan maar ${eur(metKorting(eerste.strijken))}.`;
+  } else if (actie && treffers.some((t) => t.stuk.strijken != null)) {
+    tekst += '\n\nGoed om te weten: in oktober krijgt u 15% korting op alle strijkprijzen.';
+  }
+  return tekst;
+}
+
+// Zoals in de prijsmail die we naar klanten sturen.
+const MEEST_GEVRAAGD = ['T-shirt/topje', 'Polo', 'Hemd', 'Bloes', 'Broek', 'Trui', 'Kleed'];
+
+function regelVoor(naam: string, actie: boolean): string {
+  for (const groep of PRIJSLIJST) {
+    const stuk = groep.stukken.find((s) => s.naam === naam);
+    if (stuk) return prijsRegel(stuk, groep, actie);
+  }
+  throw new Error(`Onbekend stuk in MEEST_GEVRAAGD: ${naam}`);
 }
 
 const BEL = `bel ${CONTACT.telefoon} of mail ${CONTACT.email}`;
@@ -78,11 +161,11 @@ export function regelAntwoord(vraag: string, nu = new Date()): string {
     return 'Een lederen motorjas reinigen en voeden kost € 59, een lederen broek € 49, een 2-delig pak € 95 en een 1-delig racepak € 99. Alle prijzen staan op onze pagina Motorkleding.';
   }
 
-  const prijzen = zoekPrijzen(vraag, actie);
-  if (prijzen.length) return 'Onze prijzen per stuk:\n' + prijzen.join('\n') + actieZin;
+  const prijs = prijsAntwoord(vraag, actie);
+  if (prijs) return prijs;
 
   if (/prijs|prijzen|tarief|kost|kosten|hoeveel|prijslijst/.test(t)) {
-    return `Onze prijzen zijn per stuk. Een paar voorbeelden:\n• Hemd: strijken € 2,30, wassen + strijken € 4,50\n• Broek: strijken € 2,30, wassen + strijken € 5,50\n• T-shirt: strijken € 1,20, wassen + strijken € 3,00\nTyp gerust de naam van een kledingstuk voor de prijs.${actieZin}`;
+    return `Onze prijzen zijn per stuk. De meest gevraagde stukken:\n${MEEST_GEVRAAGD.map((n) => '• ' + regelVoor(n, actie)).join('\n')}\nTyp gerust de naam van een kledingstuk voor de prijs.${actieZin}`;
   }
   if (/zakelijk|bedrijf|horeca|hotel|salon|offerte/.test(t)) {
     return `Voor zaken halen wij linnen en bedrijfskleding op vaste dagen op en brengen het gewassen en gestreken terug. ${BEL_ZIN} met uw volume en wensen, dan maken wij een vrijblijvend voorstel.`;
