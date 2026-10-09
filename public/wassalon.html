@@ -793,11 +793,12 @@
     </button>
   </div>
   <div id="cs-chat-body">
-    <div class="cs-msg bot">Hallo! 👋 Ik help u graag met vragen over onze wasserij, openingsuren, dienstencheques of een afspraak. Waarmee kan ik helpen?</div>
+    <div class="cs-msg bot">Hallo! 👋 Ik ben de digitale assistent van Crystal Services. Vraag mij gerust naar prijzen, droogkuis, openingsuren of dienstencheques.</div>
   </div>
   <div class="cs-chips" id="cs-chips">
     <button class="cs-chip" data-q="openingsuren">Openingsuren</button>
     <button class="cs-chip" data-q="prijzen">Prijzen</button>
+    <button class="cs-chip" data-q="droogkuis">Droogkuis</button>
     <button class="cs-chip" data-q="dienstencheques">Dienstencheques</button>
     <button class="cs-chip" data-q="diensten">Onze diensten</button>
     <button class="cs-chip" data-q="contact">Contact</button>
@@ -808,7 +809,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l16-8L4 4v6l10 2-10 2v6Z" fill="currentColor"/></svg>
     </button>
   </div>
-  <div class="cs-disclaimer">Automatisch antwoord · voor maatwerk: <a href="tel:0494403841" style="color:var(--navy-deep);">bel ons</a></div>
+  <div class="cs-disclaimer">Antwoorden opgesteld met AI · twijfelt u? <a href="tel:0494403841" style="color:var(--navy-deep);">bel ons</a></div>
 </div>
 
 <script>
@@ -835,89 +836,8 @@
     mainnav.style.padding='14px 20px';
     mainnav.style.boxShadow='var(--shadow)';
   });
-
-  // ---- Chat widget logic (rule-based, no external calls, no auto popups) ----
-  const launcher = document.getElementById('cs-chat-launcher');
-  const panel = document.getElementById('cs-chat-panel');
-  const closeBtn = document.getElementById('cs-chat-close');
-  const body = document.getElementById('cs-chat-body');
-  const input = document.getElementById('cs-chat-text');
-  const sendBtn = document.getElementById('cs-chat-send');
-  const chips = document.getElementById('cs-chips');
-
-  function openPanel(){
-    panel.classList.add('open');
-    launcher.setAttribute('aria-expanded','true');
-    input.focus();
-  }
-  function closePanel(){
-    panel.classList.remove('open');
-    launcher.setAttribute('aria-expanded','false');
-  }
-  launcher.addEventListener('click', ()=> panel.classList.contains('open') ? closePanel() : openPanel());
-  closeBtn.addEventListener('click', closePanel);
-
-  function addMsg(text, who){
-    const div = document.createElement('div');
-    div.className = 'cs-msg ' + who;
-    div.textContent = text;
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-  }
-
-  // ---- Volledige prijslijst (bron: prijzenlijst wasserij) ----
-  // iron = prijs strijken, wash = prijs wassen + strijken (null = niet van toepassing)
-  const answers = {
-    openingsuren: "Ons zelfbedieningswassalon is 7 dagen op 7 open, van 8:00 tot 22:00 uur, ook in het weekend en op feestdagen. De uren van onze wasserij/strijkatelier zijn tijdelijk aangepast: maandag tot vrijdag van 8:00 tot 11:00 en van 13:00 tot 17:00 uur.",
-    dienstencheques: "Ja, u kan bij ons betalen met dienstencheques voor strijkwerk. Breng ze gerust mee langs of vraag ernaar bij afgifte.",
-    diensten: "Wij bieden strijkservice, was- en droogdiensten, reiniging van delicate kledingstukken en professionele reiniging van bedrijfskleding.",
-    contact: "U kan ons bereiken op 0494 40 38 41 of via info@crystal-services.be. Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    prijzen: "Onze prijzen hangen af van het stuk en de behandeling. Stuur ons gerust een e-mail op info@crystal-services.be met een korte omschrijving (een foto mag ook), dan laten wij u weten wat het kost. De tarieven voor schoenen en motorkleding staan wel op hun eigen pagina op de website.",
-    afspraak: "Een afspraak is meestal niet nodig, u kan gewoon langskomen tijdens de openingsuren. Voor grotere hoeveelheden bedrijfskleding nemen wij graag telefonisch contact op om alles vlot te laten verlopen.",
-    adres: "Ons adres is Lodewijk van Berckenlaan 189, 2140 Borgerhout.",
-    btw: "Ons BTW-nummer is BE 0691.912.876.",
-    default: "Daar kan ik u niet meteen mee helpen, maar ons team beantwoordt uw vraag graag persoonlijk: bel 0494 40 38 41 of mail info@crystal-services.be."
-  };
-
-  function keywordMatch(text){
-    const t = text.toLowerCase();
-    if(/open|uren|tijden|wanneer|hoe laat/.test(t)) return answers.openingsuren;
-    if(/dienstencheque/.test(t)) return answers.dienstencheques;
-    if(/kilo|per kg|kiloprijs/.test(t)) return answers.prijzen;
-    if(/btw|vat|ondernemingsnummer/.test(t)) return answers.btw;
-
-    if(/prijs|tarief|kost|kosten|hoeveel/.test(t)) return answers.prijzen;
-    if(/dienst|strijk|was|droog|reinig|kleding/.test(t)) return answers.diensten;
-    if(/afspraak|langskomen|ophalen|brengen/.test(t)) return answers.afspraak;
-    if(/adres|locatie|waar/.test(t)) return answers.adres;
-    if(/contact|bel|mail|telefoon|nummer/.test(t)) return answers.contact;
-    return answers.default;
-  }
-
-  function handleQuery(q){
-    addMsg(q, 'user');
-    setTimeout(()=> addMsg(keywordMatch(q), 'bot'), 350);
-  }
-
-  chips.addEventListener('click', (e)=>{
-    const chip = e.target.closest('.cs-chip');
-    if(!chip) return;
-    const key = chip.getAttribute('data-q');
-    const label = chip.textContent;
-    addMsg(label, 'user');
-    setTimeout(()=> addMsg(answers[key] || answers.default, 'bot'), 350);
-  });
-
-  sendBtn.addEventListener('click', ()=>{
-    const v = input.value.trim();
-    if(!v) return;
-    handleQuery(v);
-    input.value='';
-  });
-  input.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){ sendBtn.click(); }
-  });
 </script>
+<script src="/chat.js" defer></script>
 
 
 <!-- Cookiemelding -->

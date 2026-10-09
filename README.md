@@ -40,6 +40,14 @@ A modern, responsive website for Crystal Services - a professional laundry and d
 - Sunday & Holidays: CLOSED
 - Pickup/delivery available after 18:30
 
+## 💬 Chatbot
+
+De chat rechtsonder op elke pagina (`public/chat.js`) stuurt vragen naar `/api/chat`, dat antwoordt met Claude (AI) op basis van onze prijslijst, droogkuisregels, openingsuren en de oktoberactie.
+
+- **Prijzen, uren of acties aanpassen:** `src/app/api/chat/kennis.ts`. De AI en de reserve-antwoorden halen alles daar.
+- **Nodig op de server:** de omgevingsvariabele `ANTHROPIC_API_KEY` (aan te maken op console.anthropic.com).
+- Zonder sleutel, of als de AI even niet bereikbaar is, antwoordt de chat met eenvoudige regels (`src/app/api/chat/regels.ts`), maar wel met dezelfde prijzen.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
