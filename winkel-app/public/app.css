@@ -231,49 +231,120 @@ a{color:var(--navy);}
   @page{margin:5mm;}
   html,body{background:#fff!important;}
   body > *:not(#afdruk){display:none!important;}
-  #afdruk{display:block;width:100%;max-width:72mm;margin:0 auto;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
-  .pr-streepjes{display:block;height:12mm;max-width:100%;margin:2mm auto 0;}
-  .pr-label .pr-streepjes{height:10mm;}
-  .pr-label-loc{font-size:10pt;font-weight:700;margin-top:1mm;}
-  /* Groot op A4: dezelfde bon, vergroot en gecentreerd */
-  #afdruk.a4{zoom:1.55;}
-  .pr-dag-datum{text-align:center;font-size:10pt;margin:1mm 0 2mm;}
-  .pr-dag .pr-merk{text-align:center;}
-  .pr-klein-tabel td{font-size:8pt;}
-  .pr-groep-kop{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:.3mm solid #000;margin:4mm 0 1mm;padding-bottom:.5mm;}
-  .pr-factuurvraag{font-size:8.5pt;padding:1.5mm 0;border-bottom:.2mm dotted #000;break-inside:avoid;}
+  #afdruk{display:block;width:100%;max-width:72mm;margin:0 auto;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   #afdruk b{font-weight:700;}
+  .pr-streepjes{display:block;height:12mm;max-width:100%;margin:2.5mm auto 0;}
+  .pr-label .pr-streepjes{height:10mm;}
   .pr-klein{font-size:8pt;color:#000;}
-  .pr-kop{display:flex;align-items:center;gap:3mm;}
-  .pr-kop img{width:12mm;height:12mm;border-radius:2mm;filter:grayscale(1);}
-  .pr-merk{font-size:13pt;font-weight:800;letter-spacing:.02em;}
-  .pr-adres{margin:1.5mm 0 3mm;}
-  .pr-nr{border-top:.4mm solid #000;border-bottom:.4mm solid #000;padding:2mm 0;text-align:center;font-size:26pt;font-weight:800;letter-spacing:.04em;line-height:1.1;}
-  .pr-nr span{display:block;font-size:8pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;}
-  .pr-info{width:100%;border-collapse:collapse;margin:3mm 0 2mm;}
-  .pr-info th{text-align:left;font-weight:400;font-size:8pt;width:18mm;vertical-align:top;padding:.6mm 2mm .6mm 0;white-space:nowrap;}
-  .pr-info td{padding:.6mm 0;}
-  .pr-klaar{border:.4mm solid #000;border-radius:1.5mm;padding:1.5mm 2.5mm;display:flex;justify-content:space-between;align-items:baseline;gap:2mm;font-size:8.5pt;}
-  .pr-klaar b{font-size:11pt;}
-  .pr-stukken{width:100%;border-collapse:collapse;margin:3mm 0 1mm;}
-  .pr-stukken th{font-size:8pt;font-weight:600;text-align:left;border-bottom:.3mm solid #000;padding:.8mm 0;}
-  .pr-stukken td{padding:.8mm 0;border-bottom:.2mm dotted #000;vertical-align:top;}
+
+  /* Klein bonnetje (bonprinter, 72 mm, enkel zwart) */
+  .pr-bon{break-inside:avoid;}
+  .pr-kop{text-align:center;}
+  .pr-kop img{display:block;width:15mm;height:15mm;margin:0 auto 1mm;filter:grayscale(1) contrast(1.6);}
+  .pr-merk{font-size:15pt;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.1;}
+  .pr-slogan{font-size:7pt;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:.8mm;}
+  .pr-adres{font-size:7.5pt;margin-top:1.5mm;}
+  .pr-titel{display:flex;align-items:center;gap:2.5mm;font-size:9pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;margin:3.5mm 0 2mm;}
+  .pr-titel::before,.pr-titel::after{content:"";flex:1;border-top:.4mm solid #000;}
+  .pr-nr{background:#000;color:#fff;border-radius:2mm;padding:1.5mm 0 2mm;text-align:center;font-size:28pt;font-weight:800;letter-spacing:.05em;line-height:1.05;}
+  .pr-nr span{display:block;font-size:7pt;font-weight:600;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.5mm;}
+  .pr-info{width:100%;border-collapse:collapse;margin:3mm 0 2.5mm;}
+  .pr-info th{text-align:left;font-weight:400;font-size:7.5pt;text-transform:uppercase;letter-spacing:.06em;width:19mm;vertical-align:top;padding:1mm 2mm 1mm 0;white-space:nowrap;border-bottom:.2mm dotted #000;}
+  .pr-info td{padding:1mm 0;border-bottom:.2mm dotted #000;}
+  .pr-klaar{border:.6mm solid #000;border-radius:2mm;padding:1.5mm 2.5mm;text-align:center;}
+  .pr-klaar span{display:block;font-size:7pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;}
+  .pr-klaar b{font-size:12pt;font-weight:800;}
+  .pr-groep-kop{font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.12em;border-bottom:.4mm solid #000;margin:3.5mm 0 1mm;padding-bottom:.6mm;}
+  .pr-lijst{width:100%;border-collapse:collapse;}
+  .pr-lijst td{padding:.8mm 0;vertical-align:top;border-bottom:.2mm dotted #000;}
+  .pr-lijst td.n{width:8mm;font-weight:800;}
+  .pr-lijst td.n::after{content:"×";font-weight:400;margin-left:.5mm;}
+  .pr-mand{font-size:8.5pt;font-style:italic;padding:.8mm 0;}
+  .pr-telling{text-align:right;font-size:8pt;font-weight:700;margin-top:1mm;}
+  .pr-stukken{width:100%;border-collapse:collapse;margin:2mm 0 1mm;}
+  .pr-stukken td{padding:.9mm 0;border-bottom:.2mm dotted #000;vertical-align:top;}
   .pr-stukken tfoot td{border-bottom:0;border-top:.4mm solid #000;font-weight:800;font-size:10.5pt;padding-top:1.5mm;}
   .pr-stukken .r{text-align:right;white-space:nowrap;padding-left:2mm;}
-  .pr-betaling{margin:2mm 0;text-align:center;font-size:10pt;}
-  .pr-opm{margin:2mm 0;padding:1.5mm 2mm;border-left:.6mm solid #000;font-size:8.5pt;}
-  .pr-portaal{margin:2mm 0;text-align:center;font-size:8.5pt;}
-  .pr-voet{margin-top:3mm;padding-top:2mm;border-top:.2mm dashed #000;text-align:center;font-size:8pt;}
+  .pr-stukprijs{font-size:7.5pt;}
+  .pr-groep td{font-size:7.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.12em;padding-top:2.5mm!important;border-bottom:.4mm solid #000!important;}
+  .pr-totaal{display:flex;justify-content:space-between;align-items:baseline;background:#000;color:#fff;border-radius:2mm;padding:2mm 2.5mm;margin-top:2mm;}
+  .pr-totaal span{font-size:8pt;font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+  .pr-totaal b{font-size:14pt;font-weight:800;}
+  .pr-betaling{margin:2.5mm 0;padding:1.5mm;border:.4mm dashed #000;border-radius:2mm;text-align:center;font-size:9.5pt;font-weight:700;}
+  .pr-opm{margin:2.5mm 0;padding:1.5mm 2mm;border-left:.8mm solid #000;font-size:8.5pt;}
+  .pr-portaal{margin:2mm 0;text-align:center;font-size:8pt;}
+  .pr-voet{margin-top:3mm;padding-top:2mm;border-top:.3mm solid #000;text-align:center;font-size:7.5pt;line-height:1.5;}
+  .pr-voet b{font-size:8.5pt;}
   .pr-knip{margin:5mm 0 3mm;border-top:.3mm dashed #000;padding-top:1mm;text-align:center;font-size:7.5pt;}
   .pr-label{border:.6mm solid #000;border-radius:2mm;padding:3mm;text-align:center;break-inside:avoid;}
   .pr-label-nr{font-size:30pt;font-weight:800;letter-spacing:.04em;line-height:1;}
   .pr-label-naam{font-size:14pt;font-weight:700;margin-top:1.5mm;overflow-wrap:anywhere;}
   .pr-label-info{font-size:9pt;margin-top:1mm;}
+  .pr-label-loc{font-size:10pt;font-weight:700;margin-top:1mm;}
   .pr-label-opm{font-size:8.5pt;margin-top:1.5mm;font-style:italic;}
-  .pr-bon{break-inside:avoid;}
-  .pr-titel{text-align:center;font-size:9pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin:2.5mm 0 0;}
-  .pr-groep td{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding-top:2mm!important;border-bottom:.3mm solid #000!important;}
-  .pr-lijst{width:100%;border-collapse:collapse;margin:3mm 0 1mm;}
-  .pr-lijst td{padding:.7mm 0;vertical-align:top;}
-  .pr-lijst td.n{width:9mm;font-weight:700;}
+
+  /* Dagoverzicht */
+  #afdruk.a4-zoom{zoom:1.55;}
+  .pr-dag-datum{text-align:center;font-size:10pt;margin:1mm 0 2mm;}
+  .pr-dag .pr-merk{text-align:center;}
+  .pr-klein-tabel td{font-size:8pt;}
+  .pr-factuurvraag{font-size:8.5pt;padding:1.5mm 0;border-bottom:.2mm dotted #000;break-inside:avoid;}
+
+  /* Groot op A4: een volle pagina in de huisstijl, met onderaan de prijslijst */
+  #afdruk.a4{max-width:none;color:#1B2422;font:10pt/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .a4-blad{break-inside:avoid;}
+  .a4-kop{display:flex;justify-content:space-between;align-items:center;gap:6mm;padding-bottom:3mm;border-bottom:1.2mm solid #0E1F42;}
+  .a4-merk{display:flex;align-items:center;gap:3.5mm;}
+  .a4-merk img{width:14mm;height:14mm;}
+  .a4-naam{font-size:18pt;font-weight:800;color:#0E1F42;letter-spacing:.01em;line-height:1.05;}
+  .a4-slogan{font-size:7.5pt;font-weight:700;color:#8A6829;letter-spacing:.2em;text-transform:uppercase;margin-top:1mm;}
+  .a4-zaak{text-align:right;font-size:8pt;color:#565B63;line-height:1.5;}
+  .a4-titelrij{display:flex;justify-content:space-between;align-items:flex-end;margin:3.5mm 0 2.5mm;}
+  .a4-soort{font-size:9pt;font-weight:800;color:#8A6829;letter-spacing:.24em;text-transform:uppercase;}
+  .a4-nr{font-size:22pt;font-weight:800;color:#0E1F42;line-height:1.05;}
+  .a4-code .pr-streepjes{height:12mm;margin:0;}
+  .a4-vakken{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:3mm;}
+  .a4-vak{border:.3mm solid #E3DED3;border-radius:2.5mm;padding:2mm 3.5mm;font-size:9.5pt;}
+  .a4-vak h4,.a4-opm h4{margin:0 0 1mm;font-size:7pt;font-weight:700;color:#565B63;letter-spacing:.14em;text-transform:uppercase;}
+  .a4-accent{background:#0E1F42;border-color:#0E1F42;color:#fff;}
+  .a4-accent h4{color:#E2C48F;}
+  .a4-accent b{font-size:12.5pt;}
+  .a4-tabel{width:100%;border-collapse:collapse;margin-top:4mm;font-size:9.5pt;}
+  .a4-tabel th{background:#0E1F42;color:#fff;font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:1.5mm 3mm;}
+  .a4-tabel th:first-child{border-radius:2mm 0 0 2mm;}
+  .a4-tabel th:last-child{border-radius:0 2mm 2mm 0;}
+  .a4-tabel td{padding:.7mm 3mm;border-bottom:.2mm solid #E3DED3;vertical-align:top;}
+  .a4-tabel .r{text-align:right;white-space:nowrap;}
+  .a4-tabel .a4-n{width:16mm;text-align:center;font-weight:700;}
+  .a4-groep td{padding-top:2.5mm!important;font-size:7.5pt;font-weight:800;color:#8A6829;letter-spacing:.14em;text-transform:uppercase;border-bottom:.4mm solid #B98D4A;}
+  .a4-zacht{color:#565B63;font-style:italic;}
+  .a4-tabel tfoot td{border-bottom:0;border-top:.5mm solid #0E1F42;font-weight:700;}
+  .a4-totaal{display:flex;justify-content:space-between;align-items:baseline;gap:6mm;width:85mm;margin:3mm 0 0 auto;background:#0E1F42;color:#fff;border-radius:2.5mm;padding:2.5mm 4mm;}
+  .a4-totaal span{font-size:8pt;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+  .a4-totaal b{font-size:16pt;font-weight:800;}
+  .a4-onder{display:flex;gap:4mm;margin-top:4mm;}
+  .a4-betaling{flex:1;border:.3mm solid #E3DED3;border-radius:2.5mm;padding:2mm 4mm;font-size:10.5pt;}
+  .a4-betaling small{font-size:8.5pt;color:#565B63;}
+  .a4-betaald{color:#1E6B3A;font-weight:800;}
+  .a4-opm{flex:1.3;border-left:1mm solid #B98D4A;padding:1mm 0 1mm 3.5mm;font-size:9.5pt;}
+  .a4-portaal{text-align:center;font-size:9pt;margin:3mm 0 0;}
+  .a4-dank{text-align:center;font-size:9.5pt;font-weight:600;color:#0E1F42;margin:2.5mm 0 0;}
+  .a4-prijslijst{margin-top:4mm;padding-top:2.5mm;border-top:.5mm solid #0E1F42;break-inside:avoid;}
+  .a4-prijslijst h3{margin:0 0 2mm;font-size:10.5pt;font-weight:800;color:#0E1F42;}
+  .a4-prijslijst h3 small{display:block;font-size:7pt;font-weight:400;color:#565B63;margin-top:.5mm;}
+  .a4-pl-kolommen{column-count:4;column-gap:4.5mm;font-size:6.2pt;line-height:1.2;}
+  .a4-pl-groep{margin-bottom:1.6mm;}
+  .a4-pl-titel{color:#0E1F42;font-size:6.8pt;font-weight:800;border-bottom:.3mm solid #B98D4A;padding-bottom:.3mm;margin-bottom:.3mm;break-after:avoid;break-inside:avoid;}
+  .a4-pl-rij{display:flex;gap:1mm;border-bottom:.1mm dotted #C9C3B6;break-inside:avoid;}
+  .a4-pl-rij em{flex:1;font-style:normal;}
+  .a4-pl-rij span{width:7mm;text-align:right;white-space:nowrap;}
+  .a4-pl-rij .a4-pl-breed{width:15mm;}
+  .a4 .pr-knip{margin:3.5mm 0 1.5mm;}
+  /* Op A4 is het label een smalle strook: nummer links, gegevens in het midden, streepjescode rechts */
+  .a4 .pr-label{display:grid;grid-template-columns:auto 1fr auto;column-gap:5mm;align-items:center;text-align:left;padding:2mm 4mm;color:#000;}
+  .a4 .pr-label-nr{grid-row:1 / span 5;font-size:24pt;}
+  .a4 .pr-label > :not(.pr-label-nr):not(.pr-streepjes){grid-column:2;margin-top:.5mm;}
+  .a4 .pr-label-naam{font-size:13pt;margin-top:0;}
+  .a4 .pr-label-opm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .a4 .pr-label .pr-streepjes{grid-column:3;grid-row:1 / span 5;height:11mm;margin:0;}
 }
