@@ -254,3 +254,19 @@ test('factuur aanvragen: gegevens bij de klant bewaard, afvinken, en de bon blij
   assert.equal(b2.factuur.adres, 'Straat 1, 2000 Antwerpen');
   assert.throws(() => pasToe(LEEG, { op: 'factuurGemaakt', id: 'x' }, nu), /niet gevonden/);
 });
+
+test('indeling van de winkel: wordt opgeschoond en bewaard, null zet terug op standaard', () => {
+  let { staat } = pasToe(LEEG, { op: 'instellingen', indeling: [
+    { plaats: '  Kast lingerie ', woorden: ['Lingerie', ' bh ', 'bh', ''] },
+    { plaats: 'Rek hemden', woorden: 'hemd, bloes' },
+    { plaats: '', woorden: ['zonder plaats'] },
+  ] }, nu);
+  assert.deepEqual(voorWinkel(staat, nu).instellingen.indeling, [
+    { plaats: 'Kast lingerie', woorden: ['lingerie', 'bh'] },
+    { plaats: 'Rek hemden', woorden: ['hemd', 'bloes'] },
+  ]);
+  ({ staat } = pasToe(staat, { op: 'instellingen', bewaarMaanden: 6 }, nu));
+  assert.equal(voorWinkel(staat, nu).instellingen.indeling.length, 2, 'blijft bij andere instellingen');
+  ({ staat } = pasToe(staat, { op: 'instellingen', indeling: null }, nu));
+  assert.equal(voorWinkel(staat, nu).instellingen.indeling, undefined);
+});

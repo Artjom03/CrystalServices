@@ -142,7 +142,7 @@
       <p id="f-fout" class="fout" role="alert"></p>
     </div>
     <div class="paneel-voet">
-      <label class="vink" id="f-print-label" style="margin-right:auto;font-size:.9rem"><input type="checkbox" id="f-print"> Afgiftebon afdrukken</label>
+      <label class="vink" id="f-print-label" style="margin-right:auto;font-size:.9rem"><input type="checkbox" id="f-print"> Klantenbon en mandticket afdrukken</label>
       <button type="button" class="knop" data-sluit>Annuleren</button>
       <button type="submit" class="knop hoofd" id="f-bewaar">Bon maken</button>
     </div>
@@ -166,7 +166,7 @@
     </fieldset>
     <fieldset>
       <legend>Afdrukken</legend>
-      <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de afgiftebon bij een nieuwe bon, de afhaalbon bij het ophalen</label>
+      <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de klantenbon en het mandticket bij een nieuwe bon, de afhaalbon bij het ophalen</label>
       <label>Bonnen standaard afdrukken als
         <select id="i-formaat">
           <option value="klein">Klein bonnetje (bonprinter)</option>
@@ -188,8 +188,13 @@
       <div class="d-knoppen"><button type="button" class="knop" id="i-prijzen">Prijzen aanpassen</button></div>
     </fieldset>
     <fieldset>
+      <legend>Indeling van de winkel</legend>
+      <p class="tijdlijn">Op het mandticket staan de stukken per plaats (kast, rek...), zodat je weet wat waar moet. Kies zelf de plaatsen en welke stukken erbij horen.</p>
+      <div class="d-knoppen"><button type="button" class="knop" id="i-indeling">Indeling aanpassen</button></div>
+    </fieldset>
+    <fieldset>
       <legend>Streepjescode</legend>
-      <p class="tijdlijn">Op elke afgiftebon en elk mandlabel staat een streepjescode. Scan die met een USB-scanner en de bon gaat meteen open, klaar om af te rekenen; daarna komt de afhaalbon uit de printer. Zonder scanner: typ het bonnummer in het zoekveld en druk op Enter. Scan de testbon om de scanner te proberen.</p>
+      <p class="tijdlijn">Op elke klantenbon en elk mandticket staat een streepjescode. Scan die met een USB-scanner en de bon gaat meteen open, klaar om af te rekenen; daarna komt de afhaalbon uit de printer. Zonder scanner: typ het bonnummer in het zoekveld en druk op Enter. Scan de testbon om de scanner te proberen.</p>
     </fieldset>
     <p id="i-fout" class="fout" role="alert"></p>
   </div>
@@ -212,6 +217,27 @@
       <button type="button" class="knop gevaar" id="p-standaard" style="margin-right:auto">Standaardprijzen</button>
       <button type="button" class="knop" data-sluit>Annuleren</button>
       <button type="submit" class="knop hoofd" id="p-bewaar">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Indeling van de winkel: waar welk stuk naartoe gaat -->
+<dialog id="indeling" class="paneel">
+  <form id="ix" method="dialog" novalidate>
+    <div class="paneel-kop">
+      <h2>Indeling van de winkel</h2>
+      <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
+    </div>
+    <div class="paneel-inhoud">
+      <p class="tijdlijn">Op het mandticket staan de stukken per plaats. Geef elke plaats een naam en zet erachter welke stukken daar horen, gescheiden door komma's. Een stuk komt bij de eerste plaats die past (met ↑ verander je de volgorde). Wat nergens past, staat onder "Andere stukken".</p>
+      <div id="ix-rijen"></div>
+      <div class="d-knoppen"><button type="button" class="knop" id="ix-plus">+ Plaats toevoegen</button></div>
+      <p id="ix-fout" class="fout" role="alert"></p>
+    </div>
+    <div class="paneel-voet">
+      <button type="button" class="knop gevaar" id="ix-standaard" style="margin-right:auto">Standaardindeling</button>
+      <button type="button" class="knop" data-sluit>Annuleren</button>
+      <button type="submit" class="knop hoofd">Opslaan</button>
     </div>
   </form>
 </dialog>

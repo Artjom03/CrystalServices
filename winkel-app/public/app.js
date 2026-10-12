@@ -465,7 +465,8 @@
             <option value="klein"${standaardFormaat() === 'klein' ? ' selected' : ''}>Klein bonnetje</option>
             <option value="a4"${standaardFormaat() === 'a4' ? ' selected' : ''}>Groot op A4</option>
           </select>
-          <button class="knop" data-actie="print" data-soort="afgifte">Afgiftebon</button>
+          <button class="knop" data-actie="print" data-soort="klant">Klantenbon</button>
+          <button class="knop" data-actie="print" data-soort="mand">Mandticket</button>
           <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
         </div>
       </div>
@@ -623,7 +624,7 @@
     scan = [];
     const enter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
     if (!enter || !snel || reeks.length < 5) return;
-    if ($('#app').hidden || $('#formulier').open || $('#prijslijst').open || $('#kassa-open').open) return;
+    if ($('#app').hidden || $('#formulier').open || $('#prijslijst').open || $('#indeling').open || $('#kassa-open').open) return;
     e.preventDefault();
     e.stopPropagation();
     // De cijfers zijn ook in een invulveld beland: daar weer weghalen.
@@ -674,52 +675,101 @@
   const mandTekst = (titel) => (titel === 'Strijk' ? 'Strijkmand: de stukken worden geteld bij het strijken'
     : titel === 'Was' ? 'Was: de stukken worden geteld bij het wassen' : 'De stukken worden nog geteld');
 
+  // Welke bonnen komen uit de printer:
+  // afgifte = klantenbon + mandticket, klant = enkel de klantenbon, mand = enkel het mandticket, afhaal = afhaalbon.
+  // Het mandticket gaat altijd naar de bonprinter (klein formaat), ook als de klant een A4 krijgt.
   function drukAf(b, soortBon = 'afgifte', formaat = 'klein') {
-    $('#afdruk').innerHTML = formaat === 'a4' ? bonA4(b, soortBon === 'afhaal') : bonKlein(b, soortBon === 'afhaal');
-    $('#afdruk').className = formaat === 'a4' ? 'a4' : '';
-    afdrukkenNaLogo(formaat);
+    const a4 = formaat === 'a4';
+    const delen = [];
+    if (soortBon === 'afhaal') delen.push({ html: a4 ? bonA4(b, true) : bonKlein(b, true), a4 });
+    if (soortBon === 'afgifte' || soortBon === 'klant') delen.push({ html: a4 ? bonA4(b, false) : bonKlein(b, false), a4 });
+    if (soortBon === 'afgifte' || soortBon === 'mand') delen.push({ html: mandTicket(b), a4: false });
+    drukDelen(delen);
+  }
+
+  /**
+   * In het Windows-programma: elk deel apart naar de printer, zodat de bonprinter ertussen snijdt.
+   * In de browser: alles in één keer, met een nieuwe pagina per deel.
+   */
+  async function drukDelen(delen) {
+    if (DESKTOP) {
+      for (const d of delen) {
+        $('#afdruk').innerHTML = d.html;
+        $('#afdruk').className = d.a4 ? 'a4' : '';
+        await logoGeladen();
+        await afdrukken(d.a4 ? 'a4' : 'klein');
+      }
+      return;
+    }
+    const a4 = delen.some((d) => d.a4);
+    $('#afdruk').innerHTML = delen.map((d, i) => `<div class="pr-deel${i ? ' pr-nieuwe-pagina' : ''}">${d.html}</div>`).join('');
+    $('#afdruk').className = a4 ? 'a4' : '';
+    await logoGeladen();
+    afdrukken(a4 ? 'a4' : 'klein');
+  }
+
+  // ---------- Indeling van de winkel ----------
+  // Op het mandticket staan de stukken per plaats in de winkel, zodat je weet wat waar moet.
+  // Een stuk komt bij de eerste plaats waarvan een woord in de naam staat; de volgorde telt dus.
+  const STANDAARD_INDELING = [
+    { plaats: 'Kast lingerie & ondergoed', woorden: ['lingerie', 'bh', 'slip', 'string', 'onderbroek', 'ondergoed', 'boxer', 'body', 'sokken', 'kousen', 'panty', 'nachtkleed', 'pyjama', 'nachtkleding'] },
+    { plaats: 'Kast bedlinnen & handdoeken', woorden: ['laken', 'dekbed', 'kussen', 'sloop', 'tafelkleed', 'servet', 'theenap', 'handdoek', 'vaatdoek', 'washandje', 'badmat', 'donsdeken', 'deken', 'gordijn', 'zakdoek'] },
+    { plaats: 'Rek hemden & bloezen', woorden: ['hemd', 'bloes', 'polo', 'koksvest'] },
+    { plaats: 'Rek broeken', woorden: ['broek', 'bermuda', 'jogging', 'short'] },
+    { plaats: 'Rek kleedjes & rokken', woorden: ['kleed', 'rok', 'bolero'] },
+    { plaats: 'Rek jassen & kostuums', woorden: ['mantel', 'jas', 'colbert', 'kostuum', 'anorak', 'overall', 'vest', 'pak'] },
+    { plaats: 'Plank truien & T-shirts', woorden: ['trui', 'sweater', 'golf', 't-shirt', 'topje', 'sjaal'] },
+    { plaats: 'Schoenen', woorden: ['schoen', 'sneaker', 'laars', 'handschoen'] },
+  ];
+  const indeling = () => (Array.isArray(staat.instellingen?.indeling) ? staat.instellingen.indeling : STANDAARD_INDELING);
+  const ANDERE_PLAATS = 'Andere stukken';
+  function plaatsVan(naam) {
+    const n = zoekVorm(naam);
+    const r = indeling().find((x) => (x.woorden || []).some((w) => w && n.includes(zoekVorm(w))));
+    return r ? r.plaats : ANDERE_PLAATS;
   }
 
   function bonKlein(b, afhaal) {
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
-    const code = scanCode(b.nr);
     const uren = esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1));
-    const kop = `
+    if (!afhaal) {
+      // Kort: wat de klant nodig heeft om terug te komen.
+      const code = scanCode(b.nr);
+      const lijst = blokkenVan(b).map(([titel, stukken]) => `<tr><th>${esc(titel)}</th><td>${stukken.length
+        ? stukken.map((s) => `<b>${s.aantal}×</b> ${esc(kaleNaam(s))}`).join(', ')
+        : (titel === 'Strijk' ? 'strijkmand, wordt nog geteld' : titel === 'Was' ? 'was, wordt nog geteld' : 'wordt nog geteld')}</td></tr>`).join('');
+      return `<section class="pr-bon pr-kort">
+        <header class="pr-kop-kort">
+          <img src="/apple-touch-icon.png" alt="">
+          <div><div class="pr-merk">${esc(WINKEL.naam)}</div><div class="pr-adres">Tel. ${esc(WINKEL.telefoon)} · ${WEBSITE}</div></div>
+        </header>
+        <div class="pr-nr"><span>Afgiftebon</span>${esc(b.nr)}</div>
+        ${code ? streepjescode(code) : ''}
+        <table class="pr-info">
+          <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
+          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
+          <tr class="pr-klaar-rij"><th>Klaar</th><td><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten'}</b></td></tr>
+          ${lijst}
+        </table>
+        <div class="pr-betaling">${b.betaald ? betaaldTekst(b) : 'U betaalt bij het ophalen'}</div>
+        ${heeftToegang(b) ? `<div class="pr-portaal">Volg uw bonnen online: <b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></div>` : ''}
+        <footer class="pr-voet">Breng deze bon mee bij het ophalen.<br>${uren} · ${esc(WINKEL.adres)}</footer>
+      </section>`;
+    }
+
+    const rijen = groepen(b.stukken).map(([beh, lijst]) =>
+      `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
+      lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
+    ).join('');
+    return `<section class="pr-bon">
         <header class="pr-kop">
           <img src="/apple-touch-icon.png" alt="">
           <div class="pr-merk">${esc(WINKEL.naam)}</div>
           <div class="pr-slogan">Strijkatelier · Wasserij · Droogkuis</div>
           <div class="pr-adres">${esc(WINKEL.adres)}<br>Tel. ${esc(WINKEL.telefoon)} · ${WEBSITE}</div>
         </header>
-        <div class="pr-titel"><span>${afhaal ? 'Afhaalbon' : 'Afgiftebon'}</span></div>
+        <div class="pr-titel"><span>Afhaalbon</span></div>
         <div class="pr-nr"><span>Bonnummer</span>${esc(b.nr)}</div>
-        ${!afhaal && code ? streepjescode(code) : ''}`;
-
-    let inhoud;
-    if (!afhaal) {
-      const lijst = blokkenVan(b).map(([titel, stukken]) => `
-        <div class="pr-groep-kop">${esc(titel)}</div>
-        ${stukken.length
-          ? `<table class="pr-lijst">${stukken.map((s) => `<tr><td class="n">${s.aantal}</td><td>${esc(kaleNaam(s))}</td></tr>`).join('')}</table>`
-          : `<div class="pr-mand">${mandTekst(titel)}</div>`}`).join('');
-      inhoud = `
-        <table class="pr-info">
-          <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b>${b.klant.telefoon ? '<br>' + esc(b.klant.telefoon) : ''}</td></tr>
-          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
-        </table>
-        <div class="pr-klaar"><span>Klaar vanaf</span><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten'}</b></div>
-        ${lijst}
-        ${aantal ? `<div class="pr-telling">${aantal} stuk${aantal > 1 ? 's' : ''}</div>` : ''}
-        ${b.opmerking ? `<div class="pr-opm"><b>Opmerking</b><br>${esc(b.opmerking)}</div>` : ''}
-        <div class="pr-betaling">${b.betaald ? betaaldTekst(b) : 'U betaalt bij het ophalen'}</div>
-        ${heeftToegang(b) ? `<div class="pr-portaal">Volg uw bonnen online<br><b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></div>` : ''}
-        <footer class="pr-voet"><b>Breng deze bon mee bij het ophalen.</b><br>${uren}<br>Bedankt en tot binnenkort!</footer>`;
-    } else {
-      const rijen = groepen(b.stukken).map(([beh, lijst]) =>
-        `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
-        lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
-      ).join('');
-      inhoud = `
         <table class="pr-info">
           <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
           <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp))}</td></tr>
@@ -729,22 +779,31 @@
         <div class="pr-totaal"><span>Totaal${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>
         <div class="pr-betaling">${b.betaald ? betaaldTekst(b) : `Te betalen: <b>${eur(b.totaal)}</b>`}</div>
         ${b.factuur ? '<div class="pr-portaal">U krijgt een factuur voor deze bon.</div>' : ''}
-        <footer class="pr-voet"><b>Bedankt voor uw vertrouwen!</b><br>${uren}<br>${WEBSITE}</footer>`;
-    }
-
-    // Het label blijft in de winkel: daarop mag ook de locatie staan.
-    return `<section class="pr-bon">${kop}${inhoud}</section>` + (afhaal ? '' : `
-      <div class="pr-knip">✂ hier knippen · label voor de mand</div>
-      ${mandLabel(b, aantal, code)}`);
+        <footer class="pr-voet"><b>Bedankt voor uw vertrouwen!</b><br>${uren}<br>${WEBSITE}</footer>
+      </section>`;
   }
 
-  function mandLabel(b, aantal, code) {
-    return `<section class="pr-label">
-        <div class="pr-label-nr">${esc(b.nr)}</div>
+  /** Het mandticket blijft in de winkel: op de mand plakken en de stukken per plaats indelen. */
+  function mandTicket(b) {
+    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const code = scanCode(b.nr);
+    const perPlaats = new Map([...indeling().map((r) => [r.plaats, []]), [ANDERE_PLAATS, []]]);
+    b.stukken.forEach((s) => perPlaats.get(plaatsVan(kaleNaam(s)))?.push(s));
+    const plaatsen = [...perPlaats].filter(([, l]) => l.length).map(([plaats, lijst]) => `
+        <div class="pr-plaats">
+          <div class="pr-plaats-kop">${esc(plaats)}<span>${lijst.reduce((n, s) => n + s.aantal, 0)} st.</span></div>
+          ${lijst.map((s) => `<div class="pr-plaats-rij"><i></i><b>${s.aantal}×</b><span>${esc(kaleNaam(s))}</span><small>${esc((BEHANDELING[s.behandeling] || '').toLowerCase())}</small></div>`).join('')}
+        </div>`).join('');
+    // Strijk of was zonder getelde stukken: dat moet nog geteld en ingedeeld worden.
+    const teTellen = blokkenVan(b).filter(([, l]) => !l.length).map(([titel]) => `<div class="pr-plaats-rij"><i></i><span>${esc(mandTekst(titel))}</span></div>`).join('');
+    return `<section class="pr-ticket">
+        <div class="pr-ticket-kop"><span>Mandticket</span><span>${esc(b.soort)}</span></div>
+        <div class="pr-ticket-nr">${esc(b.nr)}</div>
         <div class="pr-label-naam">${esc(b.klant.naam)}</div>
-        <div class="pr-label-info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' st.' : ''} · klaar ${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</div>
+        <div class="pr-ticket-info">${b.klant.telefoon ? esc(b.klant.telefoon) + ' · ' : ''}klaar <b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</b>${aantal ? ` · ${aantal} st.` : ''}${b.betaald ? ' · betaald' : ''}</div>
         ${b.locatie ? `<div class="pr-label-loc">Locatie: ${esc(b.locatie)}</div>` : ''}
-        ${b.opmerking ? `<div class="pr-label-opm">${esc(b.opmerking)}</div>` : ''}
+        ${b.opmerking ? `<div class="pr-ticket-opm">${esc(b.opmerking)}</div>` : ''}
+        ${plaatsen || teTellen ? `<div class="pr-ticket-titel">Indeling</div>${plaatsen}${teTellen ? `<div class="pr-plaats">${teTellen}</div>` : ''}` : ''}
         ${code ? streepjescode(code, 0.4) : ''}
       </section>`;
   }
@@ -811,8 +870,7 @@
       ${afhaal ? '<p class="a4-dank">Bedankt voor uw vertrouwen!</p>' : ''}`;
 
     return `<section class="a4-blad">${kop}${tabel}${slot}</section>
-      ${prijslijstOpA4 ? prijslijstA4() : ''}
-      ${afhaal ? '' : `<div class="pr-knip">✂ hier knippen · label voor de mand</div>${mandLabel(b, aantal, code)}`}`;
+      ${prijslijstOpA4 ? prijslijstA4() : ''}`;
   }
 
   /** Onze prijslijst, compact in kolommen, onderaan de A4-bon. */
@@ -835,13 +893,10 @@
   }
 
   // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
-  function afdrukkenNaLogo(formaat) {
+  function logoGeladen() {
     const logo = $('#afdruk img');
-    if (logo && !logo.complete) {
-      logo.onload = logo.onerror = () => afdrukken(formaat);
-    } else {
-      afdrukken(formaat);
-    }
+    if (!logo || logo.complete) return Promise.resolve();
+    return new Promise((klaar) => { logo.onload = logo.onerror = () => klaar(); });
   }
 
   const standaardFormaat = () => (staat.instellingen?.formaat === 'a4' ? 'a4' : 'klein');
@@ -849,8 +904,8 @@
   function afdrukken(formaat = 'klein') {
     // Paginaformaat: A4 met marges, of een smalle rol voor de bonprinter.
     $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4;margin:12mm}}' : '@media print{@page{margin:5mm}}';
-    if (!DESKTOP) return window.print();
-    window.crystal.afdrukken(formaat).then((r) => {
+    if (!DESKTOP) return Promise.resolve(window.print());
+    return window.crystal.afdrukken(formaat).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
         alert('Afdrukken lukte niet' + (r.fout ? ' (' + r.fout + ')' : '') + '. Kies de printer via ⚙ Instellingen.');
       }
@@ -1234,6 +1289,48 @@
   });
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
+  $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
+
+  // ---------- Indeling aanpassen ----------
+  function indelingRij(r = { plaats: '', woorden: [] }) {
+    return `<div class="ix-rij">
+      <input class="ix-plaats" maxlength="40" placeholder="Plaats, bv. Kast 2 lingerie" value="${esc(r.plaats)}" aria-label="Plaats">
+      <input class="ix-woorden" placeholder="Stukken, bv. bh, slip, lingerie" value="${esc((r.woorden || []).join(', '))}" aria-label="Stukken voor deze plaats">
+      <button type="button" class="knop ix-knop" data-ix="op" title="Hoger zetten" aria-label="Hoger zetten">↑</button>
+      <button type="button" class="knop ix-knop" data-ix="weg" title="Weghalen" aria-label="Weghalen">✕</button>
+    </div>`;
+  }
+  function openIndeling(lijst = indeling()) {
+    $('#ix-rijen').innerHTML = lijst.map(indelingRij).join('');
+    $('#ix-fout').textContent = '';
+    if (!$('#indeling').open) $('#indeling').showModal();
+  }
+  $('#ix-rijen').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-ix]');
+    if (!knop) return;
+    const rij = knop.closest('.ix-rij');
+    if (knop.dataset.ix === 'weg') rij.remove();
+    else if (rij.previousElementSibling) rij.parentNode.insertBefore(rij, rij.previousElementSibling);
+  });
+  $('#ix-plus').addEventListener('click', () => {
+    $('#ix-rijen').insertAdjacentHTML('beforeend', indelingRij());
+    $('#ix-rijen .ix-rij:last-child .ix-plaats').focus();
+  });
+  $('#ix-standaard').addEventListener('click', () => openIndeling(STANDAARD_INDELING));
+  $('#ix').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const lijst = $$('#ix-rijen .ix-rij').map((r) => ({
+      plaats: r.querySelector('.ix-plaats').value.trim(),
+      woorden: r.querySelector('.ix-woorden').value.split(',').map((w) => w.trim()).filter(Boolean),
+    })).filter((r) => r.plaats);
+    try {
+      await doe({ op: 'instellingen', indeling: lijst });
+      $('#indeling').close();
+      toast('Indeling opgeslagen ✓');
+    } catch (err) {
+      if (err.message !== 'pin') $('#ix-fout').textContent = err.message;
+    }
+  });
 
   // ---------- Prijslijst aanpassen ----------
   let werk = null;

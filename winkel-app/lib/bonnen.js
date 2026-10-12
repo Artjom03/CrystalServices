@@ -144,10 +144,25 @@ export function schoonPrijslijst(p) {
 export function instellingenVan(staat) {
   const i = staat?.instellingen || {};
   const m = Math.round(Number(i.bewaarMaanden));
-  return {
+  const uit = {
     bewaarMaanden: m >= BEWAAR_MIN && m <= BEWAAR_MAX ? m : STANDAARD_INSTELLINGEN.bewaarMaanden,
     formaat: i.formaat === 'a4' ? 'a4' : 'klein',
   };
+  // Zonder eigen indeling gebruikt de app een standaardindeling.
+  if (Array.isArray(i.indeling)) uit.indeling = indelingVan(i.indeling);
+  return uit;
+}
+
+/**
+ * De indeling van de winkel: waar welk stuk naartoe gaat (een rek, een kast...).
+ * Een stuk komt bij de eerste plaats waarvan een woord in de naam van het stuk staat.
+ */
+function indelingVan(lijst) {
+  return (Array.isArray(lijst) ? lijst : []).slice(0, 30).map((r) => ({
+    plaats: tekst(r?.plaats, 40),
+    woorden: [...new Set((Array.isArray(r?.woorden) ? r.woorden : String(r?.woorden || '').split(','))
+      .map((w) => tekst(w, 30).toLowerCase()).filter(Boolean))].slice(0, 30),
+  })).filter((r) => r.plaats);
 }
 
 /** Zoeken en vergelijken zonder hoofdletters en accenten. */
@@ -339,6 +354,10 @@ function handeling(oud, actie, nu) {
         nieuw.bewaarMaanden = m;
       }
       if (actie.formaat !== undefined) nieuw.formaat = actie.formaat === 'a4' ? 'a4' : 'klein';
+      if (actie.indeling !== undefined) {
+        if (actie.indeling === null) delete nieuw.indeling;
+        else nieuw.indeling = indelingVan(actie.indeling);
+      }
       staat.instellingen = nieuw;
       return { staat };
     }

@@ -227,6 +227,10 @@ a{color:var(--navy);}
 /* Afdruk: een bon van maximaal 72 mm breed (de printbreedte van een bonnenprinter van 80 mm; op A4 in het midden),
    met onderaan een label om af te knippen en aan de mand te hangen. Enkel zwart-wit. */
 #afdruk{display:none;}
+.ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
+.ix-knop{width:44px;padding:0;}
+.ix-rij input{border:1px solid var(--lijn);border-radius:10px;padding:9px 10px;min-height:44px;width:100%;background:var(--kaart);}
+@media (max-width:560px){.ix-rij{grid-template-columns:1fr auto auto;}.ix-rij .ix-woorden{grid-column:1 / -1;grid-row:2;}}
 @media print{
   @page{margin:5mm;}
   html,body{background:#fff!important;}
@@ -339,12 +343,42 @@ a{color:var(--navy);}
   .a4-pl-rij em{flex:1;font-style:normal;}
   .a4-pl-rij span{width:7mm;text-align:right;white-space:nowrap;}
   .a4-pl-rij .a4-pl-breed{width:15mm;}
-  .a4 .pr-knip{margin:3.5mm 0 1.5mm;}
-  /* Op A4 is het label een smalle strook: nummer links, gegevens in het midden, streepjescode rechts */
-  .a4 .pr-label{display:grid;grid-template-columns:auto 1fr auto;column-gap:5mm;align-items:center;text-align:left;padding:2mm 4mm;color:#000;}
-  .a4 .pr-label-nr{grid-row:1 / span 5;font-size:24pt;}
-  .a4 .pr-label > :not(.pr-label-nr):not(.pr-streepjes){grid-column:2;margin-top:.5mm;}
-  .a4 .pr-label-naam{font-size:13pt;margin-top:0;}
-  .a4 .pr-label-opm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .a4 .pr-label .pr-streepjes{grid-column:3;grid-row:1 / span 5;height:11mm;margin:0;}
+  /* Mandticket na een A4-bon (browser): smal en gecentreerd op een eigen pagina */
+  .a4 .pr-ticket{max-width:72mm;margin:0 auto;color:#000;font-size:9.5pt;}
+
+  /* Korte klantenbon */
+  .pr-nieuwe-pagina{break-before:page;}
+  .pr-kop-kort{display:flex;align-items:center;gap:2.5mm;padding-bottom:2mm;}
+  .pr-kop-kort img{width:11mm;height:11mm;filter:grayscale(1) contrast(1.6);}
+  .pr-kop-kort .pr-merk{font-size:12.5pt;}
+  .pr-kop-kort .pr-adres{margin-top:.5mm;}
+  .pr-kort .pr-nr{font-size:24pt;}
+  .pr-kort .pr-info{margin:2.5mm 0 1.5mm;}
+  .pr-kort .pr-info th{width:15mm;}
+  .pr-klaar-rij th,.pr-klaar-rij td{border-top:.5mm solid #000;border-bottom:.5mm solid #000!important;}
+  .pr-klaar-rij b{font-size:11.5pt;font-weight:800;}
+  .pr-kort .pr-betaling{margin:2mm 0;padding:1mm;font-size:9pt;}
+  .pr-kort .pr-voet{margin-top:2mm;padding-top:1.5mm;}
+
+  /* Mandticket: blijft in de winkel, met de stukken per plaats */
+  .pr-ticket{break-inside:auto;}
+  .pr-ticket-kop{display:flex;justify-content:space-between;gap:2mm;background:#000;color:#fff;border-radius:1.5mm;padding:1mm 2mm;font-size:7.5pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
+  .pr-ticket-kop span:last-child{letter-spacing:.02em;font-weight:600;text-transform:none;text-align:right;}
+  .pr-ticket-nr{font-size:34pt;font-weight:800;letter-spacing:.04em;line-height:1;text-align:center;margin-top:2mm;}
+  .pr-ticket .pr-label-naam{text-align:center;}
+  .pr-ticket-info{text-align:center;font-size:8.5pt;margin-top:1mm;}
+  .pr-ticket .pr-label-loc{text-align:center;font-size:11pt;border:.4mm solid #000;border-radius:1.5mm;padding:.8mm;margin-top:2mm;}
+  .pr-ticket-opm{margin-top:2mm;padding:1.2mm 2mm;border:.4mm dashed #000;border-radius:1.5mm;font-size:8.5pt;font-weight:700;}
+  .pr-ticket-opm::before{content:"⚠ ";}
+  .pr-ticket-titel{font-size:8pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;text-align:center;margin:3mm 0 1mm;display:flex;align-items:center;gap:2mm;}
+  .pr-ticket-titel::before,.pr-ticket-titel::after{content:"";flex:1;border-top:.3mm solid #000;}
+  .pr-plaats{margin-top:2mm;break-inside:avoid;}
+  .pr-plaats-kop{display:flex;justify-content:space-between;align-items:baseline;background:#000;color:#fff;padding:.8mm 2mm;border-radius:1mm;font-size:9pt;font-weight:800;}
+  .pr-plaats-kop span{font-size:7.5pt;font-weight:600;}
+  .pr-plaats-rij{display:flex;align-items:baseline;gap:1.5mm;padding:1mm 1mm;border-bottom:.2mm dotted #000;font-size:9.5pt;}
+  .pr-plaats-rij i{flex:none;width:3mm;height:3mm;border:.35mm solid #000;border-radius:.5mm;align-self:center;}
+  .pr-plaats-rij b{flex:none;min-width:6mm;}
+  .pr-plaats-rij span{flex:1;}
+  .pr-plaats-rij small{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;}
+  .pr-ticket .pr-streepjes{margin-top:3mm;}
 }
