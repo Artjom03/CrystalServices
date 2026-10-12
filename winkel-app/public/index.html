@@ -33,6 +33,8 @@
     <div class="balk-binnen">
       <h1 class="merk">Crystal <span>Winkel</span></h1>
       <div class="balk-knoppen">
+        <button id="kassa-knop" class="knop balk-knop">Kassa</button>
+        <button id="klanten-knop" class="knop balk-knop">Klanten</button>
         <button id="instellingen-knop" class="knop icoon" aria-label="Instellingen" title="Instellingen">⚙</button>
         <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
       </div>
@@ -165,11 +167,36 @@
     <fieldset>
       <legend>Afdrukken</legend>
       <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de afgiftebon bij een nieuwe bon, de afhaalbon bij het ophalen</label>
+      <label>Bonnen standaard afdrukken als
+        <select id="i-formaat">
+          <option value="klein">Klein bonnetje (bonprinter)</option>
+          <option value="a4">Groot op A4</option>
+        </select>
+      </label>
+      <p class="tijdlijn">Bij elke bon kan je het formaat ook apart kiezen. Facturen komen altijd op A4.</p>
       <p id="i-printer" class="tijdlijn" hidden></p>
       <div class="d-knoppen">
-        <button type="button" class="knop" id="i-kies-printer" hidden>Printer kiezen</button>
+        <button type="button" class="knop" id="i-kies-printer" hidden>Bonprinter kiezen</button>
+        <button type="button" class="knop" id="i-kies-printer-a4" hidden>A4-printer kiezen</button>
         <button type="button" class="knop" id="i-testbon">Testbon afdrukken</button>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend>Bedrijfsgegevens <small>(voor facturen)</small></legend>
+      <form id="i-bedrijf" class="i-bedrijf">
+        <label>Naam<input name="naam" maxlength="80"></label>
+        <label>Adres<input name="adres" maxlength="160"></label>
+        <div class="rij">
+          <label>Btw-nummer<input name="btw" maxlength="30" placeholder="BE0123456789"></label>
+          <label>Btw-tarief (%)<input name="btwPct" inputmode="decimal" maxlength="5"></label>
+        </div>
+        <div class="rij">
+          <label>IBAN<input name="iban" maxlength="40" placeholder="BE.."></label>
+          <label>Telefoon<input name="telefoon" maxlength="30"></label>
+        </div>
+        <label>E-mail<input name="email" type="email" maxlength="120"></label>
+        <div class="d-knoppen"><button class="knop" type="submit">Bedrijfsgegevens opslaan</button></div>
+      </form>
     </fieldset>
     <fieldset>
       <legend>Prijslijst</legend>
@@ -205,11 +232,118 @@
   </form>
 </dialog>
 
+<!-- Kassa openen: elke dag bij de eerste keer verplicht -->
+<dialog id="kassa-open" class="paneel smal">
+  <form id="ko" method="dialog" novalidate>
+    <div class="paneel-kop"><h2>Kassa openen</h2></div>
+    <div class="paneel-inhoud">
+      <p id="ko-dag" class="tijdlijn"></p>
+      <label>Hoeveel cash zit er nu in de kassa?
+        <span class="prijs-veld groot">€ <input name="begin" inputmode="decimal" autocomplete="off" placeholder="0,00" required></span>
+      </label>
+      <p id="ko-vorige" class="tijdlijn"></p>
+      <p id="ko-fout" class="fout" role="alert"></p>
+    </div>
+    <div class="paneel-voet"><button type="submit" class="knop hoofd">Kassa openen</button></div>
+  </form>
+</dialog>
+
+<!-- Kassa en dagoverzicht -->
+<dialog id="kassa" class="paneel">
+  <div class="paneel-kop">
+    <h2>Kassa</h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div class="paneel-inhoud">
+    <label class="dag-kies">Dag <input id="k-dag" type="date"></label>
+    <div id="k-inhoud"></div>
+    <form id="k-beweging" class="k-form" hidden>
+      <h3>Geld in of uit de kassa</h3>
+      <div class="keuzes" id="k-richting">
+        <button type="button" data-richting="uit" aria-pressed="true">Uit de kassa</button>
+        <button type="button" data-richting="in" aria-pressed="false">In de kassa</button>
+      </div>
+      <div class="rij">
+        <span class="prijs-veld">€ <input name="bedrag" inputmode="decimal" placeholder="0,00" autocomplete="off"></span>
+        <input name="reden" maxlength="80" placeholder="Reden, bv. wisselgeld, naar de bank, aankoop zeep" autocomplete="off">
+      </div>
+      <div class="d-knoppen"><button class="knop hoofd" type="submit">Opslaan</button><button class="knop" type="button" data-annuleer>Annuleren</button></div>
+    </form>
+    <form id="k-sluit" class="k-form" hidden>
+      <h3>Dag afsluiten</h3>
+      <label>Tel de cash in de kassa. Hoeveel zit erin?
+        <span class="prijs-veld groot">€ <input name="geteld" inputmode="decimal" placeholder="0,00" autocomplete="off"></span>
+      </label>
+      <div class="d-knoppen"><button class="knop hoofd" type="submit">Afsluiten en dagoverzicht afdrukken</button><button class="knop" type="button" data-annuleer>Annuleren</button></div>
+    </form>
+    <p id="k-fout" class="fout" role="alert"></p>
+  </div>
+  <div class="paneel-voet">
+    <button type="button" class="knop" id="k-beweging-knop">Geld in/uit</button>
+    <button type="button" class="knop" id="k-print">Dagoverzicht afdrukken</button>
+    <button type="button" class="knop hoofd" id="k-sluit-knop">Dag afsluiten</button>
+  </div>
+</dialog>
+
+<!-- Klantenbestand -->
+<dialog id="klanten" class="paneel">
+  <div class="paneel-kop">
+    <h2>Klanten</h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div class="paneel-inhoud">
+    <input id="kl-zoek" type="search" placeholder="Zoek op naam, gsm-nummer of e-mail" autocomplete="off" aria-label="Klant zoeken">
+    <p id="kl-aantal" class="tijdlijn"></p>
+    <ul id="kl-lijst" class="kl-lijst"></ul>
+    <form id="kl-form" class="k-form" hidden>
+      <h3 id="kl-titel"></h3>
+      <label>Naam<input name="naam" maxlength="80"></label>
+      <div class="rij">
+        <label>Telefoon<input name="telefoon" type="tel" maxlength="30"></label>
+        <label>E-mail<input name="email" type="email" maxlength="120"></label>
+      </div>
+      <label>Adres <small>(voor facturen)</small><input name="adres" maxlength="160"></label>
+      <label>Btw-nummer <small>(enkel voor bedrijven)</small><input name="btw" maxlength="30"></label>
+      <label>Notitie<textarea name="notitie" rows="2" maxlength="300" placeholder="Bv. altijd geen stijfsel"></textarea></label>
+      <p id="kl-info" class="tijdlijn"></p>
+      <div class="d-knoppen">
+        <button class="knop hoofd" type="submit">Opslaan</button>
+        <button class="knop" type="button" id="kl-bonnen">Bonnen van deze klant</button>
+        <button class="knop goud" type="button" id="kl-nieuw">+ Nieuwe bon</button>
+        <button class="knop" type="button" data-annuleer>Terug</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Factuur maken -->
+<dialog id="factuur" class="paneel smal">
+  <form id="fa" method="dialog" novalidate>
+    <div class="paneel-kop">
+      <h2 id="fa-titel">Factuur maken</h2>
+      <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
+    </div>
+    <div class="paneel-inhoud">
+      <p class="tijdlijn">Deze gegevens komen op de factuur en worden bij de klant bewaard.</p>
+      <label>Naam of bedrijf<input name="naam" maxlength="80" required></label>
+      <label>Adres<input name="adres" maxlength="160" placeholder="Straat nummer, postcode gemeente" required></label>
+      <label>Btw-nummer <small>(enkel voor bedrijven)</small><input name="btw" maxlength="30" placeholder="BE0123456789"></label>
+      <label>E-mail<input name="email" type="email" maxlength="120"></label>
+      <p id="fa-fout" class="fout" role="alert"></p>
+    </div>
+    <div class="paneel-voet">
+      <button type="button" class="knop" data-sluit>Annuleren</button>
+      <button type="submit" class="knop hoofd" id="fa-maak">Factuur maken en afdrukken</button>
+    </div>
+  </form>
+</dialog>
+
 <datalist id="locaties"></datalist>
 <div id="toast" role="status" hidden></div>
 
 <!-- Afdruk: wordt enkel bij printen getoond -->
 <div id="afdruk" aria-hidden="true"></div>
+<style id="pagina-stijl"></style>
 
 <script src="/prijzen.js"></script>
 <script src="/app.js"></script>

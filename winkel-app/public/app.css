@@ -39,6 +39,32 @@ button,input,select,textarea{font:inherit;color:inherit;}
 .balk-knoppen{display:flex;gap:8px;align-items:center;}
 .knop.icoon{width:44px;padding:0;background:transparent;color:#fff;border-color:rgba(255,255,255,.35);font-size:1.25rem;}
 .knop.icoon:hover{border-color:#fff;}
+.knop.balk-knop{background:transparent;color:#fff;border-color:rgba(255,255,255,.35);padding:8px 14px;}
+.knop.balk-knop:hover{border-color:#fff;}
+@media (max-width:600px){ .balk-binnen{flex-wrap:wrap;} .knop.balk-knop{padding:8px 10px;} }
+
+/* Kassa, klanten, factuur */
+dialog.paneel.smal{width:min(460px,calc(100% - 24px));}
+.prijs-veld.groot{font-size:1.4rem;font-weight:700;color:var(--ink);}
+.prijs-veld.groot input{font-size:1.4rem;font-weight:700;}
+.dag-kies{display:flex;flex-direction:row;align-items:center;gap:10px;max-width:260px;margin-bottom:8px;}
+.k-tegels{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:10px 0 16px;}
+.k-tegel{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid;gap:2px;}
+.k-tegel span{font-size:.8rem;color:var(--ink-soft);}
+.k-tegel b{font-size:1.15rem;color:var(--navy);}
+.k-tegel.totaal{background:var(--navy);}
+.k-tegel.totaal span,.k-tegel.totaal b{color:#fff;}
+#kassa h3,.k-form h3{margin:14px 0 6px;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
+.k-tabel tr.som td{font-weight:800;border-top:2px solid var(--navy);}
+.k-tabel tr.verschil td{color:var(--rood);font-weight:700;}
+.k-tabel tr.ok td{color:var(--groen);font-weight:700;}
+.k-form{background:var(--geel-zacht);border:1px solid #EBD9B4;border-radius:14px;padding:12px 14px;margin-top:12px;display:grid;gap:10px;}
+.k-form h3{margin-top:0;}
+.kl-lijst{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;}
+.kl-lijst button{width:100%;border:1px solid var(--lijn);background:#fff;border-radius:12px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;min-height:48px;}
+.kl-lijst button:hover{border-color:var(--navy);}
+.kl-lijst span{color:var(--ink-soft);font-size:.9rem;}
+.d-knoppen select{width:auto;min-height:44px;}
 #zoek{width:100%;border:0;border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.12);color:#fff;}
 #zoek::placeholder{color:rgba(255,255,255,.65);}
 .tabs{max-width:860px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;}
@@ -206,6 +232,30 @@ a{color:var(--navy);}
   .pr-streepjes{display:block;height:12mm;max-width:100%;margin:2mm auto 0;}
   .pr-label .pr-streepjes{height:10mm;}
   .pr-label-loc{font-size:10pt;font-weight:700;margin-top:1mm;}
+  /* Groot op A4: dezelfde bon, vergroot en gecentreerd */
+  #afdruk.a4:not(.factuur){zoom:1.55;}
+  .pr-dag-datum{text-align:center;font-size:10pt;margin:1mm 0 2mm;}
+  .pr-dag .pr-merk{text-align:center;}
+  .pr-klein-tabel td{font-size:8pt;}
+  /* Factuur op A4 */
+  #afdruk.factuur{max-width:none;font:10pt/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .pr-factuur{width:100%;}
+  .fa-kop{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:.5mm solid #000;padding-bottom:5mm;}
+  .fa-kop img{width:20mm;height:20mm;filter:grayscale(1);}
+  .fa-merk{font-size:18pt;font-weight:800;margin-bottom:1mm;}
+  .fa-midden{display:flex;justify-content:space-between;gap:10mm;margin:8mm 0 4mm;}
+  .fa-label{font-size:8pt;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1mm;}
+  .fa-klant{border:.3mm solid #000;border-radius:2mm;padding:4mm 5mm;min-width:80mm;}
+  .fa-meta th{text-align:left;font-weight:400;padding:.5mm 6mm .5mm 0;}
+  .fa-titel{font-size:20pt;margin:6mm 0 3mm;letter-spacing:.05em;}
+  .fa-regels{width:100%;border-collapse:collapse;}
+  .fa-regels th{text-align:left;font-size:8.5pt;border-bottom:.4mm solid #000;padding:1.5mm 1mm;}
+  .fa-regels td{padding:1.5mm 1mm;border-bottom:.2mm solid #999;}
+  .fa-regels .r,.fa-totaal .r{text-align:right;white-space:nowrap;}
+  .fa-totaal{margin:5mm 0 0 auto;border-collapse:collapse;min-width:85mm;}
+  .fa-totaal td{padding:1.2mm 1mm;}
+  .fa-totaal .fa-eind td{font-size:13pt;font-weight:800;border-top:.5mm solid #000;padding-top:2mm;}
+  .fa-betaling{margin-top:10mm;}
   #afdruk b{font-weight:700;}
   .pr-klein{font-size:8pt;color:#000;}
   .pr-kop{display:flex;align-items:center;gap:3mm;}

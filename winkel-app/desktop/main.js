@@ -15,7 +15,7 @@ const BACKUPS = () => path.join(app.getPath('userData'), 'back-ups');
 const BEWAAR_BACKUPS = 60;
 
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'factuur'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -44,7 +44,7 @@ async function schrijfJson(bestand, data) {
   await rename(tijdelijk, bestand);
 }
 
-const instellingen = { pin: '', printer: '', zoom: 1 };
+const instellingen = { pin: '', printer: '', printerA4: '', zoom: 1 };
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
 }
@@ -129,37 +129,43 @@ async function bestand(pad) {
 
 // ---------- Afdrukken ----------
 
-/** Druk de huidige pagina af; de afdruk-CSS toont dan enkel de bon. */
-function drukAf(webContents) {
+/** Druk de huidige pagina af; de afdruk-CSS toont dan enkel de bon. Klein gaat naar de bonprinter, A4 naar de A4-printer. */
+function drukAf(webContents, formaat) {
+  const a4 = formaat === 'a4';
   // Enkel voor tests: de afdruk als PDF bewaren in plaats van naar een printer te sturen.
   if (process.env.CRYSTAL_TEST_PDF) {
-    return webContents.printToPDF({ pageSize: { width: 3.15, height: 11.7 }, margins: { marginType: 'none' } })
+    const opties = a4 ? { pageSize: 'A4', preferCSSPageSize: true } : { pageSize: { width: 3.15, height: 11.7 }, margins: { marginType: 'none' } };
+    return webContents.printToPDF(opties)
       .then((pdf) => writeFile(process.env.CRYSTAL_TEST_PDF, pdf))
       .then(() => ({ ok: true }));
   }
+  const printer = a4 ? instellingen.printerA4 : instellingen.printer;
   return new Promise((resolve) => {
-    // printableArea: de bon begint waar de printer kan drukken, zodat er links of rechts niets wegvalt.
+    // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
     webContents.print(
-      { silent: Boolean(instellingen.printer), deviceName: instellingen.printer || undefined, printBackground: false, margins: { marginType: 'printableArea' } },
+      a4
+        ? { silent: Boolean(printer), deviceName: printer || undefined, printBackground: false, pageSize: 'A4' }
+        : { silent: Boolean(printer), deviceName: printer || undefined, printBackground: false, margins: { marginType: 'printableArea' } },
       (ok, fout) => resolve({ ok, fout: ok ? '' : String(fout || '') }),
     );
   });
 }
 
-async function kiesPrinter(venster) {
+async function kiesPrinter(venster, soort = 'bon') {
+  const veld = soort === 'a4' ? 'printerA4' : 'printer';
   const printers = await venster.webContents.getPrintersAsync();
   const namen = printers.map((p) => p.name);
   const knoppen = [...namen, 'Telkens het afdrukvenster tonen', 'Annuleren'];
   const { response } = await dialog.showMessageBox(venster, {
     type: 'question',
     title: 'Printer kiezen',
-    message: 'Naar welke printer moeten de bonnen gaan?',
-    detail: instellingen.printer ? `Nu: ${instellingen.printer}` : 'Nu: telkens het afdrukvenster',
+    message: soort === 'a4' ? 'Naar welke printer moeten A4-afdrukken (facturen, grote bonnen) gaan?' : 'Naar welke bonprinter moeten de kleine bonnetjes gaan?',
+    detail: instellingen[veld] ? `Nu: ${instellingen[veld]}` : 'Nu: telkens het afdrukvenster',
     buttons: knoppen,
     cancelId: knoppen.length - 1,
   });
   if (response === knoppen.length - 1) return;
-  instellingen.printer = response < namen.length ? namen[response] : '';
+  instellingen[veld] = response < namen.length ? namen[response] : '';
   await bewaarInstellingen();
 }
 
@@ -221,7 +227,8 @@ function maakMenu(venster) {
     {
       label: 'Bestand',
       submenu: [
-        { label: 'Printer kiezen…', click: () => kiesPrinter(venster) },
+        { label: 'Bonprinter kiezen…', click: () => kiesPrinter(venster, 'bon') },
+        { label: 'A4-printer kiezen…', click: () => kiesPrinter(venster, 'a4') },
         { type: 'separator' },
         { label: 'Back-up opslaan…', click: () => backupOpslaan(venster) },
         { label: 'Back-up terugzetten…', click: () => backupTerugzetten(venster) },
@@ -247,7 +254,7 @@ function maakMenu(venster) {
         label: 'Over Crystal Winkel',
         click: () => dialog.showMessageBox(venster, {
           message: `Crystal Winkel ${app.getVersion()}`,
-          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nPrinter: ${instellingen.printer || 'afdrukvenster'}`,
+          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nBonprinter: ${instellingen.printer || 'afdrukvenster'}\nA4-printer: ${instellingen.printerA4 || 'afdrukvenster'}`,
         }),
       }],
     },
@@ -308,12 +315,12 @@ if (!app.requestSingleInstanceLock()) {
       const { pathname } = new URL(request.url);
       return pathname === '/api/bonnen' ? api(request) : bestand(pathname);
     });
-    ipcMain.handle('afdrukken', (e) => drukAf(e.sender));
+    ipcMain.handle('afdrukken', (e, formaat) => drukAf(e.sender, formaat));
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
-    ipcMain.handle('printer', () => instellingen.printer);
-    ipcMain.handle('kies-printer', async (e) => {
-      await kiesPrinter(BrowserWindow.fromWebContents(e.sender));
-      return instellingen.printer;
+    ipcMain.handle('printer', () => ({ bon: instellingen.printer, a4: instellingen.printerA4 }));
+    ipcMain.handle('kies-printer', async (e, soort) => {
+      await kiesPrinter(BrowserWindow.fromWebContents(e.sender), soort);
+      return { bon: instellingen.printer, a4: instellingen.printerA4 };
     });
     maakVenster();
   });

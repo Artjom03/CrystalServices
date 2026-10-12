@@ -59,8 +59,12 @@
       bonnen: data.bonnen || [],
       teller: data.teller || {},
       klanten: data.klanten || {},
-      instellingen: data.instellingen || { bewaarMaanden: 12 },
+      instellingen: data.instellingen || { bewaarMaanden: 12, formaat: 'klein', btwPct: 21, bedrijf: {} },
       prijslijst: data.prijslijst || null,
+      klantenboek: data.klantenboek || {},
+      betalingen: data.betalingen || [],
+      kassa: data.kassa || {},
+      facturen: data.facturen || [],
     };
   }
 
@@ -185,14 +189,17 @@
     return zoekVorm(q).split(/\s+/).every((w) => t.includes(w));
   }
 
-  /** Alle gekende klanten, met hun laatste gegevens en hoeveel bonnen ze hebben. */
+  /** Alle gekende klanten (het klantenbestand blijft, ook als bonnen gewist zijn), met hun bonnen. */
   function klanten() {
     const per = new Map();
+    for (const k of Object.values(staat.klantenboek || {})) {
+      per.set(k.sleutel, { ...k, bonnen: 0, open: 0 });
+    }
     const opDatum = [...(staat.bonnen || [])].sort((a, b) => a.binnenOp.localeCompare(b.binnenOp));
     for (const b of opDatum) {
       const sleutel = klantSleutel(b.klant);
-      const k = per.get(sleutel) || { sleutel, naam: '', telefoon: '', email: '', bonnen: 0, open: 0 };
-      k.naam = b.klant.naam;
+      const k = per.get(sleutel) || { sleutel, naam: '', telefoon: '', email: '', adres: '', btw: '', bonnen: 0, open: 0 };
+      if (!staat.klantenboek?.[sleutel]) k.naam = b.klant.naam;
       k.telefoon = b.klant.telefoon || k.telefoon;
       k.email = b.klant.email || k.email;
       k.bonnen += 1;
@@ -226,6 +233,7 @@
     $('#voetnoot').hidden = Boolean(q) || tab !== 'opgehaald';
     $('#voetnoot').textContent = `Hier staan de laatste 60 dagen; oudere bonnen vind je via zoeken. Opgehaalde bonnen worden na ${maanden} ${maanden === 1 ? 'maand' : 'maanden'} gewist (⚙ Instellingen).`;
     toonLocaties();
+    controleerKassa();
   }
 
   /** Boven de zoekresultaten: de klant, als alle gevonden bonnen van dezelfde klant zijn. */
@@ -430,9 +438,19 @@
         ${b.verwittigdOp ? '<br>Verwittigd: ' + esc(mooiDatum(b.verwittigdOp, true)) : ''}
         ${b.opgehaaldOp ? '<br>Opgehaald: ' + esc(mooiDatum(b.opgehaaldOp, true)) : ''}
       </div>
+      <div class="d-blok">
+        <h3>Afdrukken</h3>
+        <div class="d-knoppen">
+          <select id="d-formaat" aria-label="Formaat">
+            <option value="klein"${standaardFormaat() === 'klein' ? ' selected' : ''}>Klein bonnetje</option>
+            <option value="a4"${standaardFormaat() === 'a4' ? ' selected' : ''}>Groot op A4</option>
+          </select>
+          <button class="knop" data-actie="print" data-soort="afgifte">Afgiftebon</button>
+          <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
+          <button class="knop" data-actie="factuur">${b.factuurNr ? 'Factuur ' + esc(b.factuurNr) + ' (A4)' : 'Factuur maken (A4)'}</button>
+        </div>
+      </div>
       <div class="d-knoppen">
-        <button class="knop" data-actie="print" data-soort="afgifte">Afgiftebon</button>
-        <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
         <button class="knop" data-actie="wijzig">Wijzigen</button>
         <button class="knop gevaar" data-actie="verwijder">Verwijderen</button>
       </div>`;
@@ -473,14 +491,18 @@
         const betaal = knop.dataset.betaal;
         const { bon: na } = await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
         $('#detail').close();
-        if (autoPrint) drukAf(na, 'afhaal');
+        if (autoPrint) drukAf(na, 'afhaal', standaardFormaat());
       } else if (actie === 'klantcode') {
         if (knop.dataset.opnieuw && !confirm('Een nieuwe code maken? De oude code werkt dan niet meer.')) return;
         const data = await doe({ op: 'klantcode', telefoon: b.klant.telefoon, naam: b.klant.naam });
         openDetail(id, data.pin);
       } else if (actie === 'print') {
         if (knop.dataset.soort === 'afhaal' && b.prijsOpen && !confirm('Er staan nog stukken zonder prijs. Toch een afhaalbon afdrukken?')) return;
-        drukAf(b, knop.dataset.soort);
+        drukAf(b, knop.dataset.soort, $('#d-formaat').value);
+      } else if (actie === 'factuur') {
+        const f = b.factuurNr && (staat.facturen || []).find((x) => x.nr === b.factuurNr);
+        if (f) drukFactuur(f);
+        else openFactuur(b);
       } else if (actie === 'klant') {
         $('#detail').close();
         zoekKlant(b);
@@ -560,7 +582,7 @@
     scan = [];
     const enter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
     if (!enter || !snel || reeks.length < 5) return;
-    if ($('#app').hidden || $('#formulier').open || $('#prijslijst').open) return;
+    if ($('#app').hidden || $('#formulier').open || $('#prijslijst').open || $('#kassa-open').open) return;
     e.preventDefault();
     e.stopPropagation();
     // De cijfers zijn ook in een invulveld beland: daar weer weghalen.
@@ -574,7 +596,7 @@
   }, true);
 
   async function gescand(code) {
-    $$('dialog[open]').forEach((d) => d.close());
+    $$('dialog[open]').forEach((d) => { if (d.id !== 'kassa-open') d.close(); });
     if (code === scanCode(TEST_NR)) { toast('De scanner werkt ✓'); return; }
     const zoek = () => (staat.bonnen || []).find((b) => scanCode(b.nr) === code);
     let b = zoek();
@@ -590,7 +612,7 @@
   // ---------- Afdrukken ----------
   // Afgiftebon: bij het binnenbrengen, wat er binnenkwam, zonder prijzen, met een label voor de mand.
   // Afhaalbon: bij het ophalen, alle stukken met prijs, totaal en betaling.
-  function drukAf(b, soortBon = 'afgifte') {
+  function drukAf(b, soortBon = 'afgifte', formaat = 'klein') {
     const afhaal = soortBon === 'afhaal';
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const klaar = b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten';
@@ -668,20 +690,29 @@
         ${b.opmerking ? `<div class="pr-label-opm">${esc(b.opmerking)}</div>` : ''}
         ${code ? streepjescode(code, 0.4) : ''}
       </section>`);
-    // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
+    $('#afdruk').className = formaat === 'a4' ? 'a4' : '';
+    afdrukkenNaLogo(formaat);
+  }
+
+  // Wachten tot het logo geladen is, anders ontbreekt het soms op papier.
+  function afdrukkenNaLogo(formaat) {
     const logo = $('#afdruk img');
     if (logo && !logo.complete) {
-      logo.onload = logo.onerror = afdrukken;
+      logo.onload = logo.onerror = () => afdrukken(formaat);
     } else {
-      afdrukken();
+      afdrukken(formaat);
     }
   }
 
-  function afdrukken() {
+  const standaardFormaat = () => (staat.instellingen?.formaat === 'a4' ? 'a4' : 'klein');
+
+  function afdrukken(formaat = 'klein') {
+    // Paginaformaat: A4 met marges, of een smalle rol voor de bonprinter.
+    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4;margin:15mm}}' : '@media print{@page{margin:5mm}}';
     if (!DESKTOP) return window.print();
-    window.crystal.afdrukken().then((r) => {
+    window.crystal.afdrukken(formaat).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
-        alert('Afdrukken lukte niet' + (r.fout ? ' (' + r.fout + ')' : '') + '. Kies de printer via ⚙ Instellingen → Printer kiezen.');
+        alert('Afdrukken lukte niet' + (r.fout ? ' (' + r.fout + ')' : '') + '. Kies de printer via ⚙ Instellingen.');
       }
     });
   }
@@ -994,7 +1025,7 @@
         toon();
       }
       openDetail(nieuw.id);
-      if (!bewerkId && autoPrint) drukAf(nieuw, 'afgifte');
+      if (!bewerkId && autoPrint) drukAf(nieuw, 'afgifte', standaardFormaat());
     } catch (err) {
       if (err.message !== 'pin') $('#f-fout').textContent = err.message;
     } finally {
@@ -1011,8 +1042,9 @@
   }
   function toonPrinter() {
     if (!DESKTOP) return;
-    window.crystal.printer().then((naam) => {
-      $('#i-printer').textContent = 'Printer: ' + (naam || 'nog niet gekozen, het afdrukvenster komt telkens tevoorschijn');
+    window.crystal.printer().then((p) => {
+      const nog = 'nog niet gekozen (het afdrukvenster komt tevoorschijn)';
+      $('#i-printer').textContent = `Bonprinter: ${p.bon || nog} · A4-printer: ${p.a4 || nog}`;
     });
   }
   function openInstellingen() {
@@ -1024,6 +1056,12 @@
     $('#i-fout').textContent = '';
     $('#i-printer').hidden = !DESKTOP;
     $('#i-kies-printer').hidden = !DESKTOP;
+    $('#i-kies-printer-a4').hidden = !DESKTOP;
+    $('#i-formaat').value = standaardFormaat();
+    const bedrijf = staat.instellingen?.bedrijf || {};
+    const fb = $('#i-bedrijf');
+    for (const k of ['naam', 'adres', 'btw', 'iban', 'telefoon', 'email']) fb[k].value = bedrijf[k] || '';
+    fb.btwPct.value = String(staat.instellingen?.btwPct ?? 21).replace('.', ',');
     toonPrinter();
     $('#instellingen').showModal();
   }
@@ -1048,8 +1086,29 @@
     }
   });
   $('#i-print').addEventListener('change', (e) => zetAutoPrint(e.target.checked));
-  $('#i-kies-printer').addEventListener('click', () => window.crystal.kiesPrinter().then(toonPrinter));
-  $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte'));
+  $('#i-kies-printer').addEventListener('click', () => window.crystal.kiesPrinter('bon').then(toonPrinter));
+  $('#i-kies-printer-a4').addEventListener('click', () => window.crystal.kiesPrinter('a4').then(toonPrinter));
+  $('#i-formaat').addEventListener('change', (e) => {
+    doe({ op: 'instellingen', formaat: e.target.value }).catch((err) => { if (err.message !== 'pin') $('#i-fout').textContent = err.message; });
+  });
+  $('#i-bedrijf').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const knop = f.querySelector('button');
+    try {
+      await doe({
+        op: 'instellingen',
+        btwPct: f.btwPct.value,
+        bedrijf: Object.fromEntries(['naam', 'adres', 'btw', 'iban', 'telefoon', 'email'].map((k) => [k, f[k].value])),
+      });
+      $('#i-fout').textContent = '';
+      knop.textContent = 'Opgeslagen ✓';
+      setTimeout(() => { knop.textContent = 'Bedrijfsgegevens opslaan'; }, 1500);
+    } catch (err) {
+      if (err.message !== 'pin') $('#i-fout').textContent = err.message;
+    }
+  });
+  $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
 
   // ---------- Prijslijst aanpassen ----------
@@ -1173,12 +1232,355 @@
     }
   });
 
+
+  // ---------- Geld ----------
+  const WIJZEN = [['cash', 'Cash'], ['kaart', 'Kaart'], ['dienstencheques', 'Dienstencheques'], ['overschrijving', 'Overschrijving'], ['onbekend', 'Onbekend']];
+  /** De dag (YYYY-MM-DD) van een tijdstip, in de tijd van deze pc. */
+  function dagVan(iso) {
+    const d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+  function leesBedrag(t) {
+    const n = Number(String(t || '').replace('€', '').replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+  }
+  const verschilTekst = (v) => (v > 0 ? '+ ' : v < 0 ? '− ' : '') + eur(Math.abs(v)) + (v > 0 ? ' te veel' : v < 0 ? ' te weinig' : ' (klopt)');
+  const mooieDag = (dag) => new Date(dag + 'T12:00:00').toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  /** Alles over de kassa van één dag: beginbedrag, ontvangsten per betaalwijze, wat er in de kassa hoort te zitten. */
+  function kassaVan(dag) {
+    const k = (staat.kassa || {})[dag] || {};
+    const betalingen = (staat.betalingen || []).filter((p) => dagVan(p.op) === dag).sort((a, b) => a.op.localeCompare(b.op));
+    const per = Object.fromEntries(WIJZEN.map(([w]) => [w, 0]));
+    for (const p of betalingen) per[p.wijze in per ? p.wijze : 'onbekend'] += p.bedrag;
+    for (const w in per) per[w] = Math.round(per[w] * 100) / 100;
+    const bewegingen = k.bewegingen || [];
+    const bewegingTotaal = Math.round(bewegingen.reduce((s2, b) => s2 + b.bedrag, 0) * 100) / 100;
+    const begin = k.begin ?? null;
+    const verwacht = Math.round(((begin || 0) + per.cash + bewegingTotaal) * 100) / 100;
+    const totaal = Math.round(Object.values(per).reduce((a, b) => a + b, 0) * 100) / 100;
+    const verschil = k.geteld == null ? null : Math.round((k.geteld - verwacht) * 100) / 100;
+    const binnen = (staat.bonnen || []).filter((b) => dagVan(b.binnenOp) === dag).length;
+    const opgehaald = (staat.bonnen || []).filter((b) => b.opgehaaldOp && dagVan(b.opgehaaldOp) === dag).length;
+    const facturen = (staat.facturen || []).filter((f) => dagVan(f.datum) === dag);
+    return { dag, ...k, begin, betalingen, per, bewegingen, bewegingTotaal, verwacht, totaal, verschil, binnen, opgehaald, facturen };
+  }
+
+  // ---------- Kassa openen (elke dag) ----------
+  function controleerKassa() {
+    if ($('#app').hidden || $('#kassa-open').open) return;
+    const dag = vandaagIso();
+    if ((staat.kassa || {})[dag]?.geopendOp) return;
+    $('#ko-dag').textContent = mooieDag(dag);
+    const vorige = Object.keys(staat.kassa || {}).filter((d) => d < dag).sort().pop();
+    const v = vorige && staat.kassa[vorige];
+    $('#ko-vorige').textContent = v ? `Vorige keer (${mooieDag(vorige)}): ${v.geteld != null ? 'geteld bij het afsluiten ' + eur(v.geteld) : 'niet afgesloten, verwacht ' + eur(kassaVan(vorige).verwacht)}.` : '';
+    $('#ko-fout').textContent = '';
+    $('#ko').begin.value = '';
+    $$('dialog[open]').forEach((d) => d.close());
+    $('#kassa-open').showModal();
+    $('#ko').begin.focus();
+  }
+  $('#ko').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const begin = leesBedrag(e.target.begin.value);
+    if (Number.isNaN(begin) || e.target.begin.value.trim() === '') { $('#ko-fout').textContent = 'Vul het bedrag in, ook als het 0 is.'; return; }
+    try {
+      await doe({ op: 'kassaOpen', dag: vandaagIso(), begin });
+      $('#kassa-open').close();
+      toast(`Kassa geopend met ${eur(begin)}`);
+    } catch (err) {
+      if (err.message !== 'pin') $('#ko-fout').textContent = err.message;
+    }
+  });
+
+  // ---------- Kassa ----------
+  function openKassa(dag) {
+    $('#k-dag').value = dag || vandaagIso();
+    $('#k-beweging').hidden = true;
+    $('#k-sluit').hidden = true;
+    $('#k-fout').textContent = '';
+    toonKassa();
+    if (!$('#kassa').open) $('#kassa').showModal();
+  }
+  function toonKassa() {
+    const k = kassaVan($('#k-dag').value || vandaagIso());
+    const rij = (label, waarde, cls = '') => `<tr class="${cls}"><td>${label}</td><td class="bedrag">${waarde}</td></tr>`;
+    $('#k-inhoud').innerHTML = `
+      <p class="tijdlijn">${esc(mooieDag(k.dag))} · ${k.geslotenOp ? 'afgesloten om ' + esc(mooiDatum(k.geslotenOp, true).split(' ').pop()) : k.geopendOp ? 'open' : 'nog niet geopend'}</p>
+      <div class="k-tegels">
+        ${WIJZEN.filter(([w]) => w !== 'onbekend' || k.per.onbekend).map(([w, label]) => `<div class="k-tegel"><span>${label}</span><b>${eur(k.per[w])}</b></div>`).join('')}
+        <div class="k-tegel totaal"><span>Totaal ontvangen</span><b>${eur(k.totaal)}</b></div>
+      </div>
+      <h3>Cash in de kassa</h3>
+      <table class="stukken k-tabel"><tbody>
+        ${rij('Bij het openen', k.begin == null ? '—' : eur(k.begin))}
+        ${rij('+ cash ontvangen', eur(k.per.cash))}
+        ${k.bewegingen.map((b) => rij(`${b.bedrag < 0 ? '− uit' : '+ in'} de kassa: ${esc(b.reden)}`, eur(Math.abs(b.bedrag)))).join('')}
+        ${rij('= hoort in de kassa te zitten', eur(k.verwacht), 'som')}
+        ${k.geteld != null ? rij('Geteld bij het afsluiten', eur(k.geteld)) + rij('Verschil', verschilTekst(k.verschil), k.verschil ? 'verschil' : 'ok') : ''}
+      </tbody></table>
+      <h3>Betalingen (${k.betalingen.length})</h3>
+      ${k.betalingen.length ? `<table class="stukken"><tbody>${k.betalingen.map((p) => `<tr><td>${esc(new Date(p.op).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }))}</td><td>${esc(p.nr)} · ${esc(p.naam)}</td><td>${esc(p.wijze)}</td><td class="bedrag">${eur(p.bedrag)}</td></tr>`).join('')}</tbody></table>` : '<p class="tijdlijn">Nog geen betalingen.</p>'}
+      <p class="tijdlijn">${k.binnen} bon${k.binnen === 1 ? '' : 'nen'} binnengebracht, ${k.opgehaald} opgehaald${k.facturen.length ? ', facturen: ' + k.facturen.map((f) => esc(f.nr)).join(', ') : ''}.</p>`;
+    const vandaag = $('#k-dag').value === vandaagIso();
+    $('#k-beweging-knop').hidden = Boolean(k.geslotenOp) || !k.geopendOp;
+    $('#k-sluit-knop').textContent = k.geslotenOp ? 'Opnieuw openen' : 'Dag afsluiten';
+    $('#k-sluit-knop').hidden = !k.geopendOp && !vandaag;
+  }
+  $('#kassa-knop').addEventListener('click', () => openKassa());
+  $('#k-dag').addEventListener('change', () => { $('#k-beweging').hidden = true; $('#k-sluit').hidden = true; toonKassa(); });
+  $('#k-beweging-knop').addEventListener('click', () => {
+    $('#k-sluit').hidden = true;
+    $('#k-beweging').hidden = false;
+    $('#k-beweging').reset();
+    zetRichting('uit');
+    $('#k-beweging').bedrag.focus();
+  });
+  let richting = 'uit';
+  function zetRichting(r2) {
+    richting = r2;
+    $$('#k-richting button').forEach((k) => k.setAttribute('aria-pressed', String(k.dataset.richting === r2)));
+  }
+  $('#k-richting').addEventListener('click', (e) => { const k = e.target.closest('[data-richting]'); if (k) zetRichting(k.dataset.richting); });
+  $$('#kassa [data-annuleer]').forEach((k) => k.addEventListener('click', () => { k.closest('form').hidden = true; }));
+  $('#k-beweging').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const b = leesBedrag(e.target.bedrag.value);
+    if (!(b > 0)) { $('#k-fout').textContent = 'Vul een bedrag in.'; return; }
+    try {
+      await doe({ op: 'kassaBeweging', dag: $('#k-dag').value, bedrag: richting === 'uit' ? -b : b, reden: e.target.reden.value });
+      e.target.hidden = true;
+      $('#k-fout').textContent = '';
+      toonKassa();
+    } catch (err) {
+      if (err.message !== 'pin') $('#k-fout').textContent = err.message;
+    }
+  });
+  $('#k-sluit-knop').addEventListener('click', async () => {
+    const dag = $('#k-dag').value;
+    const k = kassaVan(dag);
+    if (k.geslotenOp) {
+      if (!confirm('De kassa van deze dag opnieuw openen? Het getelde bedrag wordt gewist.')) return;
+      try { await doe({ op: 'kassaHeropen', dag }); toonKassa(); } catch (err) { if (err.message !== 'pin') $('#k-fout').textContent = err.message; }
+      return;
+    }
+    $('#k-beweging').hidden = true;
+    $('#k-sluit').hidden = false;
+    $('#k-sluit').reset();
+    $('#k-sluit').geteld.focus();
+  });
+  $('#k-sluit').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const geteld = leesBedrag(e.target.geteld.value);
+    if (Number.isNaN(geteld) || e.target.geteld.value.trim() === '') { $('#k-fout').textContent = 'Vul het getelde bedrag in.'; return; }
+    const dag = $('#k-dag').value;
+    try {
+      if (!kassaVan(dag).geopendOp) await doe({ op: 'kassaOpen', dag, begin: 0 });
+      await doe({ op: 'kassaSluit', dag, geteld });
+      e.target.hidden = true;
+      $('#k-fout').textContent = '';
+      toonKassa();
+      drukDag(dag, standaardFormaat());
+    } catch (err) {
+      if (err.message !== 'pin') $('#k-fout').textContent = err.message;
+    }
+  });
+  $('#k-print').addEventListener('click', () => drukDag($('#k-dag').value, standaardFormaat()));
+
+  /** Het dagoverzicht op papier: kassa, ontvangsten per betaalwijze en alle betalingen. */
+  function drukDag(dag, formaat) {
+    const k = kassaVan(dag);
+    const rij = (a, b2, cls = '') => `<tr class="${cls}"><td>${a}</td><td class="r">${b2}</td></tr>`;
+    $('#afdruk').innerHTML = `<section class="pr-bon pr-dag">
+      <div class="pr-merk">${esc(WINKEL.naam)}</div>
+      <div class="pr-titel">Dagoverzicht</div>
+      <div class="pr-dag-datum">${esc(mooieDag(dag))}</div>
+      <table class="pr-stukken">
+        <tbody>
+          <tr class="pr-groep"><td colspan="2">Ontvangen</td></tr>
+          ${WIJZEN.filter(([w]) => w !== 'onbekend' || k.per.onbekend).map(([w, label]) => rij(label, eur(k.per[w]))).join('')}
+        </tbody>
+        <tfoot><tr><td>Totaal (${k.betalingen.length} betaling${k.betalingen.length === 1 ? '' : 'en'})</td><td class="r">${eur(k.totaal)}</td></tr></tfoot>
+      </table>
+      <table class="pr-stukken">
+        <tbody>
+          <tr class="pr-groep"><td colspan="2">Cash in de kassa</td></tr>
+          ${rij('Bij het openen', k.begin == null ? '—' : eur(k.begin))}
+          ${rij('+ cash ontvangen', eur(k.per.cash))}
+          ${k.bewegingen.map((b) => rij(`${b.bedrag < 0 ? '− uit' : '+ in'}: ${esc(b.reden)}`, eur(Math.abs(b.bedrag)))).join('')}
+          ${rij('<b>Hoort in de kassa</b>', '<b>' + eur(k.verwacht) + '</b>')}
+          ${k.geteld != null ? rij('Geteld', eur(k.geteld)) + rij('<b>Verschil</b>', '<b>' + verschilTekst(k.verschil) + '</b>') : rij('Geteld', 'nog niet afgesloten')}
+        </tbody>
+      </table>
+      ${k.betalingen.length ? `<table class="pr-stukken pr-klein-tabel">
+        <tbody>
+          <tr class="pr-groep"><td colspan="2">Betalingen</td></tr>
+          ${k.betalingen.map((p) => rij(`${esc(new Date(p.op).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }))} · ${esc(p.nr)} · ${esc(p.naam)} · ${esc(p.wijze)}`, eur(p.bedrag))).join('')}
+        </tbody>
+      </table>` : ''}
+      <div class="pr-voet">Bonnen binnengebracht: ${k.binnen} · opgehaald: ${k.opgehaald}${k.facturen.length ? '<br>Facturen: ' + k.facturen.map((f) => esc(f.nr) + ' (' + eur(f.totaal) + ')').join(', ') : ''}<br>Afgedrukt ${esc(new Date().toLocaleString('nl-BE'))}</div>
+    </section>`;
+    $('#afdruk').className = formaat === 'a4' ? 'a4' : '';
+    afdrukken(formaat);
+  }
+
+  // ---------- Klanten ----------
+  let klantOpen = null;
+  function openKlanten() {
+    $('#kl-zoek').value = '';
+    $('#kl-form').hidden = true;
+    toonKlanten();
+    $('#klanten').showModal();
+    $('#kl-zoek').focus();
+  }
+  function toonKlanten() {
+    const q = zoekVorm($('#kl-zoek').value.trim());
+    const cijfers = $('#kl-zoek').value.replace(/\D/g, '');
+    const alle = klanten().sort((a, b) => zoekVorm(a.naam).localeCompare(zoekVorm(b.naam)));
+    const lijst = alle.filter((k) => !q || zoekVorm(k.naam + ' ' + k.email + ' ' + (k.adres || '')).includes(q)
+      || (cijfers.length >= 3 && (k.telefoon || '').replace(/\D/g, '').includes(cijfers.replace(/^0/, ''))));
+    $('#kl-aantal').textContent = `${alle.length} klant${alle.length === 1 ? '' : 'en'}${q ? `, ${lijst.length} gevonden` : ''}`;
+    $('#kl-lijst').innerHTML = lijst.slice(0, 200).map((k) => `<li><button type="button" data-klant="${esc(k.sleutel)}">
+      <strong>${esc(k.naam)}</strong><span>${esc(k.telefoon || 'geen telefoon')}${k.bonnen ? ` · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'}${k.open ? ` (${k.open} open)` : ''}` : ''}${k.btw ? ' · ' + esc(k.btw) : ''}</span></button></li>`).join('');
+    $('#kl-lijst').hidden = false;
+  }
+  $('#klanten-knop').addEventListener('click', openKlanten);
+  $('#kl-zoek').addEventListener('input', () => { $('#kl-form').hidden = true; toonKlanten(); });
+  $('#kl-lijst').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-klant]');
+    if (!knop) return;
+    const k = klanten().find((x) => x.sleutel === knop.dataset.klant);
+    if (!k) return;
+    klantOpen = k;
+    const f = $('#kl-form');
+    for (const veld of ['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie']) f[veld].value = k[veld] || '';
+    $('#kl-titel').textContent = k.naam;
+    const facturen = (staat.facturen || []).filter((x) => klantSleutel({ naam: k.naam, telefoon: k.telefoon }) === k.sleutel && x.klant.naam === k.naam);
+    $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem${facturen.length ? ' · facturen: ' + facturen.map((x) => x.nr).join(', ') : ''}`;
+    $('#kl-lijst').hidden = true;
+    f.hidden = false;
+  });
+  $('#kl-form [data-annuleer]').addEventListener('click', () => { $('#kl-form').hidden = true; toonKlanten(); });
+  $('#kl-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!klantOpen) return;
+    const f = e.target;
+    try {
+      if (!staat.klantenboek?.[klantOpen.sleutel]) throw new Error('Deze klant staat nog niet in het klantenbestand.');
+      await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant: Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])) });
+      toast('Klant opgeslagen ✓');
+      f.hidden = true;
+      toonKlanten();
+    } catch (err) {
+      if (err.message !== 'pin') alert(err.message);
+    }
+  });
+  $('#kl-bonnen').addEventListener('click', () => {
+    if (!klantOpen) return;
+    $('#klanten').close();
+    $('#zoek').value = klantOpen.telefoon || klantOpen.naam;
+    toon();
+  });
+  $('#kl-nieuw').addEventListener('click', () => {
+    if (!klantOpen) return;
+    $('#klanten').close();
+    openFormulier(null, klantOpen);
+  });
+
+  // ---------- Factuur ----------
+  let factuurBon = null;
+  function openFactuur(b) {
+    factuurBon = b;
+    if (b.prijsOpen) { alert('Vul eerst alle prijzen in (Wijzigen), dan kan je een factuur maken.'); return; }
+    const k = (staat.klantenboek || {})[klantSleutel(b.klant)] || {};
+    const f = $('#fa');
+    f.naam.value = b.klant.naam;
+    f.adres.value = k.adres || '';
+    f.btw.value = k.btw || '';
+    f.email.value = b.klant.email || k.email || '';
+    $('#fa-titel').textContent = `Factuur voor bon ${b.nr} · ${eur(b.totaal)}`;
+    $('#fa-fout').textContent = staat.instellingen?.bedrijf?.btw ? '' : 'Let op: vul eerst je eigen btw-nummer in bij ⚙ Instellingen → Bedrijfsgegevens.';
+    $('#detail').close();
+    $('#factuur').showModal();
+    (f.adres.value ? f.btw : f.adres).focus();
+  }
+  $('#fa').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    $('#fa-maak').disabled = true;
+    try {
+      const data = await doe({ op: 'factuur', bonId: factuurBon.id, klant: { naam: f.naam.value, adres: f.adres.value, btw: f.btw.value, email: f.email.value } });
+      $('#factuur').close();
+      const factuur = data.factuur || (staat.facturen || []).find((x) => x.bonId === factuurBon.id);
+      if (factuur) drukFactuur(factuur);
+      openDetail(factuurBon.id);
+    } catch (err) {
+      if (err.message !== 'pin') $('#fa-fout').textContent = err.message;
+    } finally {
+      $('#fa-maak').disabled = false;
+    }
+  });
+
+  /** De factuur op A4: prijzen in de app zijn inclusief btw; de btw wordt eruit gerekend. */
+  function drukFactuur(fa) {
+    const d = fa.bedrijf || {};
+    const deler = 1 + fa.btwPct / 100;
+    const excl = (v) => Math.round((v / deler) * 100) / 100;
+    const datum = (iso) => new Date(iso).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const regels = fa.regels.map((r2) => `<tr>
+        <td>${esc(r2.omschrijving)}</td><td class="r">${r2.aantal}</td>
+        <td class="r">${eur(excl(r2.prijsIncl || 0))}</td><td class="r">${fa.btwPct}%</td>
+        <td class="r">${eur(excl((r2.prijsIncl || 0) * r2.aantal))}</td></tr>`).join('');
+    $('#afdruk').innerHTML = `<section class="pr-factuur">
+      <header class="fa-kop">
+        <div>
+          <div class="fa-merk">${esc(d.naam || WINKEL.naam)}</div>
+          <div>${esc(d.adres || '')}</div>
+          ${d.telefoon ? `<div>Tel. ${esc(d.telefoon)}</div>` : ''}
+          ${d.email ? `<div>${esc(d.email)}</div>` : ''}
+          ${d.btw ? `<div>Btw ${esc(d.btw)}</div>` : ''}
+          ${d.iban ? `<div>IBAN ${esc(d.iban)}</div>` : ''}
+        </div>
+        <img src="/apple-touch-icon.png" alt="">
+      </header>
+      <div class="fa-midden">
+        <div class="fa-klant">
+          <div class="fa-label">Factuur aan</div>
+          <strong>${esc(fa.klant.naam)}</strong><br>${esc(fa.klant.adres)}
+          ${fa.klant.btw ? `<br>Btw ${esc(fa.klant.btw)}` : ''}${fa.klant.email ? `<br>${esc(fa.klant.email)}` : ''}
+        </div>
+        <table class="fa-meta">
+          <tr><th>Factuur</th><td><strong>${esc(fa.nr)}</strong></td></tr>
+          <tr><th>Datum</th><td>${datum(fa.datum)}</td></tr>
+          <tr><th>Datum dienst</th><td>${datum(fa.dienstDatum || fa.datum)}</td></tr>
+          <tr><th>Bon</th><td>${esc(fa.bonNr)}</td></tr>
+        </table>
+      </div>
+      <h1 class="fa-titel">Factuur</h1>
+      <table class="fa-regels">
+        <thead><tr><th>Omschrijving</th><th class="r">Aantal</th><th class="r">Prijs excl. btw</th><th class="r">Btw</th><th class="r">Totaal excl. btw</th></tr></thead>
+        <tbody>${regels}</tbody>
+      </table>
+      <table class="fa-totaal">
+        <tr><td>Maatstaf van heffing (excl. btw)</td><td class="r">${eur(fa.maatstaf)}</td></tr>
+        <tr><td>Btw ${fa.btwPct}%</td><td class="r">${eur(fa.btw)}</td></tr>
+        <tr class="fa-eind"><td>Totaal</td><td class="r">${eur(fa.totaal)}</td></tr>
+      </table>
+      <p class="fa-betaling">${fa.betaald ? `Betaald${fa.betaalwijze ? ' (' + esc(fa.betaalwijze) + ')' : ''}. Bedankt!` : `Te betalen binnen 14 dagen${d.iban ? ' op rekening ' + esc(d.iban) : ''}, met vermelding van factuur ${esc(fa.nr)}.`}</p>
+    </section>`;
+    $('#afdruk').className = 'a4 factuur';
+    afdrukkenNaLogo('a4');
+  }
+
   // Sluitknoppen en klikken naast een paneel.
   $$('dialog').forEach((d) => {
+    if (d.id === 'kassa-open') return; // die moet ingevuld worden
     d.addEventListener('click', (e) => {
       if (e.target.closest('[data-sluit]') || e.target === d) d.close();
     });
   });
+  $('#kassa-open').addEventListener('cancel', (e) => e.preventDefault());
 
   // ---------- Start ----------
   if (pin) {
