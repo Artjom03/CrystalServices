@@ -361,6 +361,39 @@ function handeling(oud, actie, nu) {
       staat.instellingen = nieuw;
       return { staat };
     }
+    case 'klantenImport': {
+      // Een lijst klanten in één keer toevoegen (bv. uit Excel). Bestaande klanten (zelfde gsm,
+      // of zonder gsm dezelfde naam) worden enkel aangevuld: wat al ingevuld is, blijft staan.
+      const lijst = Array.isArray(actie.klanten) ? actie.klanten.slice(0, 2000) : [];
+      let nieuw = 0;
+      let aangevuld = 0;
+      for (const k of lijst) {
+        const naam = tekst(k?.naam, MAX.naam);
+        if (!naam) continue;
+        const invoer = { naam, telefoon: tekst(k.telefoon, MAX.telefoon), email: tekst(k.email, MAX.email) };
+        const sleutel = klantSleutel(invoer);
+        const oud = staat.klantenboek[sleutel];
+        const extra = {
+          adres: oud?.adres || tekst(k.adres, 160),
+          btw: oud?.btw || tekst(k.btw, 30),
+          notitie: oud?.notitie || tekst(k.notitie, 300),
+        };
+        if (oud) {
+          staat.klantenboek[sleutel] = {
+            ...oud,
+            ...extra,
+            telefoon: oud.telefoon || invoer.telefoon,
+            email: oud.email || invoer.email,
+            gewijzigdOp: iso,
+          };
+          aangevuld++;
+        } else {
+          zetKlant(staat.klantenboek, invoer, iso, extra);
+          nieuw++;
+        }
+      }
+      return { staat, nieuw, aangevuld };
+    }
     case 'klant': {
       // Klantgegevens aanvullen (adres, btw-nummer voor facturen, notitie).
       const sleutel = String(actie.sleutel || '');

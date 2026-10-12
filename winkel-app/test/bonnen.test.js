@@ -270,3 +270,21 @@ test('indeling van de winkel: wordt opgeschoond en bewaard, null zet terug op st
   ({ staat } = pasToe(staat, { op: 'instellingen', indeling: null }, nu));
   assert.equal(voorWinkel(staat, nu).instellingen.indeling, undefined);
 });
+
+test('klanten importeren: nieuwe klanten erbij, bestaande enkel aangevuld', () => {
+  let { staat } = nieuw(LEEG, { klant: { naam: 'Bocal', telefoon: '0485 75 27 63' } });
+  let r = pasToe(staat, { op: 'klantenImport', klanten: [
+    { naam: 'Bocal', telefoon: '0485752763', email: 'admin@bocal.be', adres: 'Lodewijk van Berckenlaan 372, 2140 Borgerhout', btw: 'BE 0768.909.595' },
+    { naam: 'Immo MVP BV' },
+    { naam: 'Immo MVP BV', adres: 'Joe Englishstraat 61, 2140 Borgerhout' },
+    { naam: '' },
+  ] }, nu);
+  staat = r.staat;
+  assert.equal(r.nieuw, 1);
+  assert.equal(r.aangevuld, 2);
+  const boek = voorWinkel(staat, nu).klantenboek;
+  assert.equal(Object.keys(boek).length, 2);
+  assert.equal(boek['32485752763'].telefoon, '0485 75 27 63', 'bestaande gegevens blijven');
+  assert.equal(boek['32485752763'].btw, 'BE 0768.909.595');
+  assert.equal(boek['naam:immo mvp bv'].adres, 'Joe Englishstraat 61, 2140 Borgerhout');
+});
