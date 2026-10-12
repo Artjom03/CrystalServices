@@ -1,7 +1,7 @@
 // Waar de bonnen bewaard worden.
 // Online: één privé-bestand in Vercel Blob (alleen de server kan het lezen).
 // Lokaal, zonder Blob-instellingen: een bestand in .data/, om te testen.
-import { get, put, BlobPreconditionFailedError } from '@vercel/blob';
+import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from '@vercel/blob';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { LEEG } from './bonnen.js';
 
@@ -9,10 +9,20 @@ const PAD = 'winkel/bonnen.json';
 const LOKAAL = new URL('../.data/bonnen.json', import.meta.url);
 
 async function leesBlob() {
+  // Eerst de versie (etag) opvragen bij de opslag zelf, dan pas de inhoud. Het etag van de
+  // download kan afwijken van wat put() verwacht (bv. een zwak etag na compressie), en dan
+  // zou elk bewaren mislukken. Wijzigt er iets tussen beide, dan faalt put() en proberen we opnieuw.
+  let etag;
+  try {
+    etag = (await head(PAD)).etag;
+  } catch (e) {
+    if (e instanceof BlobNotFoundError) return { staat: structuredClone(LEEG), etag: null };
+    throw e;
+  }
   const res = await get(PAD, { access: 'private', useCache: false });
   if (!res || res.statusCode !== 200) return { staat: structuredClone(LEEG), etag: null };
   const tekst = await new Response(res.stream).text();
-  return { staat: JSON.parse(tekst), etag: res.blob.etag };
+  return { staat: JSON.parse(tekst), etag };
 }
 
 async function schrijfBlob(staat, etag) {
