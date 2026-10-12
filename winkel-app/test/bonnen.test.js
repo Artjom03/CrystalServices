@@ -298,7 +298,14 @@ test('vlekken per stuk en een klant met vlekkenrapport', () => {
     ],
   });
   assert.equal(bon.stukken[0].vlek, '1 hemd: kraag');
+  assert.equal(bon.stukken[0].vlekAantal, 3, 'niet ingevuld: allemaal');
   assert.equal('vlek' in bon.stukken[1], false, 'geen vlek: geen veld');
+  ({ bon } = nieuw(LEEG, { klant: { naam: 'X' }, stukken: [
+    { naam: 'Servet', aantal: 10, vlek: 'rode wijn', vlekAantal: 3 },
+    { naam: 'Theenap', aantal: 2, vlek: 'koffie', vlekAantal: 9 },
+  ] }));
+  assert.equal(bon.stukken[0].vlekAantal, 3);
+  assert.equal(bon.stukken[1].vlekAantal, 2, 'nooit meer dan het aantal');
   ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { vlekkenrapport: true } }, nu));
   assert.equal(voorWinkel(staat, nu).klantenboek['naam:flying service nv'].vlekkenrapport, true);
   ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { notitie: 'x' } }, nu));

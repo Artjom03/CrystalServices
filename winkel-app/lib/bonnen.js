@@ -71,7 +71,12 @@ export function schoonStukken(stukken) {
     const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
     // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
     const vlek = tekst(s?.vlek, 120);
-    if (vlek) stuk.vlek = vlek;
+    if (vlek) {
+      stuk.vlek = vlek;
+      // Hoeveel van de stukken een vlek hebben (bv. 3 van 10 servetten); niet ingevuld = allemaal.
+      const n = Math.round(Number(s?.vlekAantal));
+      stuk.vlekAantal = n >= 1 ? Math.min(n, aantal) : aantal;
+    }
     return [stuk];
   });
 }

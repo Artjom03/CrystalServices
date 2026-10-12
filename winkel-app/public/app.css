@@ -233,6 +233,8 @@ a{color:var(--navy);}
 .vlek-knop{border:1px dashed var(--lijn);background:transparent;color:var(--ink-soft);border-radius:999px;padding:4px 12px;font-size:.85rem;cursor:pointer;}
 .vlek-knop:hover{border-color:var(--rood);color:var(--rood);}
 .vlek-veld{display:flex;align-items:center;gap:6px;color:var(--rood);font-weight:700;}
+.vlek-aantal{display:flex;align-items:center;gap:4px;white-space:nowrap;font-weight:600;}
+.vlek-aantal input{width:64px;flex:none!important;}
 .vlek-veld input{flex:1;border:1px solid var(--rood);background:var(--rood-zacht);border-radius:10px;padding:6px 10px;}
 .vlek-veld button{border:0;background:transparent;color:var(--ink-soft);font-size:1rem;cursor:pointer;padding:4px 8px;}
 .vlek-tag{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:999px;background:var(--rood-zacht);color:var(--rood);font-size:.82rem;font-weight:700;}
@@ -404,6 +406,4 @@ a{color:var(--navy);}
   .vr-rij-vlek td{background:#FBE9E7;color:#B3261E;font-weight:700;border-bottom-color:#E8B4AE;}
   .vr-rij-vlek .vr-jn b{display:inline-block;background:#B3261E;color:#fff;border-radius:1mm;padding:.2mm 2mm;}
   .vr-opm{margin-top:4mm;}
-  .vr-handtekening{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:14mm;}
-  .vr-handtekening div{border-top:.3mm solid #1B2422;padding-top:1.5mm;font-size:8.5pt;color:#565B63;}
 }
