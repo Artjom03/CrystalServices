@@ -174,6 +174,18 @@
     return Object.values(staat.klantenboek || {}).some((x) => x.vlekkenrapport && (x.sleutel === sleutel || zoekVorm(x.naam).trim() === naam));
   }
   const vlekTag = (s) => (s.vlek ? `<span class="vlek-tag">⚠ vlek: ${esc(s.vlek)}</span>` : '');
+  /** Hoeveel stukken van een regel een vlek hebben (oudere bonnen: allemaal). */
+  const vlekAantalVan = (s) => (s.vlek ? Math.min(s.aantal, Number(s.vlekAantal) || s.aantal) : 0);
+  /**
+   * Voor op papier en op het scherm: een regel waarvan maar een deel een vlek heeft, wordt
+   * twee regels, bv. "3 Servet, vlek" en "7 Servet, geen vlek".
+   */
+  const splitsVlekken = (stukken) => stukken.flatMap((s) => {
+    const n = vlekAantalVan(s);
+    if (!n || n >= s.aantal) return [s];
+    const { vlek, vlekAantal, ...zonder } = s;
+    return [{ ...s, aantal: n }, { ...zonder, aantal: s.aantal - n }];
+  });
 
   function zoekTekst(b) {
     const intl = telefoonIntl(b.klant.telefoon);
@@ -376,7 +388,7 @@
     const tel = telefoonIntl(b.klant.telefoon);
     const tekst = encodeURIComponent(bericht(b));
     const stukken = b.stukken.length
-      ? `<table class="stukken"><tbody>${groepen(b.stukken).map(([beh, lijst]) =>
+      ? `<table class="stukken"><tbody>${groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
           `<tr class="groep"><td colspan="3">${BEHANDELING[beh]}</td></tr>` +
           lijst.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}${s.vlek ? '<br>' + vlekTag(s) : ''}</td><td class="bedrag">${bedragOfVolgt(s)}</td></tr>`).join('')).join('')}</tbody>
          <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td></tr></tfoot></table>`
@@ -747,7 +759,7 @@
       // Kort: wat de klant nodig heeft om terug te komen.
       const code = scanCode(b.nr);
       const lijst = blokkenVan(b).map(([titel, stukken]) => `<tr><th>${esc(titel)}</th><td>${stukken.length
-        ? stukken.map((s) => `<b>${s.aantal}×</b> ${esc(kaleNaam(s))}${s.vlek ? ` <span class="pr-vlek">⚠ vlek: ${esc(s.vlek)}</span>` : ''}`).join(', ')
+        ? splitsVlekken(stukken).map((s) => `<b>${s.aantal}×</b> ${esc(kaleNaam(s))}${s.vlek ? ` <span class="pr-vlek">⚠ vlek: ${esc(s.vlek)}</span>` : ''}`).join(', ')
         : (titel === 'Strijk' ? 'strijkmand, wordt nog geteld' : titel === 'Was' ? 'was, wordt nog geteld' : 'wordt nog geteld')}</td></tr>`).join('');
       return `<section class="pr-bon pr-kort">
         <header class="pr-kop-kort">
@@ -768,7 +780,7 @@
       </section>`;
     }
 
-    const rijen = groepen(b.stukken).map(([beh, lijst]) =>
+    const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
       `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
       lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}${s.vlek ? `<div class="pr-vlek">⚠ vlek: ${esc(s.vlek)}</div>` : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
     ).join('');
@@ -799,7 +811,7 @@
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const code = scanCode(b.nr);
     const perPlaats = new Map([...indeling().map((r) => [r.plaats, []]), [ANDERE_PLAATS, []]]);
-    b.stukken.forEach((s) => perPlaats.get(plaatsVan(kaleNaam(s)))?.push(s));
+    splitsVlekken(b.stukken).forEach((s) => perPlaats.get(plaatsVan(kaleNaam(s)))?.push(s));
     const plaatsen = [...perPlaats].filter(([, l]) => l.length).map(([plaats, lijst]) => `
         <div class="pr-plaats">
           <div class="pr-plaats-kop">${esc(plaats)}<span>${lijst.reduce((n, s) => n + s.aantal, 0)} st.</span></div>
@@ -844,7 +856,7 @@
       const rijen = blokkenVan(b).map(([titel, stukken]) => `
         <tr class="a4-groep"><td colspan="2">${esc(titel)}</td></tr>
         ${stukken.length
-          ? stukken.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ` <span class="a4-vlek">⚠ vlek: ${esc(s.vlek)}</span>` : ''}</td></tr>`).join('')
+          ? splitsVlekken(stukken).map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ` <span class="a4-vlek">⚠ vlek: ${esc(s.vlek)}</span>` : ''}</td></tr>`).join('')
           : `<tr><td class="a4-n"></td><td class="a4-zacht">${mandTekst(titel)}</td></tr>`}`).join('');
       tabel = `<table class="a4-tabel">
         <thead><tr><th class="a4-n">Aantal</th><th>Wat u binnenbracht</th></tr></thead>
@@ -852,7 +864,7 @@
         ${aantal ? `<tfoot><tr><td class="a4-n">${aantal}</td><td>stuk${aantal > 1 ? 's' : ''} in totaal</td></tr></tfoot>` : ''}
       </table>`;
     } else {
-      const rijen = groepen(b.stukken).map(([beh, lijst]) =>
+      const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
         `<tr class="a4-groep"><td colspan="4">${BEHANDELING[beh]}</td></tr>` +
         lijst.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ` <span class="a4-vlek">⚠ vlek: ${esc(s.vlek)}</span>` : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
       ).join('');
@@ -894,15 +906,15 @@
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const code = scanCode(b.nr);
     const k = { ...(Object.values(staat.klantenboek || {}).find((x) => x.sleutel === klantSleutel(b.klant)) || {}), ...b.klant };
-    const metVlek = b.stukken.filter((s) => s.vlek);
+    const nVlek = b.stukken.reduce((n, s) => n + vlekAantalVan(s), 0);
     const teTellen = blokkenVan(b).filter(([, l]) => !l.length);
-    const status = metVlek.length
-      ? `<div class="vr-status vr-ja"><b>⚠ Vlekken vastgesteld</b><span>vlek gemeld op ${metVlek.length} ${metVlek.length === 1 ? 'regel' : 'regels'} · zie de rood gemarkeerde stukken hieronder</span></div>`
+    const status = nVlek
+      ? `<div class="vr-status vr-ja"><b>⚠ Vlekken vastgesteld</b><span>${nVlek} van de ${aantal} stuk${aantal === 1 ? '' : 's'} met een vlek · zie de rood gemarkeerde regels hieronder</span></div>`
       : b.stukken.length
         ? '<div class="vr-status vr-nee"><b>✓ Geen vlekken vastgesteld</b><span>Alle stukken zijn bij het binnenbrengen nagekeken</span></div>'
         : '<div class="vr-status"><b>Stukken nog niet geteld</b><span>De vlekkencontrole volgt bij het tellen</span></div>';
     const kolommen = afhaal ? 6 : 4;
-    const rijen = groepen(b.stukken).map(([beh, lijst]) =>
+    const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
       `<tr class="a4-groep"><td colspan="${kolommen}">${BEHANDELING[beh]}</td></tr>` +
       lijst.map((s) => `<tr class="${s.vlek ? 'vr-rij-vlek' : ''}">
         <td class="a4-n">${s.aantal}</td>
@@ -933,14 +945,10 @@
       <table class="a4-tabel vr-tabel">
         <thead><tr><th class="a4-n">Aantal</th><th>Stuk</th><th>Vlek</th><th>Waar zit de vlek?</th>${afhaal ? '<th class="r">Per stuk</th><th class="r">Bedrag</th>' : ''}</tr></thead>
         <tbody>${rijen}</tbody>
-        <tfoot><tr><td class="a4-n">${aantal}</td><td>stuk${aantal === 1 ? '' : 's'} in totaal</td><td class="vr-jn">${metVlek.length ? `${metVlek.length}× ja` : '–'}</td><td>${metVlek.length ? '' : 'geen vlekken'}</td>${afhaal ? `<td></td><td class="r">${eur(b.totaal)}</td>` : ''}</tr></tfoot>
+        <tfoot><tr><td class="a4-n">${aantal}</td><td>stuk${aantal === 1 ? '' : 's'} in totaal</td><td class="vr-jn">${nVlek ? `<b>${nVlek}</b>` : '0'}</td><td>${nVlek ? `met een vlek · ${aantal - nVlek} zonder vlek` : 'geen vlekken'}</td>${afhaal ? `<td></td><td class="r">${eur(b.totaal)}</td>` : ''}</tr></tfoot>
       </table>
       ${b.opmerking ? `<div class="a4-opm vr-opm"><h4>Opmerking</h4>${esc(b.opmerking)}</div>` : ''}
       ${afhaal ? `<div class="a4-onder"><div class="a4-betaling">${b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>` : `Te betalen: <b>${eur(b.totaal)}</b>`}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}</div></div>` : ''}
-      <div class="vr-handtekening">
-        <div><span>Nagekeken door ${esc(WINKEL.naam)}</span></div>
-        <div><span>${afhaal ? 'Voor ontvangst' : 'Voor akkoord'} – naam en handtekening klant</span></div>
-      </div>
     </section>`;
   }
 
@@ -1121,11 +1129,24 @@
       <td><select data-veld="behandeling" aria-label="Behandeling">${VOLGORDE.map((b) => `<option value="${b}"${r.behandeling === b ? ' selected' : ''}>${BEHANDELING[b]}</option>`).join('')}</select></td>
       <td class="bedrag"><span class="prijs-veld">€ <input class="prijs" inputmode="decimal" value="${prijsTekst(r.prijs)}" placeholder="volgt" aria-label="Prijs per stuk" data-veld="prijs"></span></td>
       <td><button type="button" class="weg" aria-label="Verwijderen" data-weg>✕</button></td>
-      <td class="vlek-td">${r.vlek != null
-        ? `<span class="vlek-veld">⚠ <input data-veld="vlek" value="${esc(r.vlek)}" maxlength="120" placeholder="Waar zit de vlek? bv. kraag, linkermouw" aria-label="Waar zit de vlek?"><button type="button" data-vlek-weg aria-label="Geen vlek">✕</button></span>`
-        : '<button type="button" class="vlek-knop" data-vlek>⚠ Vlek</button>'}</td>
+      <td class="vlek-td">${vlekCel(r)}</td>
     </tr>`).join('');
     toonTotaal();
+  }
+  // Vlek bij een stuk: waar, en bij meerdere stukken hoeveel ervan (bv. 3 van 10 servetten).
+  function vlekCel(r) {
+    if (r.vlek == null) return '<button type="button" class="vlek-knop" data-vlek>⚠ Vlek</button>';
+    const n = Math.min(r.aantal, Number(r.vlekAantal) || 1);
+    return `<span class="vlek-veld">⚠
+      ${r.aantal > 1 ? `<span class="vlek-aantal"><input type="number" min="1" max="${r.aantal}" inputmode="numeric" data-veld="vlekAantal" value="${n}" aria-label="Hoeveel met vlek"> van ${r.aantal}</span>` : ''}
+      <input data-veld="vlek" value="${esc(r.vlek)}" maxlength="120" placeholder="Waar zit de vlek? bv. kraag, rode wijn" aria-label="Waar zit de vlek?">
+      <button type="button" data-vlek-weg aria-label="Geen vlek">✕</button></span>`;
+  }
+  // Na een ander aantal: het vlekvak opnieuw tonen (bv. "van 10"), zonder de rest te verstoren.
+  function toonVlekCel(tr, r) {
+    if (r.vlek == null) return;
+    if (r.vlekAantal > r.aantal) r.vlekAantal = r.aantal;
+    tr.querySelector('.vlek-td').innerHTML = vlekCel(r);
   }
   function toonTotaal() {
     const t = regels.reduce((som, r) => som + (Number(r.aantal) || 0) * (Number(r.prijs) || 0), 0);
@@ -1136,7 +1157,8 @@
     const r = regels[Number(tr.dataset.i)];
     const veld = e.target.dataset.veld;
     if (veld === 'naam') r.naam = e.target.value;
-    if (veld === 'aantal') r.aantal = Math.max(1, Math.round(Number(e.target.value) || 1));
+    if (veld === 'aantal') { r.aantal = Math.max(1, Math.round(Number(e.target.value) || 1)); toonVlekCel(tr, r); }
+    if (veld === 'vlekAantal') r.vlekAantal = Math.max(1, Math.min(r.aantal, Math.round(Number(e.target.value) || 1)));
     if (veld === 'prijs') r.prijs = e.target.value.trim() === '' ? null : Number(e.target.value.replace(',', '.')) || 0;
     if (veld === 'vlek') r.vlek = e.target.value;
     toonTotaal();
@@ -1153,14 +1175,15 @@
       const r = regels[Number(tr.dataset.i)];
       r.aantal = Math.max(1, (Number(r.aantal) || 1) + Number(stap.dataset.stap));
       tr.querySelector('.aantal').value = r.aantal;
+      toonVlekCel(tr, r);
       toonTotaal();
       return;
     }
     const vlek = e.target.closest('[data-vlek], [data-vlek-weg]');
     if (vlek) {
       const i = Number(vlek.closest('tr').dataset.i);
-      if (vlek.hasAttribute('data-vlek')) regels[i].vlek = '';
-      else delete regels[i].vlek;
+      if (vlek.hasAttribute('data-vlek')) { regels[i].vlek = ''; regels[i].vlekAantal = 1; }
+      else { delete regels[i].vlek; delete regels[i].vlekAantal; }
       toonRegels();
       $(`#f-regels tr[data-i="${i}"] [data-veld="vlek"]`)?.focus();
       return;
