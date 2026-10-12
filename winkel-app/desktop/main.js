@@ -134,7 +134,7 @@ function drukAf(webContents, formaat) {
   const a4 = formaat === 'a4';
   // Enkel voor tests: de afdruk als PDF bewaren in plaats van naar een printer te sturen.
   if (process.env.CRYSTAL_TEST_PDF) {
-    const opties = a4 ? { pageSize: 'A4', preferCSSPageSize: true } : { pageSize: { width: 3.15, height: 11.7 }, margins: { marginType: 'none' } };
+    const opties = a4 ? { pageSize: 'A4', preferCSSPageSize: true, printBackground: true } : { pageSize: { width: 3.15, height: 11.7 }, margins: { marginType: 'none' }, printBackground: true };
     return webContents.printToPDF(opties)
       .then((pdf) => writeFile(process.env.CRYSTAL_TEST_PDF, pdf))
       .then(() => ({ ok: true }));
@@ -144,8 +144,8 @@ function drukAf(webContents, formaat) {
     // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
     webContents.print(
       a4
-        ? { silent: Boolean(printer), deviceName: printer || undefined, printBackground: false, pageSize: 'A4' }
-        : { silent: Boolean(printer), deviceName: printer || undefined, printBackground: false, margins: { marginType: 'printableArea' } },
+        ? { silent: Boolean(printer), deviceName: printer || undefined, printBackground: true, pageSize: 'A4' }
+        : { silent: Boolean(printer), deviceName: printer || undefined, printBackground: true, margins: { marginType: 'printableArea' } },
       (ok, fout) => resolve({ ok, fout: ok ? '' : String(fout || '') }),
     );
   });
