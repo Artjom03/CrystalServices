@@ -288,3 +288,19 @@ test('klanten importeren: nieuwe klanten erbij, bestaande enkel aangevuld', () =
   assert.equal(boek['32485752763'].btw, 'BE 0768.909.595');
   assert.equal(boek['naam:immo mvp bv'].adres, 'Joe Englishstraat 61, 2140 Borgerhout');
 });
+
+test('vlekken per stuk en een klant met vlekkenrapport', () => {
+  let { staat, bon } = nieuw(LEEG, {
+    klant: { naam: 'Flying Service NV' },
+    stukken: [
+      { naam: 'Hemd (strijken)', aantal: 3, prijs: 2.3, vlek: '  1 hemd: kraag ' },
+      { naam: 'Broek (strijken)', aantal: 1, prijs: 2.3, vlek: '' },
+    ],
+  });
+  assert.equal(bon.stukken[0].vlek, '1 hemd: kraag');
+  assert.equal('vlek' in bon.stukken[1], false, 'geen vlek: geen veld');
+  ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { vlekkenrapport: true } }, nu));
+  assert.equal(voorWinkel(staat, nu).klantenboek['naam:flying service nv'].vlekkenrapport, true);
+  ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { notitie: 'x' } }, nu));
+  assert.equal(voorWinkel(staat, nu).klantenboek['naam:flying service nv'].vlekkenrapport, true, 'blijft aan bij andere wijziging');
+});

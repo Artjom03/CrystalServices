@@ -229,6 +229,14 @@ a{color:var(--navy);}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}
+#f-regels td.vlek-td{grid-column:1 / -1;}
+.vlek-knop{border:1px dashed var(--lijn);background:transparent;color:var(--ink-soft);border-radius:999px;padding:4px 12px;font-size:.85rem;cursor:pointer;}
+.vlek-knop:hover{border-color:var(--rood);color:var(--rood);}
+.vlek-veld{display:flex;align-items:center;gap:6px;color:var(--rood);font-weight:700;}
+.vlek-veld input{flex:1;border:1px solid var(--rood);background:var(--rood-zacht);border-radius:10px;padding:6px 10px;}
+.vlek-veld button{border:0;background:transparent;color:var(--ink-soft);font-size:1rem;cursor:pointer;padding:4px 8px;}
+.vlek-tag{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:999px;background:var(--rood-zacht);color:var(--rood);font-size:.82rem;font-weight:700;}
+.vlek-uitleg{margin:0 0 8px;padding:8px 12px;border-radius:10px;background:var(--rood-zacht);color:var(--rood);font-size:.9rem;font-weight:600;}
 .ix-rij input{border:1px solid var(--lijn);border-radius:10px;padding:9px 10px;min-height:44px;width:100%;background:var(--kaart);}
 @media (max-width:560px){.ix-rij{grid-template-columns:1fr auto auto;}.ix-rij .ix-woorden{grid-column:1 / -1;grid-row:2;}}
 @media print{
@@ -381,4 +389,21 @@ a{color:var(--navy);}
   .pr-plaats-rij span{flex:1;}
   .pr-plaats-rij small{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;}
   .pr-ticket .pr-streepjes{margin-top:3mm;}
+  .pr-vlek{font-weight:800;}
+  div.pr-vlek{font-size:8pt;}
+  .pr-plaats-rij .pr-vlek{display:block;font-style:normal;font-size:8pt;}
+  .a4-vlek{display:inline-block;margin-left:2mm;padding:.2mm 2mm;border-radius:1mm;background:#FBE9E7;color:#B3261E;font-size:8pt;font-weight:800;}
+
+  /* A4 met vlekkencontrole */
+  .vr-status{margin-top:4mm;padding:3mm 4mm;border-radius:2.5mm;border:.5mm solid #565B63;display:flex;align-items:baseline;gap:4mm;flex-wrap:wrap;}
+  .vr-status b{font-size:15pt;font-weight:800;}
+  .vr-status span{font-size:9.5pt;}
+  .vr-ja{background:#B3261E;border-color:#B3261E;color:#fff;}
+  .vr-nee{background:#E6F2EA;border-color:#1E6B3A;color:#1E6B3A;}
+  .vr-tabel .vr-jn{width:14mm;text-align:center;}
+  .vr-rij-vlek td{background:#FBE9E7;color:#B3261E;font-weight:700;border-bottom-color:#E8B4AE;}
+  .vr-rij-vlek .vr-jn b{display:inline-block;background:#B3261E;color:#fff;border-radius:1mm;padding:.2mm 2mm;}
+  .vr-opm{margin-top:4mm;}
+  .vr-handtekening{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:14mm;}
+  .vr-handtekening div{border-top:.3mm solid #1B2422;padding-top:1.5mm;font-size:8.5pt;color:#565B63;}
 }
