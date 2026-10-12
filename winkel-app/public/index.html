@@ -173,30 +173,13 @@
           <option value="a4">Groot op A4</option>
         </select>
       </label>
-      <p class="tijdlijn">Bij elke bon kan je het formaat ook apart kiezen. Facturen komen altijd op A4.</p>
+      <p class="tijdlijn">Bij elke bon kan je het formaat ook apart kiezen.</p>
       <p id="i-printer" class="tijdlijn" hidden></p>
       <div class="d-knoppen">
         <button type="button" class="knop" id="i-kies-printer" hidden>Bonprinter kiezen</button>
         <button type="button" class="knop" id="i-kies-printer-a4" hidden>A4-printer kiezen</button>
         <button type="button" class="knop" id="i-testbon">Testbon afdrukken</button>
       </div>
-    </fieldset>
-    <fieldset>
-      <legend>Bedrijfsgegevens <small>(voor facturen)</small></legend>
-      <form id="i-bedrijf" class="i-bedrijf">
-        <label>Naam<input name="naam" maxlength="80"></label>
-        <label>Adres<input name="adres" maxlength="160"></label>
-        <div class="rij">
-          <label>Btw-nummer<input name="btw" maxlength="30" placeholder="BE0123456789"></label>
-          <label>Btw-tarief (%)<input name="btwPct" inputmode="decimal" maxlength="5"></label>
-        </div>
-        <div class="rij">
-          <label>IBAN<input name="iban" maxlength="40" placeholder="BE.."></label>
-          <label>Telefoon<input name="telefoon" maxlength="30"></label>
-        </div>
-        <label>E-mail<input name="email" type="email" maxlength="120"></label>
-        <div class="d-knoppen"><button class="knop" type="submit">Bedrijfsgegevens opslaan</button></div>
-      </form>
     </fieldset>
     <fieldset>
       <legend>Prijslijst</legend>
@@ -316,27 +299,6 @@
   </div>
 </dialog>
 
-<!-- Factuur maken -->
-<dialog id="factuur" class="paneel smal">
-  <form id="fa" method="dialog" novalidate>
-    <div class="paneel-kop">
-      <h2 id="fa-titel">Factuur maken</h2>
-      <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
-    </div>
-    <div class="paneel-inhoud">
-      <p class="tijdlijn">Deze gegevens komen op de factuur en worden bij de klant bewaard.</p>
-      <label>Naam of bedrijf<input name="naam" maxlength="80" required></label>
-      <label>Adres<input name="adres" maxlength="160" placeholder="Straat nummer, postcode gemeente" required></label>
-      <label>Btw-nummer <small>(enkel voor bedrijven)</small><input name="btw" maxlength="30" placeholder="BE0123456789"></label>
-      <label>E-mail<input name="email" type="email" maxlength="120"></label>
-      <p id="fa-fout" class="fout" role="alert"></p>
-    </div>
-    <div class="paneel-voet">
-      <button type="button" class="knop" data-sluit>Annuleren</button>
-      <button type="submit" class="knop hoofd" id="fa-maak">Factuur maken en afdrukken</button>
-    </div>
-  </form>
-</dialog>
 
 <datalist id="locaties"></datalist>
 <div id="toast" role="status" hidden></div>

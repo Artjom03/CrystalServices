@@ -59,12 +59,11 @@
       bonnen: data.bonnen || [],
       teller: data.teller || {},
       klanten: data.klanten || {},
-      instellingen: data.instellingen || { bewaarMaanden: 12, formaat: 'klein', btwPct: 21, bedrijf: {} },
+      instellingen: data.instellingen || { bewaarMaanden: 12, formaat: 'klein' },
       prijslijst: data.prijslijst || null,
       klantenboek: data.klantenboek || {},
       betalingen: data.betalingen || [],
       kassa: data.kassa || {},
-      facturen: data.facturen || [],
     };
   }
 
@@ -171,7 +170,7 @@
   function zoekTekst(b) {
     const intl = telefoonIntl(b.klant.telefoon);
     return zoekVorm([
-      b.nr, scanCode(b.nr), b.klant.naam, b.klant.email, b.locatie,
+      b.nr, scanCode(b.nr), b.klant.naam, b.klant.email, b.locatie, b.factuur && !b.factuur.gemaaktOp ? 'factuur' : '',
       // Het nummer in elke schrijfwijze: 0470123456, 32470123456
       b.klant.telefoon.replace(/\D/g, ''), intl, intl.startsWith('32') ? '0' + intl.slice(2) : '',
     ].join(' '));
@@ -264,7 +263,8 @@
       label = `<span class="label">Opgehaald ${esc(mooiDatum(b.opgehaaldOp))}</span>`;
     }
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
-    const locatie = b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '';
+    const locatie = (b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '')
+      + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '');
     return `<li class="bon" data-id="${esc(b.id)}" tabindex="0">
       <div class="nr">${esc(b.nr)}</div>
       <div class="naam">${esc(b.klant.naam)}${b.klant.telefoon ? ` <span class="tel">${esc(b.klant.telefoon)}</span>` : ''}</div>
@@ -439,6 +439,26 @@
         ${b.opgehaaldOp ? '<br>Opgehaald: ' + esc(mooiDatum(b.opgehaaldOp, true)) : ''}
       </div>
       <div class="d-blok">
+        <h3>Factuur</h3>
+        ${b.factuur ? `
+          <p class="d-factuur ${b.factuur.gemaaktOp ? 'ok' : ''}">${b.factuur.gemaaktOp ? '✓ Factuur gemaakt op ' + esc(mooiDatum(b.factuur.gemaaktOp)) : '🧾 Factuur gevraagd op ' + esc(mooiDatum(b.factuur.gevraagdOp, true))}</p>
+          <form class="d-factuurgegevens" data-factuur>
+            <p class="tijdlijn">Niet verplicht: vraag de klant gerust naar de gegevens voor de factuur.</p>
+            <input name="naam" maxlength="80" value="${esc(b.factuur.naam)}" placeholder="Naam op de factuur (bv. bedrijfsnaam)" autocomplete="off">
+            <input name="adres" maxlength="160" value="${esc(b.factuur.adres)}" placeholder="Adres" autocomplete="off">
+            <div class="rij">
+              <input name="btw" maxlength="30" value="${esc(b.factuur.btw)}" placeholder="Btw-nummer" autocomplete="off">
+              <input name="email" type="email" maxlength="120" value="${esc(b.factuur.email)}" placeholder="E-mail" autocomplete="off">
+            </div>
+            <div class="d-knoppen">
+              <button class="knop" type="submit">Gegevens opslaan</button>
+              <button class="knop" type="button" data-actie="factuurGemaakt">${b.factuur.gemaaktOp ? 'Toch nog niet gemaakt' : 'Factuur gemaakt ✓'}</button>
+              <button class="knop gevaar" type="button" data-actie="factuurIntrekken">Aanvraag intrekken</button>
+            </div>
+          </form>`
+        : `<div class="d-knoppen"><button class="knop goud" data-actie="factuurVraag">🧾 Factuur aanvragen</button></div>`}
+      </div>
+      <div class="d-blok">
         <h3>Afdrukken</h3>
         <div class="d-knoppen">
           <select id="d-formaat" aria-label="Formaat">
@@ -447,7 +467,6 @@
           </select>
           <button class="knop" data-actie="print" data-soort="afgifte">Afgiftebon</button>
           <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
-          <button class="knop" data-actie="factuur">${b.factuurNr ? 'Factuur ' + esc(b.factuurNr) + ' (A4)' : 'Factuur maken (A4)'}</button>
         </div>
       </div>
       <div class="d-knoppen">
@@ -499,10 +518,17 @@
       } else if (actie === 'print') {
         if (knop.dataset.soort === 'afhaal' && b.prijsOpen && !confirm('Er staan nog stukken zonder prijs. Toch een afhaalbon afdrukken?')) return;
         drukAf(b, knop.dataset.soort, $('#d-formaat').value);
-      } else if (actie === 'factuur') {
-        const f = b.factuurNr && (staat.facturen || []).find((x) => x.nr === b.factuurNr);
-        if (f) drukFactuur(f);
-        else openFactuur(b);
+      } else if (actie === 'factuurVraag') {
+        await doe({ op: 'factuurVraag', id });
+        openDetail(id);
+        toast('Factuur aangevraagd ✓ Ze staat op het dagoverzicht.');
+      } else if (actie === 'factuurIntrekken') {
+        if (!confirm('De factuuraanvraag voor deze bon intrekken?')) return;
+        await doe({ op: 'factuurVraag', id, aan: false });
+        openDetail(id);
+      } else if (actie === 'factuurGemaakt') {
+        await doe({ op: 'factuurGemaakt', id, gemaakt: !b.factuur?.gemaaktOp });
+        openDetail(id);
       } else if (actie === 'klant') {
         $('#detail').close();
         zoekKlant(b);
@@ -514,6 +540,21 @@
         await doe({ op: 'verwijder', id });
         $('#detail').close();
       }
+    } catch (err) {
+      if (err.message !== 'pin') alert(err.message);
+    }
+  });
+
+  // Factuurgegevens bewaren.
+  $('#detail').addEventListener('submit', async (e) => {
+    if (!e.target.matches('[data-factuur]')) return;
+    e.preventDefault();
+    const id = $('#detail').dataset.id;
+    const f = e.target;
+    try {
+      await doe({ op: 'factuurVraag', id, gegevens: { naam: f.naam.value, adres: f.adres.value, btw: f.btw.value, email: f.email.value } });
+      openDetail(id);
+      toast('Factuurgegevens opgeslagen ✓');
     } catch (err) {
       if (err.message !== 'pin') alert(err.message);
     }
@@ -1058,10 +1099,6 @@
     $('#i-kies-printer').hidden = !DESKTOP;
     $('#i-kies-printer-a4').hidden = !DESKTOP;
     $('#i-formaat').value = standaardFormaat();
-    const bedrijf = staat.instellingen?.bedrijf || {};
-    const fb = $('#i-bedrijf');
-    for (const k of ['naam', 'adres', 'btw', 'iban', 'telefoon', 'email']) fb[k].value = bedrijf[k] || '';
-    fb.btwPct.value = String(staat.instellingen?.btwPct ?? 21).replace('.', ',');
     toonPrinter();
     $('#instellingen').showModal();
   }
@@ -1090,23 +1127,6 @@
   $('#i-kies-printer-a4').addEventListener('click', () => window.crystal.kiesPrinter('a4').then(toonPrinter));
   $('#i-formaat').addEventListener('change', (e) => {
     doe({ op: 'instellingen', formaat: e.target.value }).catch((err) => { if (err.message !== 'pin') $('#i-fout').textContent = err.message; });
-  });
-  $('#i-bedrijf').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const knop = f.querySelector('button');
-    try {
-      await doe({
-        op: 'instellingen',
-        btwPct: f.btwPct.value,
-        bedrijf: Object.fromEntries(['naam', 'adres', 'btw', 'iban', 'telefoon', 'email'].map((k) => [k, f[k].value])),
-      });
-      $('#i-fout').textContent = '';
-      knop.textContent = 'Opgeslagen ✓';
-      setTimeout(() => { knop.textContent = 'Bedrijfsgegevens opslaan'; }, 1500);
-    } catch (err) {
-      if (err.message !== 'pin') $('#i-fout').textContent = err.message;
-    }
   });
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
@@ -1262,8 +1282,8 @@
     const verschil = k.geteld == null ? null : Math.round((k.geteld - verwacht) * 100) / 100;
     const binnen = (staat.bonnen || []).filter((b) => dagVan(b.binnenOp) === dag).length;
     const opgehaald = (staat.bonnen || []).filter((b) => b.opgehaaldOp && dagVan(b.opgehaaldOp) === dag).length;
-    const facturen = (staat.facturen || []).filter((f) => dagVan(f.datum) === dag);
-    return { dag, ...k, begin, betalingen, per, bewegingen, bewegingTotaal, verwacht, totaal, verschil, binnen, opgehaald, facturen };
+    const factuurVragen = (staat.bonnen || []).filter((b) => b.factuur && dagVan(b.factuur.gevraagdOp) === dag);
+    return { dag, ...k, begin, betalingen, per, bewegingen, bewegingTotaal, verwacht, totaal, verschil, binnen, opgehaald, factuurVragen };
   }
 
   // ---------- Kassa openen (elke dag) ----------
@@ -1322,7 +1342,8 @@
       </tbody></table>
       <h3>Betalingen (${k.betalingen.length})</h3>
       ${k.betalingen.length ? `<table class="stukken"><tbody>${k.betalingen.map((p) => `<tr><td>${esc(new Date(p.op).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }))}</td><td>${esc(p.nr)} · ${esc(p.naam)}</td><td>${esc(p.wijze)}</td><td class="bedrag">${eur(p.bedrag)}</td></tr>`).join('')}</tbody></table>` : '<p class="tijdlijn">Nog geen betalingen.</p>'}
-      <p class="tijdlijn">${k.binnen} bon${k.binnen === 1 ? '' : 'nen'} binnengebracht, ${k.opgehaald} opgehaald${k.facturen.length ? ', facturen: ' + k.facturen.map((f) => esc(f.nr)).join(', ') : ''}.</p>`;
+      <p class="tijdlijn">${k.binnen} bon${k.binnen === 1 ? '' : 'nen'} binnengebracht, ${k.opgehaald} opgehaald.</p>
+      ${factuurLijst()}`;
     const vandaag = $('#k-dag').value === vandaagIso();
     $('#k-beweging-knop').hidden = Boolean(k.geslotenOp) || !k.geopendOp;
     $('#k-sluit-knop').textContent = k.geslotenOp ? 'Opnieuw openen' : 'Dag afsluiten';
@@ -1388,6 +1409,50 @@
   });
   $('#k-print').addEventListener('click', () => drukDag($('#k-dag').value, standaardFormaat()));
 
+  // ---------- Factuuraanvragen ----------
+  const openVragen = () => (staat.bonnen || []).filter((b) => b.factuur && !b.factuur.gemaaktOp)
+    .sort((a, b) => a.factuur.gevraagdOp.localeCompare(b.factuur.gevraagdOp));
+  const factuurNaam = (b) => b.factuur.naam || b.klant.naam;
+
+  /** In de kassa: alle aanvragen die nog een factuur nodig hebben, met een knop om af te vinken. */
+  function factuurLijst() {
+    const lijst = openVragen();
+    if (!lijst.length) return '<h3>Factuuraanvragen</h3><p class="tijdlijn">Geen openstaande factuuraanvragen.</p>';
+    return `<h3>Factuuraanvragen nog te maken (${lijst.length})</h3>
+      <table class="stukken"><tbody>${lijst.map((b) => `<tr>
+        <td>${esc(mooiDatum(b.factuur.gevraagdOp))}</td>
+        <td><b>${esc(factuurNaam(b))}</b> · bon ${esc(b.nr)}<br><span class="tijdlijn">${esc([b.factuur.adres, b.factuur.btw, b.klant.telefoon, b.factuur.email].filter(Boolean).join(' · ') || 'geen gegevens ingevuld')}</span></td>
+        <td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td>
+        <td><button class="knop klein" type="button" data-gemaakt="${esc(b.id)}">Gemaakt ✓</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+  $('#k-inhoud').addEventListener('click', async (e) => {
+    const knop = e.target.closest('[data-gemaakt]');
+    if (!knop) return;
+    try {
+      await doe({ op: 'factuurGemaakt', id: knop.dataset.gemaakt });
+      toonKassa();
+    } catch (err) {
+      if (err.message !== 'pin') $('#k-fout').textContent = err.message;
+    }
+  });
+
+  /** Op het dagoverzicht: wie vandaag een factuur vroeg, met alles wat nodig is om ze te maken. */
+  function factuurAfdruk(k) {
+    const vandaag = k.factuurVragen;
+    const ouder = openVragen().filter((b) => dagVan(b.factuur.gevraagdOp) < k.dag);
+    if (!vandaag.length && !ouder.length) return '';
+    const blok = (b) => `<div class="pr-factuurvraag">
+        <b>${esc(factuurNaam(b))}</b>${b.factuur.naam && b.factuur.naam !== b.klant.naam ? ' (' + esc(b.klant.naam) + ')' : ''}<br>
+        ${b.factuur.adres ? esc(b.factuur.adres) + '<br>' : ''}${b.factuur.btw ? 'Btw ' + esc(b.factuur.btw) + '<br>' : ''}${[b.klant.telefoon, b.factuur.email].filter(Boolean).map(esc).join(' · ')}${b.klant.telefoon || b.factuur.email ? '<br>' : ''}
+        Bon ${esc(b.nr)} · ${esc(b.stukken.map((s) => s.aantal + '× ' + s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, '')).join(', ') || b.soort)}<br>
+        <b>${eur(b.totaal)}</b>${b.prijsOpen ? ' + prijs volgt' : ''} · ${b.betaald ? 'betaald' + (b.betaalwijze ? ' (' + esc(b.betaalwijze) + ')' : '') : 'nog niet betaald'}
+      </div>`;
+    return `<div class="pr-groep-kop">Factuur gevraagd vandaag (${vandaag.length})</div>
+      ${vandaag.length ? vandaag.map(blok).join('') : '<div class="pr-klein">Geen.</div>'}
+      ${ouder.length ? `<div class="pr-groep-kop">Nog te maken van eerder (${ouder.length})</div>${ouder.map(blok).join('')}` : ''}`;
+  }
+
   /** Het dagoverzicht op papier: kassa, ontvangsten per betaalwijze en alle betalingen. */
   function drukDag(dag, formaat) {
     const k = kassaVan(dag);
@@ -1419,7 +1484,8 @@
           ${k.betalingen.map((p) => rij(`${esc(new Date(p.op).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }))} · ${esc(p.nr)} · ${esc(p.naam)} · ${esc(p.wijze)}`, eur(p.bedrag))).join('')}
         </tbody>
       </table>` : ''}
-      <div class="pr-voet">Bonnen binnengebracht: ${k.binnen} · opgehaald: ${k.opgehaald}${k.facturen.length ? '<br>Facturen: ' + k.facturen.map((f) => esc(f.nr) + ' (' + eur(f.totaal) + ')').join(', ') : ''}<br>Afgedrukt ${esc(new Date().toLocaleString('nl-BE'))}</div>
+      ${factuurAfdruk(k)}
+      <div class="pr-voet">Bonnen binnengebracht: ${k.binnen} · opgehaald: ${k.opgehaald}<br>Afgedrukt ${esc(new Date().toLocaleString('nl-BE'))}</div>
     </section>`;
     $('#afdruk').className = formaat === 'a4' ? 'a4' : '';
     afdrukken(formaat);
@@ -1456,8 +1522,7 @@
     const f = $('#kl-form');
     for (const veld of ['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie']) f[veld].value = k[veld] || '';
     $('#kl-titel').textContent = k.naam;
-    const facturen = (staat.facturen || []).filter((x) => klantSleutel({ naam: k.naam, telefoon: k.telefoon }) === k.sleutel && x.klant.naam === k.naam);
-    $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem${facturen.length ? ' · facturen: ' + facturen.map((x) => x.nr).join(', ') : ''}`;
+    $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem`;
     $('#kl-lijst').hidden = true;
     f.hidden = false;
   });
@@ -1487,91 +1552,6 @@
     $('#klanten').close();
     openFormulier(null, klantOpen);
   });
-
-  // ---------- Factuur ----------
-  let factuurBon = null;
-  function openFactuur(b) {
-    factuurBon = b;
-    if (b.prijsOpen) { alert('Vul eerst alle prijzen in (Wijzigen), dan kan je een factuur maken.'); return; }
-    const k = (staat.klantenboek || {})[klantSleutel(b.klant)] || {};
-    const f = $('#fa');
-    f.naam.value = b.klant.naam;
-    f.adres.value = k.adres || '';
-    f.btw.value = k.btw || '';
-    f.email.value = b.klant.email || k.email || '';
-    $('#fa-titel').textContent = `Factuur voor bon ${b.nr} · ${eur(b.totaal)}`;
-    $('#fa-fout').textContent = staat.instellingen?.bedrijf?.btw ? '' : 'Let op: vul eerst je eigen btw-nummer in bij ⚙ Instellingen → Bedrijfsgegevens.';
-    $('#detail').close();
-    $('#factuur').showModal();
-    (f.adres.value ? f.btw : f.adres).focus();
-  }
-  $('#fa').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    $('#fa-maak').disabled = true;
-    try {
-      const data = await doe({ op: 'factuur', bonId: factuurBon.id, klant: { naam: f.naam.value, adres: f.adres.value, btw: f.btw.value, email: f.email.value } });
-      $('#factuur').close();
-      const factuur = data.factuur || (staat.facturen || []).find((x) => x.bonId === factuurBon.id);
-      if (factuur) drukFactuur(factuur);
-      openDetail(factuurBon.id);
-    } catch (err) {
-      if (err.message !== 'pin') $('#fa-fout').textContent = err.message;
-    } finally {
-      $('#fa-maak').disabled = false;
-    }
-  });
-
-  /** De factuur op A4: prijzen in de app zijn inclusief btw; de btw wordt eruit gerekend. */
-  function drukFactuur(fa) {
-    const d = fa.bedrijf || {};
-    const deler = 1 + fa.btwPct / 100;
-    const excl = (v) => Math.round((v / deler) * 100) / 100;
-    const datum = (iso) => new Date(iso).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const regels = fa.regels.map((r2) => `<tr>
-        <td>${esc(r2.omschrijving)}</td><td class="r">${r2.aantal}</td>
-        <td class="r">${eur(excl(r2.prijsIncl || 0))}</td><td class="r">${fa.btwPct}%</td>
-        <td class="r">${eur(excl((r2.prijsIncl || 0) * r2.aantal))}</td></tr>`).join('');
-    $('#afdruk').innerHTML = `<section class="pr-factuur">
-      <header class="fa-kop">
-        <div>
-          <div class="fa-merk">${esc(d.naam || WINKEL.naam)}</div>
-          <div>${esc(d.adres || '')}</div>
-          ${d.telefoon ? `<div>Tel. ${esc(d.telefoon)}</div>` : ''}
-          ${d.email ? `<div>${esc(d.email)}</div>` : ''}
-          ${d.btw ? `<div>Btw ${esc(d.btw)}</div>` : ''}
-          ${d.iban ? `<div>IBAN ${esc(d.iban)}</div>` : ''}
-        </div>
-        <img src="/apple-touch-icon.png" alt="">
-      </header>
-      <div class="fa-midden">
-        <div class="fa-klant">
-          <div class="fa-label">Factuur aan</div>
-          <strong>${esc(fa.klant.naam)}</strong><br>${esc(fa.klant.adres)}
-          ${fa.klant.btw ? `<br>Btw ${esc(fa.klant.btw)}` : ''}${fa.klant.email ? `<br>${esc(fa.klant.email)}` : ''}
-        </div>
-        <table class="fa-meta">
-          <tr><th>Factuur</th><td><strong>${esc(fa.nr)}</strong></td></tr>
-          <tr><th>Datum</th><td>${datum(fa.datum)}</td></tr>
-          <tr><th>Datum dienst</th><td>${datum(fa.dienstDatum || fa.datum)}</td></tr>
-          <tr><th>Bon</th><td>${esc(fa.bonNr)}</td></tr>
-        </table>
-      </div>
-      <h1 class="fa-titel">Factuur</h1>
-      <table class="fa-regels">
-        <thead><tr><th>Omschrijving</th><th class="r">Aantal</th><th class="r">Prijs excl. btw</th><th class="r">Btw</th><th class="r">Totaal excl. btw</th></tr></thead>
-        <tbody>${regels}</tbody>
-      </table>
-      <table class="fa-totaal">
-        <tr><td>Maatstaf van heffing (excl. btw)</td><td class="r">${eur(fa.maatstaf)}</td></tr>
-        <tr><td>Btw ${fa.btwPct}%</td><td class="r">${eur(fa.btw)}</td></tr>
-        <tr class="fa-eind"><td>Totaal</td><td class="r">${eur(fa.totaal)}</td></tr>
-      </table>
-      <p class="fa-betaling">${fa.betaald ? `Betaald${fa.betaalwijze ? ' (' + esc(fa.betaalwijze) + ')' : ''}. Bedankt!` : `Te betalen binnen 14 dagen${d.iban ? ' op rekening ' + esc(d.iban) : ''}, met vermelding van factuur ${esc(fa.nr)}.`}</p>
-    </section>`;
-    $('#afdruk').className = 'a4 factuur';
-    afdrukkenNaLogo('a4');
-  }
 
   // Sluitknoppen en klikken naast een paneel.
   $$('dialog').forEach((d) => {
