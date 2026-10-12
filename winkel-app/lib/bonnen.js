@@ -68,7 +68,11 @@ export function schoonStukken(stukken) {
     const naam = tekst(s?.naam, MAX.stukNaam);
     if (!naam) return [];
     const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
-    return [{ naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) }];
+    const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
+    // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
+    const vlek = tekst(s?.vlek, 120);
+    if (vlek) stuk.vlek = vlek;
+    return [stuk];
   });
 }
 
@@ -410,6 +414,8 @@ function handeling(oud, actie, nu) {
         adres: tekst(k.adres ?? oud.adres, 160),
         btw: tekst(k.btw ?? oud.btw, 30),
         notitie: tekst(k.notitie ?? oud.notitie, 300),
+        // Klant krijgt een aparte A4-bon met vlekkencontrole (bv. een bedrijf dat dat vraagt).
+        vlekkenrapport: Boolean(k.vlekkenrapport ?? oud.vlekkenrapport),
         gewijzigdOp: iso,
       };
       return { staat, klant: staat.klantenboek[sleutel] };
