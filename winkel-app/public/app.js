@@ -679,8 +679,6 @@
   const kaleNaam = (s) => s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, '');
   const BETAALWIJZE = { cash: 'cash', kaart: 'kaart', dienstencheques: 'dienstencheques', overschrijving: 'overschrijving' };
   const betaaldTekst = (b) => 'Betaald' + (b.betaalwijze ? ' met ' + esc(BETAALWIJZE[b.betaalwijze] || b.betaalwijze) : '');
-  let prijslijstOpA4 = true;
-  try { prijslijstOpA4 = localStorage.getItem('winkel-a4-prijslijst') !== 'nee'; } catch (e) {}
 
   /** Wat binnenkwam, per soort. Strijk of was zonder stukken: de mand wordt later geteld. */
   function blokkenVan(b) {
@@ -885,8 +883,7 @@
       ${!afhaal && heeftToegang(b) ? `<p class="a4-portaal">Volg uw bonnen online: <b>${esc(PORTAAL.replace(/^https?:\/\//, ''))}</b></p>` : ''}
       ${afhaal ? '<p class="a4-dank">Bedankt voor uw vertrouwen!</p>' : ''}`;
 
-    return `<section class="a4-blad">${kop}${tabel}${slot}</section>
-      ${prijslijstOpA4 ? prijslijstA4() : ''}`;
+    return `<section class="a4-blad">${kop}${tabel}${slot}</section>`;
   }
 
   const a4Kop = () => `
@@ -949,25 +946,6 @@
       </table>
       ${b.opmerking ? `<div class="a4-opm vr-opm"><h4>Opmerking</h4>${esc(b.opmerking)}</div>` : ''}
       ${afhaal ? `<div class="a4-onder"><div class="a4-betaling">${b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>` : `Te betalen: <b>${eur(b.totaal)}</b>`}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}</div></div>` : ''}
-    </section>`;
-  }
-
-  /** Onze prijslijst, compact in kolommen, onderaan de A4-bon. */
-  function prijslijstA4() {
-    const groepenLijst = (prijslijst().groepen || []).map((g) => {
-      const stukken = g.stukken.filter((s) => s.strijken != null || s.wassen != null || s.prijs != null);
-      if (!stukken.length) return '';
-      const enkel = stukken.every((s) => s.prijs != null);
-      const kolom = (v) => `<span>${v == null ? '–' : eur(v).replace('€ ', '')}</span>`;
-      return `<div class="a4-pl-groep">
-        <div class="a4-pl-titel">${esc(g.titel)}</div>
-        ${stukken.map((s) => `<div class="a4-pl-rij"><em>${esc(s.naam)}</em>${enkel ? kolom(s.prijs) : s.prijs != null ? `<span class="a4-pl-breed">${eur(s.prijs).replace('€ ', '')}</span>` : kolom(s.strijken) + kolom(s.wassen)}</div>`).join('')}
-      </div>`;
-    }).join('');
-    if (!groepenLijst) return '';
-    return `<section class="a4-prijslijst">
-      <h3>Onze prijslijst <small>per stuk, in euro · 1e kolom: strijken · 2e kolom: wassen + strijken (witte was: wassen + vouwen) · droogkuis: prijs na het bekijken van het stuk</small></h3>
-      <div class="a4-pl-kolommen">${groepenLijst}</div>
     </section>`;
   }
 
@@ -1360,7 +1338,6 @@
       .map((n) => `<option value="${n}"${n === m ? ' selected' : ''}>${maandTekst(n)}</option>`).join('');
     toonBewaarInfo();
     $('#i-print').checked = autoPrint;
-    $('#i-a4-prijslijst').checked = prijslijstOpA4;
     $('#i-fout').textContent = '';
     $('#i-printer').hidden = !DESKTOP;
     $('#i-kies-printer').hidden = !DESKTOP;
@@ -1390,10 +1367,6 @@
     }
   });
   $('#i-print').addEventListener('change', (e) => zetAutoPrint(e.target.checked));
-  $('#i-a4-prijslijst').addEventListener('change', (e) => {
-    prijslijstOpA4 = e.target.checked;
-    try { localStorage.setItem('winkel-a4-prijslijst', prijslijstOpA4 ? 'ja' : 'nee'); } catch (err) {}
-  });
   $('#i-kies-printer').addEventListener('click', () => window.crystal.kiesPrinter('bon').then(toonPrinter));
   $('#i-kies-printer-a4').addEventListener('click', () => window.crystal.kiesPrinter('a4').then(toonPrinter));
   $('#i-formaat').addEventListener('change', (e) => {

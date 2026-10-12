@@ -343,16 +343,6 @@ a{color:var(--navy);}
   .a4-opm{flex:1.3;border-left:1mm solid #B98D4A;padding:1mm 0 1mm 3.5mm;font-size:9.5pt;}
   .a4-portaal{text-align:center;font-size:9pt;margin:3mm 0 0;}
   .a4-dank{text-align:center;font-size:9.5pt;font-weight:600;color:#0E1F42;margin:2.5mm 0 0;}
-  .a4-prijslijst{margin-top:4mm;padding-top:2.5mm;border-top:.5mm solid #0E1F42;break-inside:avoid;}
-  .a4-prijslijst h3{margin:0 0 2mm;font-size:10.5pt;font-weight:800;color:#0E1F42;}
-  .a4-prijslijst h3 small{display:block;font-size:7pt;font-weight:400;color:#565B63;margin-top:.5mm;}
-  .a4-pl-kolommen{column-count:4;column-gap:4.5mm;font-size:6.2pt;line-height:1.2;}
-  .a4-pl-groep{margin-bottom:1.6mm;}
-  .a4-pl-titel{color:#0E1F42;font-size:6.8pt;font-weight:800;border-bottom:.3mm solid #B98D4A;padding-bottom:.3mm;margin-bottom:.3mm;break-after:avoid;break-inside:avoid;}
-  .a4-pl-rij{display:flex;gap:1mm;border-bottom:.1mm dotted #C9C3B6;break-inside:avoid;}
-  .a4-pl-rij em{flex:1;font-style:normal;}
-  .a4-pl-rij span{width:7mm;text-align:right;white-space:nowrap;}
-  .a4-pl-rij .a4-pl-breed{width:15mm;}
   /* Mandticket na een A4-bon (browser): smal en gecentreerd op een eigen pagina */
   .a4 .pr-ticket{max-width:72mm;margin:0 auto;color:#000;font-size:9.5pt;}
 
