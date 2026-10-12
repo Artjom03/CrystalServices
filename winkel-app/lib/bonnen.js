@@ -9,9 +9,21 @@ export const BEHANDELINGEN = ['strijk', 'was', 'droogkuis', 'ander'];
 // Hoe lang opgehaalde bonnen bewaard blijven, in maanden; de winkel kiest zelf tussen 1 en 24.
 export const BEWAAR_MIN = 1;
 export const BEWAAR_MAX = 24;
-export const STANDAARD_INSTELLINGEN = { bewaarMaanden: 12 };
+export const BETAALWIJZEN_KASSA = ['cash', 'kaart', 'dienstencheques', 'overschrijving'];
+export const STANDAARD_BEDRIJF = {
+  naam: 'Crystal Services',
+  adres: 'Lodewijk van Berckenlaan 189, 2140 Borgerhout',
+  telefoon: '0494 40 38 41',
+  email: '',
+  btw: '',
+  iban: '',
+};
+export const STANDAARD_INSTELLINGEN = { bewaarMaanden: 12, formaat: 'klein', btwPct: 21, bedrijf: STANDAARD_BEDRIJF };
 
-export const LEEG = { bonnen: [], teller: {}, klanten: {}, instellingen: STANDAARD_INSTELLINGEN };
+export const LEEG = {
+  bonnen: [], teller: {}, klanten: {}, instellingen: STANDAARD_INSTELLINGEN,
+  klantenboek: {}, betalingen: [], kassa: {}, facturen: [],
+};
 
 /**
  * Een gsm-nummer als sleutel: enkel cijfers, met landcode.
@@ -138,8 +150,87 @@ export function schoonPrijslijst(p) {
 }
 
 export function instellingenVan(staat) {
-  const m = Math.round(Number(staat?.instellingen?.bewaarMaanden));
-  return { bewaarMaanden: m >= BEWAAR_MIN && m <= BEWAAR_MAX ? m : STANDAARD_INSTELLINGEN.bewaarMaanden };
+  const i = staat?.instellingen || {};
+  const m = Math.round(Number(i.bewaarMaanden));
+  const pct = Number(i.btwPct);
+  const bedrijf = {};
+  for (const k of Object.keys(STANDAARD_BEDRIJF)) bedrijf[k] = typeof i.bedrijf?.[k] === 'string' ? i.bedrijf[k] : STANDAARD_BEDRIJF[k];
+  return {
+    bewaarMaanden: m >= BEWAAR_MIN && m <= BEWAAR_MAX ? m : STANDAARD_INSTELLINGEN.bewaarMaanden,
+    formaat: i.formaat === 'a4' ? 'a4' : 'klein',
+    btwPct: Number.isFinite(pct) && pct >= 0 && pct <= 30 ? pct : STANDAARD_INSTELLINGEN.btwPct,
+    bedrijf,
+  };
+}
+
+/** Zoeken en vergelijken zonder hoofdletters en accenten. */
+function zoekVorm(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+/** Eén sleutel per klant: het gsm-nummer, of anders de naam. */
+export function klantSleutel(klant) {
+  return telefoonSleutel(klant?.telefoon) || 'naam:' + zoekVorm(klant?.naam);
+}
+
+/**
+ * Het klantenbestand blijft altijd bewaard, ook als de bonnen van een klant al gewist zijn.
+ * Oudere gegevens hebben er nog geen: dan bouwen we het uit de bonnen.
+ */
+export function klantenboekVan(staat) {
+  if (staat.klantenboek) return { ...staat.klantenboek };
+  const boek = {};
+  const bonnen = [...(staat.bonnen || [])].sort((a, b) => String(a.binnenOp).localeCompare(String(b.binnenOp)));
+  for (const b of bonnen) zetKlant(boek, b.klant, b.binnenOp || '');
+  return boek;
+}
+
+function zetKlant(boek, klant, iso, extra = {}) {
+  const naam = tekst(klant?.naam, MAX.naam);
+  if (!naam) return null;
+  const sleutel = klantSleutel(klant);
+  const oud = boek[sleutel] || { sinds: iso, adres: '', btw: '', notitie: '' };
+  boek[sleutel] = {
+    ...oud,
+    sleutel,
+    naam,
+    telefoon: tekst(klant.telefoon, MAX.telefoon) || oud.telefoon || '',
+    email: tekst(klant.email, MAX.email) || oud.email || '',
+    ...extra,
+    gewijzigdOp: iso,
+  };
+  return boek[sleutel];
+}
+
+/** De dag van een tijdstip in Belgische tijd (YYYY-MM-DD), voor de kassa en het dagoverzicht. */
+export function dagVan(iso, tijdzone = 'Europe/Brussels') {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tijdzone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
+
+function noteerBetaling(staat, bon, wijze, iso) {
+  if (!bon.totaal) return;
+  staat.betalingen.push({
+    id: 'p' + Date.parse(iso).toString(36) + Math.random().toString(36).slice(2, 6),
+    bonId: bon.id,
+    nr: bon.nr,
+    naam: bon.klant.naam,
+    bedrag: bon.totaal,
+    wijze: BETAALWIJZEN_KASSA.includes(wijze) ? wijze : 'onbekend',
+    op: iso,
+  });
+}
+
+function bedragMetTeken(v) {
+  const n = Math.round(Number(String(v ?? '').replace(',', '.')) * 100) / 100;
+  if (!Number.isFinite(n) || Math.abs(n) >= 100000) throw new Fout('Ongeldig bedrag');
+  return n;
+}
+
+function kassaDag(staat, dag) {
+  if (!datum(dag)) throw new Fout('Ongeldige dag');
+  return { bewegingen: [], ...(staat.kassa[dag] || {}) };
 }
 
 /**
@@ -187,6 +278,10 @@ function handeling(oud, actie, nu) {
     klanten: { ...(oud.klanten || {}) },
     instellingen: instellingenVan(oud),
     prijslijst: oud.prijslijst || null,
+    klantenboek: klantenboekVan(oud),
+    betalingen: [...(oud.betalingen || [])],
+    kassa: { ...(oud.kassa || {}) },
+    facturen: [...(oud.facturen || [])],
   };
   const iso = nu.toISOString();
   const zoek = (id) => {
@@ -211,13 +306,18 @@ function handeling(oud, actie, nu) {
         gewijzigdOp: iso,
       };
       staat.bonnen.push(bon);
+      zetKlant(staat.klantenboek, bon.klant, iso);
+      if (bon.betaald) noteerBetaling(staat, bon, bon.betaalwijze, iso);
       return { staat, bon };
     }
     case 'wijzig': {
       const i = zoek(actie.id);
       const v = velden({ ...staat.bonnen[i], ...(actie.bon || {}) });
       if (!v.klant.naam) throw new Fout('Vul de naam van de klant in');
+      const wasBetaald = staat.bonnen[i].betaald;
       staat.bonnen[i] = { ...staat.bonnen[i], ...v, gewijzigdOp: iso };
+      zetKlant(staat.klantenboek, v.klant, iso);
+      if (!wasBetaald && v.betaald) noteerBetaling(staat, staat.bonnen[i], v.betaalwijze, iso);
       return { staat, bon: staat.bonnen[i] };
     }
     case 'status': {
@@ -230,6 +330,7 @@ function handeling(oud, actie, nu) {
         b.klaarOp = b.klaarOp || iso;
         b.opgehaaldOp = iso;
         if (actie.betaalwijze !== undefined) {
+          if (!b.betaald) noteerBetaling(staat, b, actie.betaalwijze, iso);
           b.betaald = true;
           b.betaalwijze = BETAALWIJZEN.includes(actie.betaalwijze) ? actie.betaalwijze : b.betaalwijze;
         }
@@ -244,10 +345,122 @@ function handeling(oud, actie, nu) {
       return { staat, bon: staat.bonnen[i] };
     }
     case 'instellingen': {
-      const m = Math.round(Number(actie.bewaarMaanden));
-      if (!(m >= BEWAAR_MIN && m <= BEWAAR_MAX)) throw new Fout(`Kies een bewaartermijn van ${BEWAAR_MIN} tot ${BEWAAR_MAX} maanden`);
-      staat.instellingen = { ...staat.instellingen, bewaarMaanden: m };
+      const nieuw = { ...staat.instellingen };
+      if (actie.bewaarMaanden !== undefined) {
+        const m = Math.round(Number(actie.bewaarMaanden));
+        if (!(m >= BEWAAR_MIN && m <= BEWAAR_MAX)) throw new Fout(`Kies een bewaartermijn van ${BEWAAR_MIN} tot ${BEWAAR_MAX} maanden`);
+        nieuw.bewaarMaanden = m;
+      }
+      if (actie.formaat !== undefined) nieuw.formaat = actie.formaat === 'a4' ? 'a4' : 'klein';
+      if (actie.btwPct !== undefined) {
+        const pct = Number(String(actie.btwPct).replace(',', '.'));
+        if (!(pct >= 0 && pct <= 30)) throw new Fout('Ongeldig btw-tarief');
+        nieuw.btwPct = pct;
+      }
+      if (actie.bedrijf) {
+        const lengtes = { naam: 80, adres: 160, telefoon: 30, email: 120, btw: 30, iban: 40 };
+        nieuw.bedrijf = { ...nieuw.bedrijf };
+        for (const [k, max] of Object.entries(lengtes)) {
+          if (actie.bedrijf[k] !== undefined) nieuw.bedrijf[k] = tekst(actie.bedrijf[k], max);
+        }
+      }
+      staat.instellingen = nieuw;
       return { staat };
+    }
+    case 'klant': {
+      // Klantgegevens aanvullen (adres, btw-nummer voor facturen, notitie).
+      const sleutel = String(actie.sleutel || '');
+      const oud = staat.klantenboek[sleutel];
+      if (!oud) throw new Fout('Klant niet gevonden', 404);
+      const k = actie.klant || {};
+      const naam = tekst(k.naam ?? oud.naam, MAX.naam);
+      if (!naam) throw new Fout('Vul de naam van de klant in');
+      staat.klantenboek[sleutel] = {
+        ...oud,
+        naam,
+        telefoon: tekst(k.telefoon ?? oud.telefoon, MAX.telefoon),
+        email: tekst(k.email ?? oud.email, MAX.email),
+        adres: tekst(k.adres ?? oud.adres, 160),
+        btw: tekst(k.btw ?? oud.btw, 30),
+        notitie: tekst(k.notitie ?? oud.notitie, 300),
+        gewijzigdOp: iso,
+      };
+      return { staat, klant: staat.klantenboek[sleutel] };
+    }
+    case 'kassaOpen': {
+      const k = kassaDag(staat, actie.dag);
+      if (k.geslotenOp) throw new Fout('De kassa van die dag is al afgesloten');
+      const begin = bedragMetTeken(actie.begin);
+      if (begin < 0) throw new Fout('Het beginbedrag kan niet negatief zijn');
+      staat.kassa[actie.dag] = { ...k, begin, geopendOp: k.geopendOp || iso };
+      return { staat };
+    }
+    case 'kassaBeweging': {
+      const k = kassaDag(staat, actie.dag);
+      if (k.geslotenOp) throw new Fout('De kassa van die dag is al afgesloten');
+      const b = bedragMetTeken(actie.bedrag);
+      if (!b) throw new Fout('Vul een bedrag in');
+      const reden = tekst(actie.reden, 80);
+      if (!reden) throw new Fout('Vul een reden in, bv. "wisselgeld" of "naar de bank"');
+      staat.kassa[actie.dag] = { ...k, bewegingen: [...k.bewegingen, { bedrag: b, reden, op: iso }] };
+      return { staat };
+    }
+    case 'kassaSluit': {
+      const k = kassaDag(staat, actie.dag);
+      const geteld = bedragMetTeken(actie.geteld);
+      if (geteld < 0) throw new Fout('Het getelde bedrag kan niet negatief zijn');
+      staat.kassa[actie.dag] = { ...k, geteld, geslotenOp: iso };
+      return { staat };
+    }
+    case 'kassaHeropen': {
+      const k = kassaDag(staat, actie.dag);
+      staat.kassa[actie.dag] = { ...k, geteld: undefined, geslotenOp: '' };
+      return { staat };
+    }
+    case 'factuur': {
+      const i = zoek(actie.bonId);
+      const b = staat.bonnen[i];
+      if (b.factuurNr) throw new Fout(`Voor deze bon bestaat al factuur ${b.factuurNr}`);
+      if (b.prijsOpen) throw new Fout('Vul eerst alle prijzen in (Wijzigen)');
+      if (!b.totaal) throw new Fout('Deze bon heeft nog geen bedrag');
+      const inst = staat.instellingen;
+      if (!inst.bedrijf.btw) throw new Fout('Vul eerst je eigen btw-nummer in bij ⚙ Instellingen → Bedrijfsgegevens');
+      const klant = {
+        naam: tekst(actie.klant?.naam || b.klant.naam, MAX.naam),
+        adres: tekst(actie.klant?.adres, 160),
+        btw: tekst(actie.klant?.btw, 30),
+        email: tekst(actie.klant?.email || b.klant.email, MAX.email),
+      };
+      if (!klant.naam) throw new Fout('Vul de naam van de klant in');
+      if (!klant.adres) throw new Fout('Vul het adres van de klant in; dat moet op een factuur staan');
+      // Doorlopende nummering per jaar, zonder gaten: 2026-0001, 2026-0002, ...
+      const jaar = String(nu.getFullYear());
+      const n = (staat.teller['F' + jaar] || 0) + 1;
+      staat.teller['F' + jaar] = n;
+      const nr = `${jaar}-${String(n).padStart(4, '0')}`;
+      const pct = inst.btwPct;
+      const maatstaf = Math.round((b.totaal / (1 + pct / 100)) * 100) / 100;
+      const factuur = {
+        nr,
+        datum: iso,
+        dienstDatum: b.opgehaaldOp || b.binnenOp,
+        bonId: b.id,
+        bonNr: b.nr,
+        klant,
+        regels: b.stukken.map((s) => ({ omschrijving: s.naam, aantal: s.aantal, prijsIncl: s.prijs })),
+        btwPct: pct,
+        maatstaf,
+        btw: Math.round((b.totaal - maatstaf) * 100) / 100,
+        totaal: b.totaal,
+        betaald: Boolean(b.betaald),
+        betaalwijze: b.betaalwijze || '',
+        bedrijf: { ...inst.bedrijf },
+      };
+      staat.facturen.push(factuur);
+      staat.bonnen[i] = { ...b, factuurNr: nr, gewijzigdOp: iso };
+      const kl = zetKlant(staat.klantenboek, { ...b.klant, naam: b.klant.naam }, iso);
+      if (kl) Object.assign(kl, { adres: klant.adres, btw: klant.btw, email: klant.email || kl.email });
+      return { staat, bon: staat.bonnen[i], factuur };
     }
     case 'prijslijst': {
       // null zet de standaardprijzen terug.
@@ -315,6 +528,10 @@ export function voorWinkel(staat, nu = new Date()) {
     klanten,
     instellingen: instellingenVan(staat),
     prijslijst: staat.prijslijst || null,
+    klantenboek: klantenboekVan(staat),
+    betalingen: staat.betalingen || [],
+    kassa: staat.kassa || {},
+    facturen: staat.facturen || [],
   };
 }
 

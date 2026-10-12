@@ -3,8 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('crystal', {
   desktop: true,
-  afdrukken: () => ipcRenderer.invoke('afdrukken'),
+  afdrukken: (formaat) => ipcRenderer.invoke('afdrukken', formaat),
   eersteKeer: () => ipcRenderer.invoke('eerste-keer'),
   printer: () => ipcRenderer.invoke('printer'),
-  kiesPrinter: () => ipcRenderer.invoke('kies-printer'),
+  kiesPrinter: (soort) => ipcRenderer.invoke('kies-printer', soort),
 });

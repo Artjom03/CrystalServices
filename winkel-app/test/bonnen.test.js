@@ -190,3 +190,65 @@ test('eigen prijslijst: wordt opgeschoond, blijft bewaard bij andere wijzigingen
   assert.equal(staat.prijslijst, null);
   assert.throws(() => pasToe(LEEG, { op: 'prijslijst', prijslijst: 'onzin' }, nu), /Ongeldige/);
 });
+
+test('klantenbestand: blijft bewaard als de bonnen gewist zijn, en is aan te vullen', async () => {
+  const { voorWinkel, klantSleutel } = await import('../lib/bonnen.js');
+  const toen = new Date('2025-01-10T09:00:00Z');
+  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'René Peeters', telefoon: '0470 12 34 56' } } }, toen);
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, toen));
+  const sleutel = klantSleutel(bon.klant);
+  ({ staat } = pasToe(staat, { op: 'klant', sleutel, klant: { adres: 'Kerkstraat 1, 2000 Antwerpen', btw: 'BE0123456789' } }, toen));
+  // Twee jaar later: de bon is weg, de klant niet.
+  ({ staat } = pasToe(staat, { op: 'instellingen', bewaarMaanden: 1 }, nu));
+  const w = voorWinkel(staat, nu);
+  assert.equal(w.bonnen.length, 0);
+  assert.equal(w.klantenboek[sleutel].naam, 'René Peeters');
+  assert.equal(w.klantenboek[sleutel].adres, 'Kerkstraat 1, 2000 Antwerpen');
+  // Oudere gegevens zonder klantenbestand: wordt opgebouwd uit de bonnen.
+  const oud = { bonnen: [{ ...bon, binnenOp: toen.toISOString() }], teller: {}, klanten: {} };
+  assert.equal(Object.keys(voorWinkel(oud, toen).klantenboek).length, 1);
+});
+
+test('betalingen worden genoteerd bij betalen, één keer per bon', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A' }, stukken: [{ naam: 'Hemd', prijs: 2.3, aantal: 2 }], betaald: true, betaalwijze: 'kaart' });
+  assert.deepEqual(staat.betalingen.map((p) => [p.wijze, p.bedrag]), [['kaart', 4.6]]);
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, nu));
+  assert.equal(staat.betalingen.length, 1, 'al betaald: geen tweede betaling');
+  let b2;
+  ({ staat, bon: b2 } = nieuw(staat, { klant: { naam: 'B' }, stukken: [{ naam: 'Broek', prijs: 5 }] }));
+  ({ staat } = pasToe(staat, { op: 'status', id: b2.id, status: 'opgehaald', betaalwijze: 'cash' }, nu));
+  assert.deepEqual(staat.betalingen.map((p) => [p.nr, p.wijze, p.bedrag]), [['26-001', 'kaart', 4.6], ['26-002', 'cash', 5]]);
+});
+
+test('kassa: openen, geld in/uit, afsluiten', () => {
+  let { staat } = pasToe(LEEG, { op: 'kassaOpen', dag: '2026-10-09', begin: '150,50' }, nu);
+  assert.equal(staat.kassa['2026-10-09'].begin, 150.5);
+  ({ staat } = pasToe(staat, { op: 'kassaBeweging', dag: '2026-10-09', bedrag: -50, reden: 'naar de bank' }, nu));
+  assert.throws(() => pasToe(staat, { op: 'kassaBeweging', dag: '2026-10-09', bedrag: 5, reden: '' }, nu), /reden/);
+  ({ staat } = pasToe(staat, { op: 'kassaSluit', dag: '2026-10-09', geteld: 100.5 }, nu));
+  assert.equal(staat.kassa['2026-10-09'].geteld, 100.5);
+  assert.throws(() => pasToe(staat, { op: 'kassaBeweging', dag: '2026-10-09', bedrag: 5, reden: 'x' }, nu), /afgesloten/);
+  assert.throws(() => pasToe(LEEG, { op: 'kassaOpen', dag: 'gisteren', begin: 5 }, nu), /dag/);
+});
+
+test('factuur: doorlopend nummer, btw uit de prijs incl. btw, en maar één per bon', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'Firma X', telefoon: '0470 00 00 01' }, stukken: [{ naam: 'Hemd', prijs: 2.42, aantal: 5 }] });
+  assert.throws(() => pasToe(staat, { op: 'factuur', bonId: bon.id, klant: { adres: 'Straat 1' } }, nu), /btw-nummer/);
+  ({ staat } = pasToe(staat, { op: 'instellingen', bedrijf: { btw: 'BE0999999999' } }, nu));
+  assert.throws(() => pasToe(staat, { op: 'factuur', bonId: bon.id, klant: {} }, nu), /adres/);
+  let f;
+  ({ staat, factuur: f } = pasToe(staat, { op: 'factuur', bonId: bon.id, klant: { adres: 'Straat 1, 2000 Antwerpen', btw: 'BE0111111111' } }, nu));
+  assert.equal(f.nr, '2026-0001');
+  assert.equal(f.totaal, 12.1);
+  assert.equal(f.maatstaf, 10);
+  assert.equal(f.btw, 2.1);
+  assert.equal(f.bedrijf.btw, 'BE0999999999');
+  assert.equal(staat.bonnen[0].factuurNr, '2026-0001');
+  assert.throws(() => pasToe(staat, { op: 'factuur', bonId: bon.id, klant: { adres: 'x' } }, nu), /bestaat al/);
+  const k = Object.values(staat.klantenboek)[0];
+  assert.equal(k.btw, 'BE0111111111');
+  let b2;
+  ({ staat, bon: b2 } = nieuw(staat, { klant: { naam: 'Y' }, stukken: [{ naam: 'Laken', prijs: 4 }] }));
+  ({ staat, factuur: f } = pasToe(staat, { op: 'factuur', bonId: b2.id, klant: { adres: 'Weg 2' } }, nu));
+  assert.equal(f.nr, '2026-0002');
+});
