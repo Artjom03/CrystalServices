@@ -393,6 +393,7 @@ a{color:var(--navy);}
   .vr-ja{background:#B3261E;border-color:#B3261E;color:#fff;}
   .vr-nee{background:#E6F2EA;border-color:#1E6B3A;color:#1E6B3A;}
   .vr-tabel .vr-jn{width:14mm;text-align:center;}
+  .vr-tabel tfoot .vr-jn{white-space:nowrap;}
   .vr-rij-vlek td{background:#FBE9E7;color:#B3261E;font-weight:700;border-bottom-color:#E8B4AE;}
   .vr-rij-vlek .vr-jn b{display:inline-block;background:#B3261E;color:#fff;border-radius:1mm;padding:.2mm 2mm;}
   .vr-opm{margin-top:4mm;}
