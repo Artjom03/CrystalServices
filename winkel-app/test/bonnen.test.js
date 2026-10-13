@@ -297,11 +297,11 @@ test('vlekken per stuk en een klant met vlekkenrapport', () => {
       { naam: 'Broek (strijken)', aantal: 1, prijs: 2.3, vlek: '' },
     ],
   });
-  assert.equal(bon.stukken[0].vlek, '1 hemd: kraag');
+  assert.equal(bon.stukken[0].vlek, true, 'enkel of er een vlek is, niet waar');
   assert.equal(bon.stukken[0].vlekAantal, 3, 'niet ingevuld: allemaal');
   assert.equal('vlek' in bon.stukken[1], false, 'geen vlek: geen veld');
   ({ bon } = nieuw(LEEG, { klant: { naam: 'X' }, stukken: [
-    { naam: 'Servet', aantal: 10, vlek: 'rode wijn', vlekAantal: 3 },
+    { naam: 'Servet', aantal: 10, vlek: true, vlekAantal: 3 },
     { naam: 'Theenap', aantal: 2, vlek: 'koffie', vlekAantal: 9 },
   ] }));
   assert.equal(bon.stukken[0].vlekAantal, 3);
