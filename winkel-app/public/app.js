@@ -1158,7 +1158,8 @@
     const vlek = e.target.closest('[data-vlek], [data-vlek-weg]');
     if (vlek) {
       const i = Number(vlek.closest('tr').dataset.i);
-      if (vlek.hasAttribute('data-vlek')) { regels[i].vlek = true; regels[i].vlekAantal = 1; }
+      // Enkel dat er een vlek is ("ja"); waar precies hoeft niet.
+      if (vlek.hasAttribute('data-vlek')) { regels[i].vlek = 'ja'; regels[i].vlekAantal = 1; }
       else { delete regels[i].vlek; delete regels[i].vlekAantal; }
       toonRegels();
       $(`#f-regels tr[data-i="${i}"] [data-veld="vlekAantal"]`)?.focus();

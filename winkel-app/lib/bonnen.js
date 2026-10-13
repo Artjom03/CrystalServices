@@ -69,9 +69,10 @@ export function schoonStukken(stukken) {
     if (!naam) return [];
     const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
     const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
-    // Heeft dit stuk een vlek? Waar precies doet er niet toe (oudere bonnen gaven nog een plaats mee).
-    if (s?.vlek === true || tekst(s?.vlek, 120)) {
-      stuk.vlek = true;
+    // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
+    const vlek = tekst(s?.vlek, 120);
+    if (vlek) {
+      stuk.vlek = vlek;
       // Hoeveel van de stukken een vlek hebben (bv. 3 van 10 servetten); niet ingevuld = allemaal.
       const n = Math.round(Number(s?.vlekAantal));
       stuk.vlekAantal = n >= 1 ? Math.min(n, aantal) : aantal;
