@@ -242,10 +242,11 @@ a{color:var(--navy);}
 .ix-rij input{border:1px solid var(--lijn);border-radius:10px;padding:9px 10px;min-height:44px;width:100%;background:var(--kaart);}
 @media (max-width:560px){.ix-rij{grid-template-columns:1fr auto auto;}.ix-rij .ix-woorden{grid-column:1 / -1;grid-row:2;}}
 @media print{
-  @page{margin:5mm;}
+  /* Geen paginamarge: dan drukt de browser geen datum, titel, adres of paginanummer mee. De witrand zit in #afdruk. */
+  @page{margin:0;}
   html,body{background:#fff!important;}
   body > *:not(#afdruk){display:none!important;}
-  #afdruk{display:block;width:100%;max-width:72mm;margin:0 auto;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  #afdruk{display:block;width:100%;max-width:72mm;margin:0 auto;padding:5mm 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#000;font:9.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   #afdruk b{font-weight:700;}
   .pr-streepjes{display:block;height:12mm;max-width:100%;margin:2.5mm auto 0;}
   .pr-label .pr-streepjes{height:10mm;}
@@ -298,14 +299,15 @@ a{color:var(--navy);}
   .pr-label-opm{font-size:8.5pt;margin-top:1.5mm;font-style:italic;}
 
   /* Dagoverzicht */
-  #afdruk.a4-zoom{zoom:1.55;}
+  #afdruk.a4-zoom{zoom:1.55;padding:7.75mm 0;}
   .pr-dag-datum{text-align:center;font-size:10pt;margin:1mm 0 2mm;}
   .pr-dag .pr-merk{text-align:center;}
   .pr-klein-tabel td{font-size:8pt;}
   .pr-factuurvraag{font-size:8.5pt;padding:1.5mm 0;border-bottom:.2mm dotted #000;break-inside:avoid;}
 
   /* Groot op A4: een volle pagina in de huisstijl, met onderaan de prijslijst */
-  #afdruk.a4{max-width:none;color:#1B2422;font:10pt/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  #afdruk.a4{max-width:none;padding:12mm;box-sizing:border-box;}
+  #afdruk.a4{color:#1B2422;font:10pt/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
   .a4-blad{break-inside:avoid;}
   .a4-kop{display:flex;justify-content:space-between;align-items:center;gap:6mm;padding-bottom:3mm;border-bottom:1.2mm solid #0E1F42;}
   .a4-merk{display:flex;align-items:center;gap:3.5mm;}

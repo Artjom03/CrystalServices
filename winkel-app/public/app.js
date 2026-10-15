@@ -958,8 +958,8 @@
   const standaardFormaat = () => (staat.instellingen?.formaat === 'a4' ? 'a4' : 'klein');
 
   function afdrukken(formaat = 'klein') {
-    // Paginaformaat: A4 met marges, of een smalle rol voor de bonprinter.
-    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4;margin:12mm}}' : '@media print{@page{margin:5mm}}';
+    // Paginaformaat: A4 of een smalle rol voor de bonprinter. De marge zit in #afdruk (zie app.css).
+    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4;margin:0}}' : '@media print{@page{margin:0}}';
     if (!DESKTOP) return Promise.resolve(window.print());
     return window.crystal.afdrukken(formaat).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
