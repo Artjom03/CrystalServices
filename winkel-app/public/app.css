@@ -208,20 +208,53 @@ dialog.paneel.breed{width:min(820px,calc(100% - 24px));}
 .d-factuur.ok{background:var(--groen-zacht);color:var(--groen);}
 .paneel form.d-factuurgegevens{display:grid;gap:8px;max-height:none;}
 
-/* Touchscherm: alles wat groter om op te tikken */
-@media (any-pointer:coarse){
-  .knop{min-height:50px;padding:12px 20px;}
-  .knop.klein{min-height:44px;}
-  .tabs button{padding:15px 8px;}
-  .keuzes button{min-height:48px;padding:10px 16px;}
-  .keuzes.klein button{min-height:44px;}
-  input:not([type=checkbox]),select,textarea{padding:12px 14px;}
-  .vink input{width:26px;height:26px;}
-  .teller button{width:46px;height:46px;flex-basis:46px;}
-  .tegel{min-height:62px;}
-  .sluit{width:48px;height:48px;}
-  .bon{padding:16px 18px;}
-}
+/* Aanraakscherm (Instellingen > Scherm, of automatisch): alles groter om met de vinger op te tikken */
+.aanraak body{font-size:17px;}
+.aanraak .knop{min-height:56px;padding:14px 22px;font-size:1.02rem;}
+.aanraak .knop.klein{min-height:48px;}
+.aanraak .knop.icoon{width:56px;}
+.aanraak .knop.balk-knop{padding:12px 16px;}
+.aanraak .tabs button{padding:16px 10px;font-size:1.02rem;}
+.aanraak .keuzes{gap:10px;}
+.aanraak .keuzes button{min-height:54px;padding:12px 20px;font-size:1rem;}
+.aanraak .keuzes.klein button{min-height:48px;}
+.aanraak input:not([type=checkbox]),.aanraak select,.aanraak textarea{padding:14px 16px;font-size:1.08rem;min-height:54px;}
+.aanraak .stukken input{padding:10px;}
+.aanraak .vink{gap:12px;min-height:48px;}
+.aanraak .vink input{width:30px;height:30px;}
+.aanraak .teller button{width:54px;height:54px;flex-basis:54px;font-size:1.4rem;}
+.aanraak #f-regels .teller .aantal{width:60px;font-size:1.15rem;}
+.aanraak #f-regels tr{grid-template-columns:auto 1fr 1fr 54px;gap:8px;padding:10px 0;}
+.aanraak .weg{min-width:54px;min-height:54px;font-size:1.3rem;}
+.aanraak .vlek-knop{min-height:48px;padding:10px 18px;font-size:1rem;}
+.aanraak .vlek-veld button{min-width:48px;min-height:48px;}
+.aanraak .tegels{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.aanraak .tegel{min-height:72px;padding:10px 14px;font-size:1.02rem;}
+.aanraak .sluit{width:52px;height:52px;font-size:1.15rem;}
+.aanraak .bon{padding:18px 20px;}
+.aanraak .kl-lijst button,.aanraak .klant-knop{min-height:58px;}
+.aanraak .k-rij{min-height:60px;}
+.aanraak .k-tegel b{font-size:1.3rem;}
+.aanraak .paneel-voet{flex-wrap:wrap;}
+.cijferpad{display:none;}
+.aanraak .cijferpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin-top:4px;}
+.cijferpad button{min-height:62px;border:1px solid var(--lijn);background:#fff;border-radius:14px;font-size:1.5rem;font-weight:700;color:var(--navy);cursor:pointer;touch-action:manipulation;}
+.cijferpad button:active{background:var(--navy);color:#fff;}
+
+/* Kassa: tik op een regel om ze te verbeteren */
+.k-hint{background:var(--bg);border-radius:10px;padding:8px 12px;color:var(--ink-soft);font-size:.9rem;margin:0 0 4px;}
+.k-tabel tr.k-wijzig td{padding:0;}
+.k-rij{width:100%;display:flex;align-items:center;gap:10px;padding:8px 6px;min-height:48px;border:0;background:transparent;text-align:left;cursor:pointer;border-radius:10px;font:inherit;color:inherit;}
+button.k-rij:hover,button.k-rij:active{background:var(--geel-zacht);}
+.k-rij span{flex:1;min-width:0;}
+.k-rij small{color:var(--ink-soft);}
+.k-rij b{white-space:nowrap;}
+.k-rij i{font-style:normal;color:var(--gold-deep);width:24px;text-align:center;}
+.k-tabel tr.som .k-rij,.k-tabel tr.som td{font-weight:800;}
+.k-lijst{list-style:none;margin:0;padding:0;}
+.k-lijst li{border-bottom:1px solid var(--lijn);}
+.k-correcties{margin:0;padding:0 0 0 18px;color:var(--ink-soft);font-size:.9rem;display:grid;gap:4px;}
+.k-correcties span{font-weight:700;color:var(--ink);}
 a{color:var(--navy);}
 
 /* Afdruk: een bon van maximaal 72 mm breed (de printbreedte van een bonnenprinter van 80 mm; op A4 in het midden),

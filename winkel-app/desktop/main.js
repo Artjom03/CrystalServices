@@ -15,7 +15,7 @@ const BACKUPS = () => path.join(app.getPath('userData'), 'back-ups');
 const BEWAAR_BACKUPS = 60;
 
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',

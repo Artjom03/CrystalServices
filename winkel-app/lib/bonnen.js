@@ -244,6 +244,15 @@ function kassaDag(staat, dag) {
   return { bewegingen: [], ...(staat.kassa[dag] || {}) };
 }
 
+const euro = (n) => '€ ' + Number(n).toFixed(2).replace('.', ',');
+
+/** Een correctie in de kassa: de kassa van die dag moet open zijn, en elke wijziging blijft zichtbaar. */
+function kassaCorrectie(staat, dag, tekst, iso) {
+  const k = kassaDag(staat, dag);
+  if (k.geslotenOp) throw new Fout('De kassa van die dag is afgesloten. Open ze eerst opnieuw om iets te verbeteren.');
+  staat.kassa[dag] = { ...k, correcties: [...(k.correcties || []), { tekst, op: iso }] };
+}
+
 /**
  * De bonnen die blijven: opgehaalde bonnen verdwijnen na de gekozen bewaartermijn,
  * gerekend vanaf het ophalen. Wat nog niet opgehaald is, blijft altijd staan.
@@ -431,6 +440,8 @@ function handeling(oud, actie, nu) {
       const begin = bedragMetTeken(actie.begin);
       if (begin < 0) throw new Fout('Het beginbedrag kan niet negatief zijn');
       staat.kassa[actie.dag] = { ...k, begin, geopendOp: k.geopendOp || iso };
+      // Een beginbedrag achteraf aanpassen is een correctie.
+      if (k.geopendOp && k.begin !== begin) kassaCorrectie(staat, actie.dag, `Beginbedrag ${euro(k.begin ?? 0)} → ${euro(begin)}`, iso);
       return { staat };
     }
     case 'kassaBeweging': {
@@ -448,6 +459,53 @@ function handeling(oud, actie, nu) {
       const geteld = bedragMetTeken(actie.geteld);
       if (geteld < 0) throw new Fout('Het getelde bedrag kan niet negatief zijn');
       staat.kassa[actie.dag] = { ...k, geteld, geslotenOp: iso };
+      return { staat };
+    }
+    case 'kassaBewegingWijzig': {
+      // Een verkeerde beweging (geld in/uit) verbeteren of schrappen.
+      const k = kassaDag(staat, actie.dag);
+      const i = Number(actie.index);
+      const oud = k.bewegingen[i];
+      if (!Number.isInteger(i) || !oud) throw new Fout('Beweging niet gevonden', 404);
+      const wat = `${oud.bedrag < 0 ? 'Uit' : 'In'} de kassa "${oud.reden}" ${euro(Math.abs(oud.bedrag))}`;
+      if (actie.weg) {
+        kassaCorrectie(staat, actie.dag, `${wat}: geschrapt`, iso);
+        staat.kassa[actie.dag].bewegingen = k.bewegingen.filter((_, j) => j !== i);
+        return { staat };
+      }
+      const b = bedragMetTeken(actie.bedrag);
+      if (!b) throw new Fout('Vul een bedrag in');
+      const reden = tekst(actie.reden, 80);
+      if (!reden) throw new Fout('Vul een reden in');
+      kassaCorrectie(staat, actie.dag, `${wat} → ${b < 0 ? 'uit' : 'in'} "${reden}" ${euro(Math.abs(b))}`, iso);
+      staat.kassa[actie.dag].bewegingen = k.bewegingen.map((x, j) => (j === i ? { ...x, bedrag: b, reden } : x));
+      return { staat };
+    }
+    case 'betalingWijzig': {
+      // Een verkeerd ingegeven betaling verbeteren (betaalwijze of bedrag) of ongedaan maken.
+      const i = staat.betalingen.findIndex((p) => p.id === actie.id);
+      if (i < 0) throw new Fout('Betaling niet gevonden', 404);
+      const p = staat.betalingen[i];
+      if (p.geschraptOp) throw new Fout('Deze betaling is al geschrapt');
+      const dag = dagVan(p.op);
+      const wat = `Betaling ${p.nr} (${p.naam}) ${euro(p.bedrag)} ${p.wijze}`;
+      if (actie.weg) {
+        kassaCorrectie(staat, dag, `${wat}: geschrapt`, iso);
+        staat.betalingen[i] = { ...p, geschraptOp: iso };
+        // De bon staat dan weer als niet betaald.
+        const b = staat.bonnen.findIndex((x) => x.id === p.bonId);
+        if (b >= 0) staat.bonnen[b] = { ...staat.bonnen[b], betaald: false, betaalwijze: '', gewijzigdOp: iso };
+        return { staat };
+      }
+      const wijze = actie.wijze === undefined ? p.wijze : actie.wijze;
+      if (!BETAALWIJZEN_KASSA.includes(wijze)) throw new Fout('Kies een betaalwijze');
+      const bedrag = actie.bedrag === undefined ? p.bedrag : bedragMetTeken(actie.bedrag);
+      if (!(bedrag > 0)) throw new Fout('Het bedrag moet groter dan 0 zijn');
+      if (wijze === p.wijze && bedrag === p.bedrag) return { staat };
+      kassaCorrectie(staat, dag, `${wat} → ${euro(bedrag)} ${wijze}`, iso);
+      staat.betalingen[i] = { ...p, wijze, bedrag };
+      const b = staat.bonnen.findIndex((x) => x.id === p.bonId);
+      if (b >= 0 && wijze !== p.wijze) staat.bonnen[b] = { ...staat.bonnen[b], betaalwijze: wijze, gewijzigdOp: iso };
       return { staat };
     }
     case 'kassaHeropen': {
