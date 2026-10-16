@@ -162,7 +162,7 @@
       <label>Opgehaalde bonnen bewaren gedurende
         <select id="i-bewaar"></select>
       </label>
-      <p class="tijdlijn">Gerekend vanaf het ophalen; daarna worden ze automatisch gewist. Bonnen die nog niet opgehaald zijn, blijven altijd staan.</p>
+      <p class="tijdlijn">Gerekend vanaf het ophalen; daarna worden ze automatisch gewist. Bonnen die nog niet opgehaald zijn, blijven altijd staan. De kassa en alle betalingen blijven altijd bewaard.</p>
       <p id="i-bewaar-info" class="tijdlijn"></p>
     </fieldset>
     <fieldset>
@@ -181,6 +181,17 @@
         <button type="button" class="knop" id="i-kies-printer-a4" hidden>A4-printer kiezen</button>
         <button type="button" class="knop" id="i-testbon">Testbon afdrukken</button>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend>Scherm</legend>
+      <label>Aanraakscherm (grotere knoppen en een cijferklavier in de kassa)
+        <select id="i-aanraak">
+          <option value="auto">Automatisch</option>
+          <option value="aan">Aan</option>
+          <option value="uit">Uit</option>
+        </select>
+      </label>
+      <p class="tijdlijn">Geldt enkel voor dit toestel.</p>
     </fieldset>
     <fieldset>
       <legend>Prijslijst</legend>
@@ -286,9 +297,24 @@
       </label>
       <div class="d-knoppen"><button class="knop hoofd" type="submit">Afsluiten en dagoverzicht afdrukken</button><button class="knop" type="button" data-annuleer>Annuleren</button></div>
     </form>
+    <form id="k-corr" class="k-form" hidden>
+      <h3 id="k-corr-titel">Verbeteren</h3>
+      <div class="keuzes" id="k-corr-wijze"></div>
+      <div class="keuzes" id="k-corr-richting">
+        <button type="button" data-richting="uit" aria-pressed="true">Uit de kassa</button>
+        <button type="button" data-richting="in" aria-pressed="false">In de kassa</button>
+      </div>
+      <div class="rij">
+        <span class="prijs-veld groot">€ <input name="bedrag" inputmode="decimal" placeholder="0,00" autocomplete="off"></span>
+        <input name="reden" maxlength="80" placeholder="Reden" autocomplete="off">
+      </div>
+      <p class="tijdlijn">Elke verbetering blijft zichtbaar in de kassa en op het dagoverzicht.</p>
+      <div class="d-knoppen"><button class="knop hoofd" type="submit">Opslaan</button><button class="knop gevaar" type="button" id="k-corr-weg">Schrappen</button><button class="knop" type="button" data-annuleer>Annuleren</button></div>
+    </form>
     <p id="k-fout" class="fout" role="alert"></p>
   </div>
   <div class="paneel-voet">
+    <button type="button" class="knop" id="k-export">Maand exporteren</button>
     <button type="button" class="knop" id="k-beweging-knop">Geld in/uit</button>
     <button type="button" class="knop" id="k-print">Dagoverzicht afdrukken</button>
     <button type="button" class="knop hoofd" id="k-sluit-knop">Dag afsluiten</button>

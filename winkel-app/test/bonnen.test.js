@@ -311,3 +311,44 @@ test('vlekken per stuk en een klant met vlekkenrapport', () => {
   ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { notitie: 'x' } }, nu));
   assert.equal(voorWinkel(staat, nu).klantenboek['naam:flying service nv'].vlekkenrapport, true, 'blijft aan bij andere wijziging');
 });
+
+test('kassa verbeteren: beginbedrag, beweging en betaling, met een spoor van elke correctie', () => {
+  const dag = '2026-10-09';
+  let { staat } = pasToe(LEEG, { op: 'kassaOpen', dag, begin: 100 }, nu);
+  ({ staat } = pasToe(staat, { op: 'kassaOpen', dag, begin: 120 }, nu));
+  assert.equal(staat.kassa[dag].begin, 120);
+  assert.match(staat.kassa[dag].correcties[0].tekst, /Beginbedrag € 100,00 → € 120,00/);
+
+  ({ staat } = pasToe(staat, { op: 'kassaBeweging', dag, bedrag: -50, reden: 'bank' }, nu));
+  ({ staat } = pasToe(staat, { op: 'kassaBewegingWijzig', dag, index: 0, bedrag: -40, reden: 'naar de bank' }, nu));
+  assert.deepEqual(staat.kassa[dag].bewegingen.map((b) => [b.bedrag, b.reden]), [[-40, 'naar de bank']]);
+  ({ staat } = pasToe(staat, { op: 'kassaBewegingWijzig', dag, index: 0, weg: true }, nu));
+  assert.equal(staat.kassa[dag].bewegingen.length, 0);
+
+  let bon;
+  ({ staat, bon } = nieuw(staat, { klant: { naam: 'Jan' }, stukken: [{ naam: 'Hemd', aantal: 2, prijs: 5 }], betaald: true, betaalwijze: 'kaart' }));
+  const id = staat.betalingen[0].id;
+  ({ staat } = pasToe(staat, { op: 'betalingWijzig', id, wijze: 'cash', bedrag: '9,50' }, nu));
+  assert.deepEqual([staat.betalingen[0].wijze, staat.betalingen[0].bedrag], ['cash', 9.5]);
+  assert.equal(staat.bonnen.find((b) => b.id === bon.id).betaalwijze, 'cash');
+  ({ staat } = pasToe(staat, { op: 'betalingWijzig', id, weg: true }, nu));
+  assert.ok(staat.betalingen[0].geschraptOp, 'blijft bewaard, maar geschrapt');
+  assert.equal(staat.bonnen.find((b) => b.id === bon.id).betaald, false);
+  assert.throws(() => pasToe(staat, { op: 'betalingWijzig', id, wijze: 'kaart' }, nu), /geschrapt/);
+  assert.equal(staat.kassa[dag].correcties.length, 5);
+
+  ({ staat } = pasToe(staat, { op: 'kassaSluit', dag, geteld: 120 }, nu));
+  assert.throws(() => pasToe(staat, { op: 'kassaOpen', dag, begin: 1 }, nu), /afgesloten/);
+  assert.throws(() => pasToe(staat, { op: 'kassaBeweging', dag, bedrag: 5, reden: 'x' }, nu), /afgesloten/);
+});
+
+test('de kassa en de betalingen blijven bewaard, ook als de bonnen opgeruimd worden', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'Oud' }, stukken: [{ naam: 'Hemd', aantal: 1, prijs: 3 }] });
+  ({ staat } = pasToe(staat, { op: 'kassaOpen', dag: '2026-10-09', begin: 50 }, nu));
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald', betaalwijze: 'cash' }, nu));
+  const later = new Date('2029-01-01T09:00:00Z');
+  ({ staat } = pasToe(staat, { op: 'kassaOpen', dag: '2029-01-01', begin: 0 }, later));
+  assert.equal(staat.bonnen.length, 0, 'de opgehaalde bon is opgeruimd');
+  assert.equal(staat.betalingen.length, 1);
+  assert.equal(staat.kassa['2026-10-09'].begin, 50);
+});
