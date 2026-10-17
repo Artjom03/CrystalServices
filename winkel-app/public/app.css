@@ -241,6 +241,8 @@ dialog.paneel.breed{width:min(820px,calc(100% - 24px));}
 .cijferpad button{min-height:62px;border:1px solid var(--lijn);background:#fff;border-radius:14px;font-size:1.5rem;font-weight:700;color:var(--navy);cursor:pointer;touch-action:manipulation;}
 .cijferpad button:active{background:var(--navy);color:#fff;}
 
+
+.actie-melding{margin:0 0 8px;padding:8px 12px;border-radius:10px;background:var(--geel-zacht);color:var(--gold-deep);font-weight:700;}
 /* Kassa: tik op een regel om ze te verbeteren */
 .k-hint{background:var(--bg);border-radius:10px;padding:8px 12px;color:var(--ink-soft);font-size:.9rem;margin:0 0 4px;}
 .k-tabel tr.k-wijzig td{padding:0;}
