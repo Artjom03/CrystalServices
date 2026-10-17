@@ -1005,14 +1005,18 @@
   let artikelBron = null;
   let artikelLijst = [];
   /** Alle gekende stukken, plat: één regel per behandeling met de prijs. */
+  /** De actie die vandaag loopt (bv. oktoberactie op strijken), of niets. */
+  const actieVandaag = () => (window.ACTIES || []).find((a) => a.van <= vandaagIso() && vandaagIso() <= a.tot) || null;
+  let artikelDag = '';
   function artikelen() {
     const p = prijslijst();
-    if (artikelBron === p) return artikelLijst;
+    if (artikelBron === p && artikelDag === vandaagIso()) return artikelLijst;
+    const actie = actieVandaag();
     const lijst = [];
     for (const g of p.groepen || []) {
       for (const s of g.stukken) {
         if (s.prijs != null) lijst.push({ naam: s.naam, kort: s.naam, soort: '', prijs: s.prijs, behandeling: 'ander' });
-        if (s.strijken != null) lijst.push({ naam: `${s.naam} (strijken)`, kort: s.naam, soort: 'strijken', prijs: s.strijken, behandeling: 'strijk' });
+        if (s.strijken != null) lijst.push({ naam: `${s.naam} (strijken)`, kort: s.naam, soort: 'strijken', prijs: actie?.strijken?.[s.naam] ?? s.strijken, behandeling: 'strijk' });
         if (s.wassen != null) lijst.push({ naam: `${s.naam} (${g.wassenLabel || 'wassen'})`, kort: s.naam, soort: g.wassenLabel || 'wassen', prijs: s.wassen, behandeling: 'was' });
         if (s.prijs == null && s.strijken == null && s.wassen == null) lijst.push({ naam: s.naam, kort: s.naam, soort: '', prijs: null, behandeling: 'ander' });
       }
@@ -1020,6 +1024,7 @@
     for (const naam of p.droogkuis || []) lijst.push({ naam, kort: naam, soort: 'droogkuis', prijs: null, behandeling: 'droogkuis' });
     for (const a of lijst) a.zoek = zoekVorm(a.kort + ' ' + a.soort);
     artikelBron = p;
+    artikelDag = vandaagIso();
     artikelLijst = lijst;
     return lijst;
   }
@@ -1054,7 +1059,8 @@
     const tekst = $('#f-stuk').value.trim();
     if (!tekst) {
       const snel = veelgebruikt();
-      $('#f-suggesties').innerHTML = snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '';
+      const actie = actieVandaag();
+      $('#f-suggesties').innerHTML = (actie ? `<p class="actie-melding">🏷 ${esc(actie.naam)} · t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long' }))}</p>` : '') + (snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '');
       return;
     }
     const gevonden = treffers(tekst);
