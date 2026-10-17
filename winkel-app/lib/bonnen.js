@@ -567,6 +567,8 @@ function handeling(oud, actie, nu) {
     case 'verwijder': {
       const i = zoek(actie.id);
       const [bon] = staat.bonnen.splice(i, 1);
+      // Een verwijderde bon was een fout: ook zijn betalingen verdwijnen.
+      staat.betalingen = staat.betalingen.filter((p) => p.bonId !== bon.id);
       return { staat, bon };
     }
     case 'klantcode': {

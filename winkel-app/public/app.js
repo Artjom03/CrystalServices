@@ -1594,7 +1594,11 @@
   }
 
   // ---------- Kassa openen (elke dag) ----------
+  // De app is een hulpmiddel, geen kassa: geen kassa openen/afsluiten en geen betalingen bijhouden op het scherm.
+  // Wat overblijft onder de knop "Facturen" zijn de factuuraanvragen.
+  const KASSA = false;
   function controleerKassa() {
+    if (!KASSA) return;
     if ($('#app').hidden || $('#kassa-open').open) return;
     const dag = vandaagIso();
     if ((staat.kassa || {})[dag]?.geopendOp) return;
@@ -1634,6 +1638,7 @@
   const uur = (iso) => new Date(iso).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' });
   const wijzeNaam = (w) => (WIJZEN.find(([x]) => x === w) || [w, w])[1];
   function toonKassa() {
+    if (!KASSA) { $('#k-inhoud').innerHTML = factuurLijst(); return; }
     const k = kassaVan($('#k-dag').value || vandaagIso());
     // Verbeteren kan zolang de kassa van die dag open is; een afgesloten dag eerst opnieuw openen.
     const kan = Boolean(k.geopendOp) && !k.geslotenOp;
@@ -1670,6 +1675,11 @@
     $('#k-sluit-knop').hidden = !k.geopendOp && !vandaag;
   }
   $('#kassa-knop').addEventListener('click', () => openKassa());
+  if (!KASSA) {
+    $('#kassa-knop').textContent = 'Facturen';
+    $('#kassa h2').textContent = 'Factuuraanvragen';
+    $('#kassa').classList.add('zonder-kassa');
+  }
   $('#k-dag').addEventListener('change', () => { $('#k-beweging').hidden = true; $('#k-sluit').hidden = true; $('#k-corr').hidden = true; toonKassa(); });
   $('#k-beweging-knop').addEventListener('click', () => {
     $('#k-sluit').hidden = true;
