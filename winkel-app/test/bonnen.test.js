@@ -10,12 +10,14 @@ test('nieuwe bon krijgt een volgnummer per jaar en een totaal', () => {
     klant: { naam: '  Lauren ' },
     stukken: [{ naam: 'Hemd (strijken)', aantal: 3, prijs: 2.3 }, { naam: 'Broek', aantal: '2', prijs: '2,30' }],
   });
-  assert.equal(bon.nr, '26-001');
+  assert.match(bon.nr, /^\d{6}$/, 'willekeurig getal van 6 cijfers');
+  const eerste = bon.nr;
   assert.equal(bon.klant.naam, 'Lauren');
   assert.equal(bon.totaal, 11.5);
   assert.equal(bon.status, 'binnen');
   ({ bon } = nieuw(staat, { klant: { naam: 'Yao' } }));
-  assert.equal(bon.nr, '26-002');
+  assert.match(bon.nr, /^\d{6}$/);
+  assert.notEqual(bon.nr, eerste);
 });
 
 test('zonder naam geen bon', () => {
@@ -37,8 +39,9 @@ test('status klaar en opgehaald zetten de tijdstippen en de betaling', () => {
 
 test('wijzigen houdt nummer en status, verwijderen haalt de bon weg', () => {
   let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A' } });
+  const nr = bon.nr;
   ({ staat, bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { klant: { naam: 'B', telefoon: '0470' }, stukken: [{ naam: 'Laken', prijs: 4.2 }] } }, nu));
-  assert.equal(bon.nr, '26-001');
+  assert.equal(bon.nr, nr);
   assert.equal(bon.klant.naam, 'B');
   assert.equal(bon.totaal, 4.2);
   ({ staat } = pasToe(staat, { op: 'verwijder', id: bon.id }, nu));
@@ -77,7 +80,7 @@ test('klantcode: enkel de hash wordt bewaard en de winkel ziet die niet', () => 
   // De klant ziet enkel de eigen bon.
   const zicht = voorKlant(staat, '32497319609');
   assert.equal(zicht.bonnen.length, 1);
-  assert.equal(zicht.bonnen[0].nr, '26-001');
+  assert.equal(zicht.bonnen[0].nr, staat.bonnen[0].nr);
   assert.equal('opmerking' in zicht.bonnen[0], false);
 });
 
@@ -217,7 +220,7 @@ test('betalingen worden genoteerd bij betalen, één keer per bon', () => {
   let b2;
   ({ staat, bon: b2 } = nieuw(staat, { klant: { naam: 'B' }, stukken: [{ naam: 'Broek', prijs: 5 }] }));
   ({ staat } = pasToe(staat, { op: 'status', id: b2.id, status: 'opgehaald', betaalwijze: 'cash' }, nu));
-  assert.deepEqual(staat.betalingen.map((p) => [p.nr, p.wijze, p.bedrag]), [['26-001', 'kaart', 4.6], ['26-002', 'cash', 5]]);
+  assert.deepEqual(staat.betalingen.map((p) => [p.nr, p.wijze, p.bedrag]), [[bon.nr, 'kaart', 4.6], [b2.nr, 'cash', 5]]);
 });
 
 test('kassa: openen, geld in/uit, afsluiten', () => {

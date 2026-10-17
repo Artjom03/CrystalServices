@@ -8,7 +8,7 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 - **Klaar:** de klant verwittigen via WhatsApp, sms of e-mail met een kant-en-klaar bericht.
 - **Opgehaald:** meteen noteren hoe er betaald is (cash, kaart, dienstencheques); de afhaalbon komt uit de printer.
 - **Zoeken** op naam (ook zonder accenten), gsm-nummer in elke schrijfwijze, bonnummer of locatie. Zijn alle gevonden bonnen van één klant, dan staat bovenaan een klantkaart met "+ Nieuwe bon".
-- **Streepjescode:** op de klantenbon en het mandticket (Code 128, het bonnummer zonder streepje: 26-001 wordt 26001). Een USB-scanner werkt als toetsenbord; de app herkent de snelle cijfers + Enter (ook met AZERTY) en opent de bon meteen om af te rekenen. De testbon (00-000) toont enkel dat de scanner werkt.
+- **Streepjescode:** op de klantenbon en het mandticket (Code 128, het bonnummer: een willekeurig getal van 6 cijfers, bv. 483920). Een USB-scanner werkt als toetsenbord; de app herkent de snelle cijfers + Enter (ook met AZERTY) en opent de bon meteen om af te rekenen. De testbon (00-000) toont enkel dat de scanner werkt.
 - **Afdrukken klein of groot:** elke bon kan op de bonprinter (klein bonnetje) of op A4. Het standaardformaat kies je in ⚙ Instellingen; in het Windows-programma kies je een aparte bonprinter en A4-printer.
 - **Klantenbon en mandticket:** bij een nieuwe bon komen er twee bonnen uit de printer: een korte klantenbon en een mandticket voor op de mand. Op het mandticket staan de stukken per plaats in de winkel (bv. lingerie in een kast, hemden op een rek), met een vakje om af te vinken. De plaatsen en welke stukken erbij horen kies je in ⚙ Instellingen → Indeling van de winkel; een stuk komt bij de eerste plaats waarvan een woord in de naam staat. Het Windows-programma stuurt ze als twee opdrachten (de bonprinter snijdt ertussen) en drukt het mandticket altijd op de bonprinter, ook als de klant een A4 krijgt.
 - **Vlekken:** bij elk stuk kan je met "⚠ Vlek" aanduiden hoeveel stukken een vlek hebben (bv. 3 van 10 servetten); op de bonnen staat dan "met vlek", zonder waar. Klanten met het vinkje "Speciale A4-bon met vlekkencontrole" (Klanten) krijgen altijd een aparte A4-bon met bovenaan of er vlekken zijn en per stuk vlek ja/nee.
@@ -65,7 +65,7 @@ npm test
 
 In `desktop/` staat dezelfde app als Windows-programma. Alles staat op de pc zelf, zonder internet:
 
-- **Gegevens:** de bonnen staan in `%APPDATA%\Crystal Winkel\bonnen.json`, met elke dag een automatische back-up in `back-ups\` (de laatste 60 dagen; daarin kunnen gewiste bonnen nog tot 60 dagen staan). Via **Bestand → Back-up opslaan** maak je zelf een kopie, bv. op een USB-stick.
+- **Gegevens:** de bonnen staan in `%APPDATA%\Crystal Winkel\bonnen.json`. Er worden geen automatische back-ups gemaakt; een verwijderde bon is meteen weg. Via **Bestand → Back-up opslaan** maak je zelf een kopie, bv. op een USB-stick.
 - **Afdrukken:** gaat rechtstreeks naar de printer die je kiest via **⚙ Instellingen → Printer kiezen** (of **Bestand → Printer kiezen**), zonder afdrukvenster. Elke bonnenprinter met een Windows-stuurprogramma werkt (bv. Epson TM-T20IV of de 123inkt RP-T100), met papier van 80 mm. De bon past zich aan de printbreedte aan (max. 72 mm).
 - **Touchscherm:** het programma opent schermvullend; knoppen worden groter op een touchscherm. **Beeld → Groter/Kleiner** wordt onthouden.
 - **Pincode:** de eerste keer kies je een pincode van 4 tot 8 cijfers.

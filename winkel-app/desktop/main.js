@@ -1,7 +1,7 @@
 // Crystal Winkel voor Windows: dezelfde winkel-app, maar volledig offline.
 // De bonnen staan in een bestand op deze pc; afdrukken gaat rechtstreeks naar de gekozen printer.
 import { app, BrowserWindow, Menu, dialog, ipcMain, protocol, screen, shell } from 'electron';
-import { readFile, writeFile, rename, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,8 +11,6 @@ const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
 const DATA = () => path.join(app.getPath('userData'), 'bonnen.json');
 const INSTELLINGEN = () => path.join(app.getPath('userData'), 'instellingen.json');
-const BACKUPS = () => path.join(app.getPath('userData'), 'back-ups');
-const BEWAAR_BACKUPS = 60;
 
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
 const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
@@ -67,17 +65,6 @@ function wijzig(fn) {
 async function ruimOp() {
   if (!existsSync(DATA())) return;
   await wijzig((staat) => ({ staat: { ...staat, bonnen: teBewaren(staat) } }));
-}
-
-/** Eén back-up per dag, de laatste 60 dagen. */
-async function maakBackup() {
-  if (!existsSync(DATA())) return;
-  await mkdir(BACKUPS(), { recursive: true });
-  const dag = new Date().toISOString().slice(0, 10);
-  const doel = path.join(BACKUPS(), `bonnen-${dag}.json`);
-  await copyFile(DATA(), doel);
-  const oud = (await readdir(BACKUPS())).filter((f) => /^bonnen-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().slice(0, -BEWAAR_BACKUPS);
-  for (const f of oud) await rm(path.join(BACKUPS(), f));
 }
 
 // ---------- De "server" van de app, maar dan op deze pc ----------
@@ -186,7 +173,6 @@ async function backupOpslaan(venster) {
 async function backupTerugzetten(venster) {
   const { canceled, filePaths } = await dialog.showOpenDialog(venster, {
     title: 'Back-up terugzetten',
-    defaultPath: BACKUPS(),
     filters: [{ name: 'Back-up', extensions: ['json'] }],
     properties: ['openFile'],
   });
@@ -202,12 +188,11 @@ async function backupTerugzetten(venster) {
   const { response } = await dialog.showMessageBox(venster, {
     type: 'warning',
     message: `Back-up met ${data.bonnen.length} bonnen terugzetten?`,
-    detail: 'De huidige bonnen worden vervangen. Er wordt eerst nog een back-up van gemaakt.',
+    detail: 'De huidige bonnen worden vervangen.',
     buttons: ['Terugzetten', 'Annuleren'],
     cancelId: 1,
   });
   if (response !== 0) return;
-  await maakBackup();
   await wijzig(() => ({ staat: data }));
   venster.webContents.reload();
 }
@@ -232,7 +217,6 @@ function maakMenu(venster) {
         { type: 'separator' },
         { label: 'Back-up opslaan…', click: () => backupOpslaan(venster) },
         { label: 'Back-up terugzetten…', click: () => backupTerugzetten(venster) },
-        { label: 'Map met automatische back-ups openen', click: async () => { await mkdir(BACKUPS(), { recursive: true }); shell.openPath(BACKUPS()); } },
         { type: 'separator' },
         { label: 'Afsluiten', role: 'quit' },
       ],
@@ -311,7 +295,6 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     await laadInstellingen();
-    await maakBackup().catch((e) => console.error('Back-up mislukt', e));
     await ruimOp().catch((e) => console.error('Opruimen mislukt', e));
     protocol.handle('app', (request) => {
       const { pathname } = new URL(request.url);
