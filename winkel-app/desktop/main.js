@@ -17,7 +17,7 @@ const BEWAAR_BACKUPS = 60;
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
 const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
 
-const TYPES = {
+const TYPES = { '.pdf': 'application/pdf',
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json',
 };
@@ -278,6 +278,8 @@ function maakVenster() {
 
   // Links naar WhatsApp, e-mail of telefoon openen in het juiste programma van Windows.
   venster.webContents.setWindowOpenHandler(({ url }) => {
+    // De prijslijsten (PDF) openen in een eigen venster van het programma, om te bekijken of af te drukken.
+    if (url.startsWith('app://') && url.endsWith('.pdf')) return { action: 'allow', overrideBrowserWindowOptions: { width: 900, height: 1000, autoHideMenuBar: true } };
     shell.openExternal(url);
     return { action: 'deny' };
   });
