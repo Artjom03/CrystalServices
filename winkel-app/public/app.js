@@ -10,6 +10,8 @@
   // In het Windows-programma (Electron) staat alles op de pc: geen klantenportaal, en afdrukken
   // gaat rechtstreeks naar de gekozen printer.
   const DESKTOP = Boolean(window.crystal && window.crystal.desktop);
+  // Zo kan de opmaak tonen of verbergen wat enkel online of enkel in het Windows-programma hoort.
+  document.documentElement.classList.toggle('desktop', DESKTOP);
 
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -1386,6 +1388,7 @@
   $('#i-aanraak').addEventListener('change', (e) => zetAanraak(e.target.value));
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
+  $('#i-prijzen-print').addEventListener('click', () => drukPrijslijst(prijslijst()));
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
 
   // ---------- Indeling aanpassen ----------
@@ -1428,6 +1431,32 @@
       if (err.message !== 'pin') $('#ix-fout').textContent = err.message;
     }
   });
+
+  // ---------- Prijslijst afdrukken ----------
+  // Op A4 in de huisstijl, om aan de toonbank te hangen of mee te geven. Lege prijzen = niet aangeboden.
+  function prijslijstA4(p) {
+    const groepenHtml = (p.groepen || []).filter((g) => g.stukken.length).map((g) => {
+      const kol = kolommen(g);
+      const kop = kol.map((k) => `<th class="r">${k === 'wassen' ? esc(hoofdletter(g.wassenLabel)) : k === 'strijken' ? 'Enkel strijken' : 'Prijs'}</th>`).join('');
+      const rijen = g.stukken.map((s) => `<tr><td>${esc(s.naam)}</td>${kol.map((k) => `<td class="r">${s[k] == null || s[k] === '' ? '–' : eur(Number(s[k]))}</td>`).join('')}</tr>`).join('');
+      return `<div class="pl-groep"><table class="a4-tabel pl-tabel">
+        <thead><tr><th>${esc(g.titel)}</th>${kop}</tr></thead><tbody>${rijen}</tbody></table></div>`;
+    }).join('');
+    const droog = (p.droogkuis || []).length ? `<div class="pl-groep"><table class="a4-tabel pl-tabel">
+        <thead><tr><th>Droogkuis</th><th class="r">Prijs</th></tr></thead>
+        <tbody>${p.droogkuis.map((n) => `<tr><td>${esc(n)}</td><td class="r pl-zacht">op aanvraag</td></tr>`).join('')}</tbody></table></div>` : '';
+    return `<section class="pl-blad">${a4Kop()}
+      <div class="a4-titelrij"><div><div class="a4-soort">Prijzen per stuk, btw inbegrepen</div><div class="a4-nr">Prijslijst</div></div></div>
+      <div class="pl-kolommen">${groepenHtml}${droog}</div>
+      <p class="pl-voet">Droogkuis: de prijs hangt af van het stuk en krijgt u bij het binnenbrengen. Prijzen geldig vanaf ${esc(new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}.</p>
+    </section>`;
+  }
+  async function drukPrijslijst(p) {
+    $('#afdruk').innerHTML = prijslijstA4(p);
+    $('#afdruk').className = 'a4';
+    await logoGeladen();
+    await afdrukken('a4');
+  }
 
   // ---------- Prijslijst aanpassen ----------
   let werk = null;
@@ -1538,6 +1567,18 @@
       $('#p-bewaar').disabled = false;
     }
   });
+  // Afdrukken wat er nu op het scherm staat, ook als het nog niet opgeslagen is.
+  $('#p-print').addEventListener('click', () => {
+    const fout = werk.groepen.flatMap((g) => g.stukken.flatMap((s) => kolommen(g).filter((k) => Number.isNaN(leesPrijs(s[k])))
+      .map((k) => `"${s[k]}" bij ${s.naam || 'een nieuw stuk'}`)));
+    if (fout.length) { $('#p-fout').textContent = `${fout[0]} is geen geldige prijs.`; return; }
+    $('#p-fout').textContent = '';
+    drukPrijslijst({
+      groepen: werk.groepen.map((g) => ({ ...g, stukken: g.stukken.filter((s) => String(s.naam || '').trim())
+        .map((s) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, k === 'naam' ? String(v).trim() : leesPrijs(v)]))) })),
+      droogkuis: werk.droogkuis.map((n) => String(n).trim()).filter(Boolean),
+    });
+  });
   $('#p-standaard').addEventListener('click', async () => {
     if (!confirm('Alle prijzen terugzetten naar de standaardprijslijst? Je eigen aanpassingen gaan verloren.')) return;
     try {
@@ -1617,7 +1658,8 @@
 
   // ---------- Kassa ----------
   function openKassa(dag) {
-    $('#k-dag').value = dag || vandaagIso();
+    // Het Windows-programma bewaart enkel de kassa van vandaag: geen andere dag te kiezen.
+    $('#k-dag').value = DESKTOP ? vandaagIso() : dag || vandaagIso();
     $('#k-beweging').hidden = true;
     $('#k-sluit').hidden = true;
     $('#k-corr').hidden = true;

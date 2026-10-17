@@ -352,3 +352,17 @@ test('de kassa en de betalingen blijven bewaard, ook als de bonnen opgeruimd wor
   assert.equal(staat.betalingen.length, 1);
   assert.equal(staat.kassa['2026-10-09'].begin, 50);
 });
+
+test('Windows-programma: enkel de kassa en betalingen van vandaag blijven', async () => {
+  const { enkelKassaVanVandaag } = await import('../lib/bonnen.js');
+  const staat = {
+    ...LEEG,
+    bonnen: [{ id: 'b1', betaald: true }],
+    kassa: { '2026-10-08': { begin: 50 }, '2026-10-09': { begin: 80 } },
+    betalingen: [{ id: 'p1', op: '2026-10-08T15:00:00Z', bedrag: 5 }, { id: 'p2', op: '2026-10-09T08:00:00Z', bedrag: 7 }],
+  };
+  const uit = enkelKassaVanVandaag(staat, nu);
+  assert.deepEqual(Object.keys(uit.kassa), ['2026-10-09']);
+  assert.deepEqual(uit.betalingen.map((p) => p.id), ['p2']);
+  assert.equal(uit.bonnen.length, 1);
+});

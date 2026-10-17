@@ -265,6 +265,18 @@ export function teBewaren(staat, nu = new Date()) {
   return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso && !(b.factuur && !b.factuur.gemaaktOp)));
 }
 
+/**
+ * Voor het Windows-programma: de kassa enkel van vandaag. De kassa van vorige dagen
+ * (beginbedrag, geld in/uit, telling) en de betalingen van vorige dagen worden gewist;
+ * de winkel houdt dat zelf bij. De bonnen zelf blijven, met hun betaald/niet betaald.
+ */
+export function enkelKassaVanVandaag(staat, nu = new Date()) {
+  const vandaag = dagVan(nu.toISOString());
+  const kassa = staat.kassa?.[vandaag] ? { [vandaag]: staat.kassa[vandaag] } : {};
+  const betalingen = (staat.betalingen || []).filter((p) => dagVan(p.op) === vandaag);
+  return { ...staat, kassa, betalingen };
+}
+
 /** Bonnummers per jaar: 26-001, 26-002, ... */
 function volgendNummer(staat, nu) {
   const jaar = String(nu.getFullYear()).slice(2);

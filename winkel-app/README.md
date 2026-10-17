@@ -69,6 +69,8 @@ In `desktop/` staat dezelfde app als Windows-programma. Alles staat op de pc zel
 - **Afdrukken:** gaat rechtstreeks naar de printer die je kiest via **⚙ Instellingen → Printer kiezen** (of **Bestand → Printer kiezen**), zonder afdrukvenster. Elke bonnenprinter met een Windows-stuurprogramma werkt (bv. Epson TM-T20IV of de 123inkt RP-T100), met papier van 80 mm. De bon past zich aan de printbreedte aan (max. 72 mm).
 - **Touchscherm:** het programma opent schermvullend; knoppen worden groter op een touchscherm. **Beeld → Groter/Kleiner** wordt onthouden.
 - **Pincode:** de eerste keer kies je een pincode van 4 tot 8 cijfers.
+- **Kassa enkel van vandaag:** het programma is een hulpmiddel voor de dag zelf. De kassa (beginbedrag, geld in/uit, telling) en de betalingen van vorige dagen worden gewist, en komen ook niet meer in nieuwe back-ups (oudere back-ups verdwijnen vanzelf na 60 dagen). De winkel houdt de kassa zelf bij. Er is daarom geen dag te kiezen en geen "Maand exporteren". De bonnen zelf blijven bewaard, met of ze betaald zijn.
+- **Prijslijst afdrukken:** via ⚙ Instellingen → Prijslijst afdrukken, of met "Afdrukken" in het venster Prijzen aanpassen (dat drukt af wat op het scherm staat, ook voor het opslaan). De lijst komt op A4 in de huisstijl.
 - **Wat er niet in zit:** geen klantenportaal (dat heeft internet nodig). WhatsApp- en e-maillinks openen in de programma's van Windows.
 
 Het installatiebestand bouwen (op Linux is daarvoor Wine nodig, ook de 32-bitversie):

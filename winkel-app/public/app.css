@@ -260,6 +260,8 @@ a{color:var(--navy);}
 /* Afdruk: een bon van maximaal 72 mm breed (de printbreedte van een bonnenprinter van 80 mm; op A4 in het midden),
    met onderaan een label om af te knippen en aan de mand te hangen. Enkel zwart-wit. */
 #afdruk{display:none;}
+.desktop .enkel-web{display:none!important;}
+html:not(.desktop) .enkel-desktop{display:none!important;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}
 #f-regels td.vlek-td{grid-column:1 / -1;}
@@ -342,6 +344,18 @@ a{color:var(--navy);}
   #afdruk.a4{max-width:none;padding:12mm;box-sizing:border-box;}
   #afdruk.a4{color:#1B2422;font:10pt/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
   .a4-blad{break-inside:avoid;}
+  /* Prijslijst op A4: twee kolommen, groepen lopen door naar de volgende pagina als het moet */
+  .pl-kolommen{column-count:2;column-gap:7mm;margin-top:1mm;}
+  .pl-groep{break-inside:avoid-column;margin-bottom:3mm;}
+  .pl-groep:has(tbody tr:nth-child(16)){break-inside:auto;}
+  .pl-tabel{margin-top:0;font-size:8.5pt;}
+  .pl-tabel td{padding:.45mm 2mm;}
+  .pl-tabel th{padding:1.3mm 2mm;font-size:6.3pt;letter-spacing:.05em;line-height:1.2;vertical-align:bottom;}
+  .pl-tabel th.r,.pl-tabel td.r{width:15mm;padding-left:1mm;}
+  .pl-tabel th.r{white-space:normal;}
+  .pl-tabel tr{break-inside:avoid;}
+  .pl-zacht{color:#565B63;font-style:italic;}
+  .pl-voet{font-size:8pt;color:#565B63;margin:2mm 0 0;}
   .a4-kop{display:flex;justify-content:space-between;align-items:center;gap:6mm;padding-bottom:3mm;border-bottom:1.2mm solid #0E1F42;}
   .a4-merk{display:flex;align-items:center;gap:3.5mm;}
   .a4-merk img{width:14mm;height:14mm;}

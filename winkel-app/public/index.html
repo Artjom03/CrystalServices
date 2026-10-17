@@ -196,7 +196,7 @@
     <fieldset>
       <legend>Prijslijst</legend>
       <p class="tijdlijn">De prijzen van de gekende stukken, en welke droogkuisstukken in de lijst staan. Op een bon kan je een prijs altijd nog aanpassen.</p>
-      <div class="d-knoppen"><button type="button" class="knop" id="i-prijzen">Prijzen aanpassen</button></div>
+      <div class="d-knoppen"><button type="button" class="knop" id="i-prijzen">Prijzen aanpassen</button><button type="button" class="knop" id="i-prijzen-print">Prijslijst afdrukken</button></div>
     </fieldset>
     <fieldset>
       <legend>Indeling van de winkel</legend>
@@ -226,6 +226,7 @@
     </div>
     <div class="paneel-voet">
       <button type="button" class="knop gevaar" id="p-standaard" style="margin-right:auto">Standaardprijzen</button>
+      <button type="button" class="knop" id="p-print">Afdrukken</button>
       <button type="button" class="knop" data-sluit>Annuleren</button>
       <button type="submit" class="knop hoofd" id="p-bewaar">Opslaan</button>
     </div>
@@ -276,7 +277,8 @@
     <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
   </div>
   <div class="paneel-inhoud">
-    <label class="dag-kies">Dag <input id="k-dag" type="date"></label>
+    <label class="dag-kies enkel-web">Dag <input id="k-dag" type="date"></label>
+    <p class="tijdlijn enkel-desktop">Het programma houdt enkel de kassa van vandaag bij. Vanaf morgen is ze gewist; noteer wat je nodig hebt na het afsluiten.</p>
     <div id="k-inhoud"></div>
     <form id="k-beweging" class="k-form" hidden>
       <h3>Geld in of uit de kassa</h3>
@@ -314,7 +316,7 @@
     <p id="k-fout" class="fout" role="alert"></p>
   </div>
   <div class="paneel-voet">
-    <button type="button" class="knop" id="k-export">Maand exporteren</button>
+    <button type="button" class="knop enkel-web" id="k-export">Maand exporteren</button>
     <button type="button" class="knop" id="k-beweging-knop">Geld in/uit</button>
     <button type="button" class="knop" id="k-print">Dagoverzicht afdrukken</button>
     <button type="button" class="knop hoofd" id="k-sluit-knop">Dag afsluiten</button>

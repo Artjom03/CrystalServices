@@ -5,7 +5,7 @@ import { readFile, writeFile, rename, mkdir, readdir, rm, copyFile } from 'node:
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pasToe, voorWinkel, teBewaren, Fout, LEEG } from './app/lib/bonnen.js';
+import { pasToe, voorWinkel, teBewaren, enkelKassaVanVandaag, Fout, LEEG } from './app/lib/bonnen.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
@@ -56,6 +56,8 @@ function wijzig(fn) {
   const klus = rij.then(async () => {
     const staat = await leesJson(DATA(), LEEG);
     const resultaat = fn(staat);
+    // De kassa wordt hier enkel voor vandaag bijgehouden; vorige dagen doet de winkel zelf.
+    resultaat.staat = enkelKassaVanVandaag(resultaat.staat);
     await schrijfJson(DATA(), resultaat.staat);
     return resultaat;
   });
@@ -63,7 +65,7 @@ function wijzig(fn) {
   return klus;
 }
 
-/** Opgehaalde bonnen die over de bewaartermijn zijn, echt uit het bestand halen. */
+/** Opgehaalde bonnen die over de bewaartermijn zijn, en de kassa van vorige dagen, echt uit het bestand halen. */
 async function ruimOp() {
   if (!existsSync(DATA())) return;
   await wijzig((staat) => ({ staat: { ...staat, bonnen: teBewaren(staat) } }));
@@ -100,7 +102,7 @@ async function api(request) {
   }
 
   try {
-    if (request.method === 'GET') return json(200, voorWinkel(await leesJson(DATA(), LEEG)));
+    if (request.method === 'GET') return json(200, voorWinkel(enkelKassaVanVandaag(await leesJson(DATA(), LEEG))));
     if (request.method === 'POST') {
       const actie = await request.json().catch(() => ({}));
       if (!TOEGESTAAN.includes(actie?.op)) throw new Fout('Onbekende handeling');
@@ -309,8 +311,9 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     await laadInstellingen();
-    await maakBackup().catch((e) => console.error('Back-up mislukt', e));
+    // Eerst opruimen, zodat ook de back-up geen kassa van vorige dagen bevat.
     await ruimOp().catch((e) => console.error('Opruimen mislukt', e));
+    await maakBackup().catch((e) => console.error('Back-up mislukt', e));
     protocol.handle('app', (request) => {
       const { pathname } = new URL(request.url);
       return pathname === '/api/bonnen' ? api(request) : bestand(pathname);
