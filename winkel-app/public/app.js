@@ -1679,7 +1679,21 @@
     $('#kassa-knop').textContent = 'Facturen';
     $('#kassa h2').textContent = 'Factuuraanvragen';
     $('#kassa').classList.add('zonder-kassa');
+    $('#kassa h2').textContent = 'Facturen en dagoverzicht';
+    $('#k-dagwis').hidden = false;
   }
+  $('#k-dagwis-knop').addEventListener('click', async () => {
+    const dag = vandaagIso();
+    await drukDag(dag, standaardFormaat());
+    if (!confirm('Is het dagoverzicht goed afgedrukt? Dan worden nu alle betalingen en opgehaalde bonnen gewist. Dit kan niet ongedaan gemaakt worden.')) return;
+    try {
+      await doe({ op: 'dagWissen' });
+      toonKassa();
+      toast('Gewist. De bonnen die nog opgehaald moeten worden staan er nog.');
+    } catch (err) {
+      if (err.message !== 'pin') $('#k-fout').textContent = err.message;
+    }
+  });
   $('#k-dag').addEventListener('change', () => { $('#k-beweging').hidden = true; $('#k-sluit').hidden = true; $('#k-corr').hidden = true; toonKassa(); });
   $('#k-beweging-knop').addEventListener('click', () => {
     $('#k-sluit').hidden = true;
@@ -1938,7 +1952,7 @@
         </tbody>
         <tfoot><tr><td>Totaal (${k.betalingen.length} betaling${k.betalingen.length === 1 ? '' : 'en'})</td><td class="r">${eur(k.totaal)}</td></tr></tfoot>
       </table>
-      <table class="pr-stukken">
+      ${KASSA ? `<table class="pr-stukken">
         <tbody>
           <tr class="pr-groep"><td colspan="2">Cash in de kassa</td></tr>
           ${rij('Bij het openen', k.begin == null ? '—' : eur(k.begin))}
@@ -1947,7 +1961,7 @@
           ${rij('<b>Hoort in de kassa</b>', '<b>' + eur(k.verwacht) + '</b>')}
           ${k.geteld != null ? rij('Geteld', eur(k.geteld)) + rij('<b>Verschil</b>', '<b>' + verschilTekst(k.verschil) + '</b>') : rij('Geteld', 'nog niet afgesloten')}
         </tbody>
-      </table>
+      </table>` : ''}
       ${k.betalingen.length ? `<table class="pr-stukken pr-klein-tabel">
         <tbody>
           <tr class="pr-groep"><td colspan="2">Betalingen</td></tr>
@@ -1964,7 +1978,7 @@
       <div class="pr-voet">Bonnen binnengebracht: ${k.binnen} · opgehaald: ${k.opgehaald}<br>Afgedrukt ${esc(new Date().toLocaleString('nl-BE'))}</div>
     </section>`;
     $('#afdruk').className = formaat === 'a4' ? 'a4-zoom' : '';
-    afdrukken(formaat);
+    return afdrukken(formaat);
   }
 
   // ---------- Klanten ----------

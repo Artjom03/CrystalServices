@@ -362,3 +362,16 @@ test('een verwijderde bon neemt zijn betalingen mee', () => {
   ({ staat } = pasToe(staat, { op: 'verwijder', id: bon.id }, nu));
   assert.equal(staat.betalingen.length, 0);
 });
+
+test('dag wissen: betalingen en opgehaalde bonnen weg, de rest blijft', () => {
+  let { staat, bon: a } = nieuw(LEEG, { klant: { naam: 'Opgehaald' }, stukken: [{ naam: 'Hemd', prijs: 3 }] });
+  let b, c;
+  ({ staat, bon: b } = nieuw(staat, { klant: { naam: 'Nog binnen' }, stukken: [{ naam: 'Broek', prijs: 2 }], betaald: true, betaalwijze: 'kaart' }));
+  ({ staat, bon: c } = nieuw(staat, { klant: { naam: 'Factuur' } }));
+  ({ staat } = pasToe(staat, { op: 'status', id: a.id, status: 'opgehaald', betaalwijze: 'cash' }, nu));
+  ({ staat } = pasToe(staat, { op: 'factuurVraag', id: c.id }, nu));
+  ({ staat } = pasToe(staat, { op: 'status', id: c.id, status: 'opgehaald' }, nu));
+  ({ staat } = pasToe(staat, { op: 'dagWissen' }, nu));
+  assert.deepEqual(staat.bonnen.map((x) => x.id).sort(), [b.id, c.id].sort());
+  assert.equal(staat.betalingen.length, 0);
+});

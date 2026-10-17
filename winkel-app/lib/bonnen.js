@@ -509,6 +509,14 @@ function handeling(oud, actie, nu) {
       if (b >= 0 && wijze !== p.wijze) staat.bonnen[b] = { ...staat.bonnen[b], betaalwijze: wijze, gewijzigdOp: iso };
       return { staat };
     }
+    case 'dagWissen': {
+      // Na het dagoverzicht: alle betalingen en opgehaalde bonnen weg. Bonnen die nog opgehaald
+      // moeten worden blijven staan, net als een opgehaalde bon waarvoor nog een factuur gemaakt moet worden.
+      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp));
+      staat.betalingen = [];
+      staat.kassa = {};
+      return { staat };
+    }
     case 'kassaHeropen': {
       const k = kassaDag(staat, actie.dag);
       staat.kassa[actie.dag] = { ...k, geteld: undefined, geslotenOp: '' };
