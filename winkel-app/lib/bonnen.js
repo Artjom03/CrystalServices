@@ -265,12 +265,13 @@ export function teBewaren(staat, nu = new Date()) {
   return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso && !(b.factuur && !b.factuur.gemaaktOp)));
 }
 
-/** Bonnummers per jaar: 26-001, 26-002, ... */
-function volgendNummer(staat, nu) {
-  const jaar = String(nu.getFullYear()).slice(2);
-  const n = (staat.teller[jaar] || 0) + 1;
-  staat.teller[jaar] = n;
-  return `${jaar}-${String(n).padStart(3, '0')}`;
+/** Elk bonnummer is een willekeurig getal van 6 cijfers, dat nog niet bij een andere bon hoort. */
+function volgendNummer(staat) {
+  const bezet = new Set(staat.bonnen.map((b) => String(b.nr).replace(/\D/g, '')));
+  for (;;) {
+    const nr = String(100000 + Math.floor(Math.random() * 900000));
+    if (!bezet.has(nr)) return nr;
+  }
 }
 
 export class Fout extends Error {
@@ -316,7 +317,7 @@ function handeling(oud, actie, nu) {
       if (!v.klant.naam) throw new Fout('Vul de naam van de klant in');
       const bon = {
         id: 'b' + nu.getTime().toString(36) + Math.random().toString(36).slice(2, 6),
-        nr: volgendNummer(staat, nu),
+        nr: volgendNummer(staat),
         ...v,
         status: 'binnen',
         binnenOp: iso,
