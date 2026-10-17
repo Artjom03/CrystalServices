@@ -1360,6 +1360,8 @@
     $('#i-kies-printer-a4').hidden = !DESKTOP;
     $('#i-formaat').value = standaardFormaat();
     $('#i-aanraak').value = aanraak;
+    $('#i-pl-actie').hidden = !actieVandaag();
+    if (actieVandaag()) $('#i-pl-actie').textContent = 'Prijslijst met ' + actieVandaag().naam.split(':')[0].toLowerCase() + ' afdrukken';
     toonPrinter();
     $('#instellingen').showModal();
   }
@@ -1392,6 +1394,28 @@
   $('#i-aanraak').addEventListener('change', (e) => zetAanraak(e.target.value));
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
+  // ---------- Prijslijst afdrukken: altijd de prijzen zoals ze nu in het programma staan ----------
+  async function drukPrijslijst(metActie) {
+    const actie = metActie ? actieVandaag() : null;
+    const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
+    const groepen = (prijslijst().groepen || []).map((g) => `
+      <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
+      ${g.stukken.map((st) => {
+        const strijk = st.strijken != null ? (actie?.strijken?.[st.naam] ?? st.strijken) : null;
+        const tweede = st.wassen ?? st.prijs ?? null;
+        return `<tr><td>${esc(st.naam)}</td><td>${strijk == null ? (tweede == null ? '' : '/') : pr(strijk)}</td><td></td><td>${pr(tweede)}</td><td></td></tr>`;
+      }).join('')}
+      <tr class="pl-leeg"><td colspan="5"></td></tr>`).join('');
+    $('#afdruk').innerHTML = `<section class="pl-blad">
+      <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}</div>
+      ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
+      <table class="pl-tabel">${groepen}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
+    </section>`;
+    $('#afdruk').className = 'a4';
+    await afdrukken('a4');
+  }
+  $('#i-pl-print').addEventListener('click', () => drukPrijslijst(false));
+  $('#i-pl-actie').addEventListener('click', () => drukPrijslijst(true));
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
 
   // ---------- Indeling aanpassen ----------
