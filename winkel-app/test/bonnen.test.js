@@ -355,3 +355,10 @@ test('de kassa en de betalingen blijven bewaard, ook als de bonnen opgeruimd wor
   assert.equal(staat.betalingen.length, 1);
   assert.equal(staat.kassa['2026-10-09'].begin, 50);
 });
+
+test('een verwijderde bon neemt zijn betalingen mee', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'Fout' }, stukken: [{ naam: 'Hemd', prijs: 3 }], betaald: true, betaalwijze: 'cash' });
+  assert.equal(staat.betalingen.length, 1);
+  ({ staat } = pasToe(staat, { op: 'verwijder', id: bon.id }, nu));
+  assert.equal(staat.betalingen.length, 0);
+});

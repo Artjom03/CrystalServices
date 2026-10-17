@@ -435,3 +435,6 @@ a{color:var(--navy);}
   .vr-rij-vlek .vr-jn b{display:inline-block;background:#B3261E;color:#fff;border-radius:1mm;padding:.2mm 2mm;}
   .vr-opm{margin-top:4mm;}
 }
+
+/* Zonder kassa: enkel de factuuraanvragen */
+#kassa.zonder-kassa .dag-kies,#kassa.zonder-kassa .paneel-voet,#kassa.zonder-kassa .k-form{display:none!important;}
