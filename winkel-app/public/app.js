@@ -972,7 +972,7 @@
 
   function afdrukken(formaat = 'klein') {
     // Paginaformaat: A4 of een smalle rol voor de bonprinter. De marge zit in #afdruk (zie app.css).
-    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4;margin:0}}' : '@media print{@page{margin:0}}';
+    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4 portrait;margin:0}}' : '@media print{@page{margin:0}}';
     if (!DESKTOP) return Promise.resolve(window.print());
     return window.crystal.afdrukken(formaat).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
@@ -1394,54 +1394,42 @@
     <div class="pl-titelbalk"><h1>${titel}</h1>${sub ? `<span>${sub}</span>` : ''}</div>`;
   const plDatum = () => new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
 
+  // Prijslijsten: één staande A4, in twee kolommen.
   async function drukPrijslijst(metActie) {
     const actie = metActie ? actieVandaag() : null;
-    const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    const groepen = (prijslijst().groepen || []).map((g) => `<tbody class="pl-groep">
-      <tr class="pl-groepkop"><th>${esc(g.titel)}</th><th>Strijken</th><th>Aantal</th><th>${esc(hoofdletter(g.wassenLabel || 'prijs'))}</th><th>Aantal</th></tr>
-      ${g.stukken.map((st) => {
-        const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
-        const tweede = st.wassen ?? st.prijs ?? null;
-        return `<tr><td>${esc(st.naam)}</td><td class="p">${strijk == null ? '<span class="pl-geen">–</span>' : pr(strijk)}</td><td class="a"></td><td class="p">${tweede == null ? '<span class="pl-geen">–</span>' : pr(tweede)}</td><td class="a"></td></tr>`;
-      }).join('')}</tbody>`).join('');
+    const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
+    const groepen = (prijslijst().groepen || []).map((g) => `<table class="pl-tabel2">
+      <tr class="pl-groepkop"><th>${esc(g.titel)}</th><th>Strijken</th><th>${esc(hoofdletter(g.wassenLabel || 'prijs'))}</th></tr>
+      ${g.stukken.map((st) => `<tr><td>${esc(st.naam)}</td><td class="p">${pr(st.strijken != null ? actiePrijs(actie, st.strijken) : null)}</td><td class="p">${pr(st.wassen ?? st.prijs ?? null)}</td></tr>`).join('')}</table>`).join('');
     const sub = actie
       ? `<b>${esc(actie.naam)}</b> · geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}`
       : 'Prijzen per stuk, btw inbegrepen · ' + esc(plDatum());
-    $('#afdruk').innerHTML = `<section class="pl-blad2">
-      ${plKop('Prijslijst strijken &amp; wassen', sub)}
-      <table class="pl-tabel2">${groepen}
-        <tbody><tr class="pl-totaal2"><td colspan="3"></td><td>Totaal</td><td></td></tr></tbody></table>
-    </section>`;
+    $('#afdruk').innerHTML = `<section class="pl-blad2">${plKop('Prijslijst strijken &amp; wassen', sub)}<div class="pl-kolommen">${groepen}</div></section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
   async function drukDroogkuis() {
     const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
     const lijst = (prijslijst().droogkuis || []).map(droogStuk);
+    const helft = Math.ceil(lijst.length / 2);
+    const tabel = (deel) => `<table class="pl-tabel2 dk2"><tr class="pl-groepkop"><th>Stuk</th><th>Luxe</th><th>Zijde</th><th>Linnen</th></tr>
+      ${deel.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}</table>`;
     $('#afdruk').innerHTML = `<section class="pl-blad2">
       ${plKop('Prijslijst nieuwkuis', 'Droogkuis per stuk, btw inbegrepen · ' + esc(plDatum()))}
-      <table class="pl-tabel2 dk2"><tbody class="pl-groep">
-        <tr class="pl-groepkop"><th>Stuk</th><th>Luxe</th><th>Zijde</th><th>Linnen</th></tr>
-        ${lijst.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}
-      </tbody></table>
+      <div class="pl-twee">${tabel(lijst.slice(0, helft))}${tabel(lijst.slice(helft))}</div>
       <p class="pl-voet">Vlekken, bijzondere stoffen of versieringen: de prijs kan na het bekijken van het stuk verschillen.</p>
     </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
-  // Eén staande A4 die de klant invult en ondertekent: de winkel is niet aansprakelijk voor schade aan de stoffen.
+  // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
   async function drukAansprakelijk() {
-    $('#afdruk').innerHTML = `<section class="pl-blad2 na-a4">
-      ${plKop('Verklaring van de klant', '')}
-      <p class="na-groot">Ik ga ermee akkoord dat ${esc(WINKEL.naam)} niet aansprakelijk is voor schade aan de stoffen.</p>
-      <p>Bij reinigen, wassen of strijken kunnen stoffen, kleuren, knopen, ritsen en versieringen beschadigd raken, ook bij een zorgvuldige behandeling. Door mijn handtekening bevestig ik dat ik dit weet en aanvaard.</p>
-      <div class="na-a4-velden">
-        <div><span>Bonnummer</span></div>
-        <div><span>Naam</span></div>
-        <div><span>Datum</span></div>
-        <div class="na-a4-hand"><span>Handtekening</span></div>
-      </div>
-    </section>`;
+    const briefje = `<div class="na-briefje">
+      <div class="na-kop"><b>${esc(WINKEL.naam)}</b><span>Bonnr. ………………</span></div>
+      <p>Ik ga ermee akkoord dat ${esc(WINKEL.naam)} niet aansprakelijk is voor schade aan de stoffen.</p>
+      <small>Bij reinigen, wassen of strijken kunnen stoffen, kleuren, knopen en versieringen beschadigd raken.</small>
+      <div class="na-velden"><span>Naam</span><span>Datum</span><span class="na-handtekening">Handtekening</span></div></div>`;
+    $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(8)}</section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }

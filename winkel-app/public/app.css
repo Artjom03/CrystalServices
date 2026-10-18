@@ -509,5 +509,14 @@ a{color:var(--navy);}
   .na-a4-velden div{border-bottom:.3mm solid #000;height:12mm;display:flex;align-items:flex-start;}
   .na-a4-velden span{font-size:9pt;color:#555;}
   .na-a4-velden .na-a4-hand{height:35mm;border:.3mm solid #000;border-radius:2mm;padding:2mm 3mm;}
+  .pl-kolommen{columns:2;column-gap:5mm;}
+  .pl-kolommen .pl-tabel2{break-inside:avoid;margin-bottom:2.5mm;}
+  .pl-twee{display:grid;grid-template-columns:1fr 1fr;gap:5mm;align-items:start;}
+  .pl-kolommen .pl-tabel2 td,.pl-kolommen .pl-tabel2 th,.pl-twee td,.pl-twee th{font-size:7.6pt;padding:.45mm 1.6mm;}
+  .pl-kolommen .pl-groepkop th,.pl-twee .pl-groepkop th{font-size:7.6pt;padding:1mm 1.6mm;}
+  .pl-kolommen .pl-groepkop th:first-child{font-size:8.5pt;}
+  .pl-kolommen .p{width:15mm;}
+  .pl-twee .p{width:13mm;}
+  .pl-tabel2 tr:nth-child(even):not(.pl-groepkop) td{background:#F4F1EA;}
   .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }
