@@ -5,7 +5,7 @@ import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pasToe, voorWinkel, teBewaren, Fout, LEEG } from './app/lib/bonnen.js';
+import { pasToe, voorWinkel, teBewaren, Fout, LEEG, klantSleutel } from './app/lib/bonnen.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
@@ -59,6 +59,24 @@ function wijzig(fn) {
   });
   rij = klus.catch(() => {});
   return klus;
+}
+
+/**
+ * Eén keer: de professionele klanten (uit de klantenlijst) inladen, met de vlekkencontrole voor wie die vraagt.
+ * Bestaande klanten worden enkel aangevuld.
+ */
+async function laadKlanten() {
+  if (instellingen.klantenGeladen) return;
+  const lijst = JSON.parse(await readFile(path.join(HIER, 'klanten.json'), 'utf8'));
+  await wijzig((staat) => {
+    let { staat: nieuw } = pasToe(staat, { op: 'klantenImport', klanten: lijst });
+    for (const k of lijst.filter((x) => x.vlekkenrapport)) {
+      ({ staat: nieuw } = pasToe(nieuw, { op: 'klant', sleutel: klantSleutel(k), klant: { vlekkenrapport: true } }));
+    }
+    return { staat: nieuw };
+  });
+  instellingen.klantenGeladen = true;
+  await bewaarInstellingen();
 }
 
 /** Opgehaalde bonnen die over de bewaartermijn zijn, echt uit het bestand halen. */
@@ -296,6 +314,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     await laadInstellingen();
     await ruimOp().catch((e) => console.error('Opruimen mislukt', e));
+    await laadKlanten().catch((e) => console.error('Klanten inladen mislukt', e));
     protocol.handle('app', (request) => {
       const { pathname } = new URL(request.url);
       return pathname === '/api/bonnen' ? api(request) : bestand(pathname);
