@@ -146,7 +146,10 @@ function drukAf(webContents, formaat) {
       .then((pdf) => writeFile(process.env.CRYSTAL_TEST_PDF, pdf))
       .then(() => ({ ok: true }));
   }
-  return gekozenPrinters(webContents).then(({ bon, a4: groot }) => {
+  // A4 (prijslijsten, facturen, grote bonnen) mag nooit op de bonprinter belanden:
+  // is er nog geen A4-printer gekozen, dan vraagt het programma het één keer.
+  const vraag = a4 && !instellingen.printerA4 ? kiesPrinter(BrowserWindow.fromWebContents(webContents), 'a4') : Promise.resolve();
+  return vraag.then(() => gekozenPrinters(webContents)).then(({ bon, a4: groot }) => {
   const printer = a4 ? groot : bon;
   return new Promise((resolve) => {
     // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
@@ -175,9 +178,9 @@ async function gekozenPrinters(webContents) {
   try { printers = await webContents.getPrintersAsync(); } catch {}
   const echt = printers.filter((p) => !VIRTUEEL.test(p.name));
   const bonAuto = echt.find((p) => BONPRINTER.test(p.name))?.name || '';
-  const a4Echt = echt.filter((p) => p.name !== bonAuto);
+  const a4Echt = echt.filter((p) => p.name !== bonAuto && p.name !== instellingen.printer && !BONPRINTER.test(p.name));
   const a4Auto = (a4Echt.find((p) => p.isDefault) || a4Echt[0])?.name || '';
-  const kies = (gekozen, auto) => (gekozen === 'venster' ? '' : gekozen && printers.some((p) => p.name === gekozen) ? gekozen : auto);
+  const kies = (gekozen, auto) => (gekozen === 'venster' ? '' : gekozen !== 'auto' && printers.some((p) => p.name === gekozen) ? gekozen : auto);
   return { bon: kies(instellingen.printer, bonAuto), a4: kies(instellingen.printerA4, a4Auto) };
 }
 
@@ -190,12 +193,12 @@ async function kiesPrinter(venster, soort = 'bon') {
     type: 'question',
     title: 'Printer kiezen',
     message: soort === 'a4' ? 'Naar welke printer moeten A4-afdrukken (facturen, grote bonnen) gaan?' : 'Naar welke bonprinter moeten de kleine bonnetjes gaan?',
-    detail: instellingen[veld] === 'venster' ? 'Nu: telkens het afdrukvenster' : instellingen[veld] ? `Nu: ${instellingen[veld]}` : 'Nu: automatisch',
+    detail: instellingen[veld] === 'venster' ? 'Nu: telkens het afdrukvenster' : instellingen[veld] && instellingen[veld] !== 'auto' ? `Nu: ${instellingen[veld]}` : 'Nu: automatisch',
     buttons: knoppen,
     cancelId: knoppen.length - 1,
   });
   if (response === knoppen.length - 1) return;
-  instellingen[veld] = response < namen.length ? namen[response] : response === namen.length ? '' : 'venster';
+  instellingen[veld] = response < namen.length ? namen[response] : response === namen.length ? 'auto' : 'venster';
   await bewaarInstellingen();
 }
 
@@ -281,7 +284,7 @@ function maakMenu(venster) {
         label: 'Over Crystal Winkel',
         click: () => dialog.showMessageBox(venster, {
           message: `Crystal Winkel ${app.getVersion()}`,
-          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nBonprinter: ${instellingen.printer || 'automatisch'}\nA4-printer: ${instellingen.printerA4 || 'automatisch'}`,
+          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nBonprinter: ${instellingen.printer || 'automatisch'}\nA4-printer: ${instellingen.printerA4 || 'nog niet gekozen'}`,
         }),
       }],
     },
@@ -348,7 +351,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
     const printerInfo = async (wc) => {
       const g = await gekozenPrinters(wc);
-      const tekst = (eigen, naam) => (eigen === 'venster' ? '' : naam ? naam + (eigen ? '' : ' (automatisch)') : '');
+      const tekst = (eigen, naam) => (eigen === 'venster' ? '' : naam ? naam + (eigen && eigen !== 'auto' ? '' : ' (automatisch)') : '');
       return { bon: tekst(instellingen.printer, g.bon), a4: tekst(instellingen.printerA4, g.a4) };
     };
     ipcMain.handle('printer', (e) => printerInfo(e.sender));
