@@ -178,12 +178,13 @@ test('eigen prijslijst: wordt opgeschoond, blijft bewaard bij andere wijzigingen
         { naam: '', strijken: 1 },
         { naam: 'Sjaal', strijken: '' },
       ] }],
-      droogkuis: ['Mantel', 'Mantel', ' ', 'Jas'],
+      droogkuis: ['Mantel', 'Mantel', ' ', { naam: 'Jas', luxe: '25', zijde: '', linne: 27 }],
     },
   }, nu);
   assert.deepEqual(staat.prijslijst, {
+    versie: 2,
     groepen: [{ titel: 'Kleding', wassenLabel: 'wassen + strijken', stukken: [{ naam: 'Hemd', strijken: 2.5, wassen: 4.5 }, { naam: 'Sjaal' }] }],
-    droogkuis: ['Mantel', 'Jas'],
+    droogkuis: [{ naam: 'Mantel' }, { naam: 'Jas', luxe: 25, linne: 27 }],
   });
   ({ staat } = nieuw(staat, { klant: { naam: 'A' } }));
   assert.equal(staat.prijslijst.groepen[0].stukken[0].strijken, 2.5);

@@ -128,7 +128,7 @@ function velden(invoer) {
 
 /**
  * De eigen prijslijst van de winkel, in dezelfde vorm als prijzen.js:
- * groepen met stukken (prijs per behandeling) en de namen van de droogkuisstukken.
+ * groepen met stukken (prijs per behandeling) en de droogkuisstukken met hun prijzen.
  */
 export function schoonPrijslijst(p) {
   if (!p || typeof p !== 'object') return null;
@@ -146,8 +146,20 @@ export function schoonPrijslijst(p) {
       return [stuk];
     }),
   }));
-  const droogkuis = [...new Set((Array.isArray(p.droogkuis) ? p.droogkuis : []).map((n) => tekst(n, MAX.stukNaam)).filter(Boolean))].slice(0, 100);
-  return { groepen, droogkuis };
+  // Droogkuis: per stuk de prijs voor luxe, zijde en linnen (een oude lijst heeft enkel namen).
+  const gezien = new Set();
+  const droogkuis = (Array.isArray(p.droogkuis) ? p.droogkuis : []).flatMap((d) => {
+    const naam = tekst(typeof d === 'string' ? d : d?.naam, MAX.stukNaam);
+    if (!naam || gezien.has(naam)) return [];
+    gezien.add(naam);
+    const stuk = { naam };
+    for (const k of ['luxe', 'zijde', 'linne']) {
+      const v = prijsOfLeeg(d?.[k]);
+      if (v !== null) stuk[k] = v;
+    }
+    return [stuk];
+  }).slice(0, 200);
+  return { versie: 2, groepen, droogkuis };
 }
 
 export function instellingenVan(staat) {

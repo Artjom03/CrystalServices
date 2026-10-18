@@ -35,6 +35,7 @@
       <div class="balk-knoppen">
         <button id="kassa-knop" class="knop balk-knop">Kassa</button>
         <button id="klanten-knop" class="knop balk-knop">Klanten</button>
+        <button id="prijslijsten-knop" class="knop balk-knop">Prijslijsten</button>
         <button id="instellingen-knop" class="knop icoon" aria-label="Instellingen" title="Instellingen">⚙</button>
         <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
       </div>
@@ -158,14 +159,6 @@
   </div>
   <div class="paneel-inhoud">
     <fieldset>
-      <legend>Bonnen bewaren</legend>
-      <label>Opgehaalde bonnen bewaren gedurende
-        <select id="i-bewaar"></select>
-      </label>
-      <p class="tijdlijn">Gerekend vanaf het ophalen; daarna worden ze automatisch gewist. Bonnen die nog niet opgehaald zijn, blijven altijd staan.</p>
-      <p id="i-bewaar-info" class="tijdlijn"></p>
-    </fieldset>
-    <fieldset>
       <legend>Afdrukken</legend>
       <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de klantenbon en het mandticket bij een nieuwe bon, de afhaalbon bij het ophalen</label>
       <label>Bonnen standaard afdrukken als
@@ -194,12 +187,6 @@
       <p class="tijdlijn">Geldt enkel voor dit toestel.</p>
     </fieldset>
     <fieldset>
-      <legend>Prijslijst</legend>
-      <p class="tijdlijn">De prijzen van de gekende stukken, en welke droogkuisstukken in de lijst staan. Op een bon kan je een prijs altijd nog aanpassen.</p>
-      <div class="d-knoppen"><button type="button" class="knop" id="i-prijzen">Prijzen aanpassen</button><button type="button" class="knop" id="i-pl-print">Prijslijst afdrukken</button><button type="button" class="knop" id="i-pl-actie" hidden>Prijslijst met actie afdrukken</button></div>
-      <p class="tijdlijn">"Prijslijst afdrukken" drukt de prijzen af zoals ze nu in het programma staan. Kies als printer "Microsoft Print to PDF" om er een PDF van te maken.</p>
-    </fieldset>
-    <fieldset>
       <legend>Indeling van de winkel</legend>
       <p class="tijdlijn">Op het mandticket staan de stukken per plaats (kast, rek...), zodat je weet wat waar moet. Kies zelf de plaatsen en welke stukken erbij horen.</p>
       <div class="d-knoppen"><button type="button" class="knop" id="i-indeling">Indeling aanpassen</button></div>
@@ -209,6 +196,24 @@
       <p class="tijdlijn">Op elke klantenbon en elk mandticket staat een streepjescode. Scan die met een USB-scanner en de bon gaat meteen open, klaar om af te rekenen; daarna komt de afhaalbon uit de printer. Zonder scanner: typ het bonnummer in het zoekveld en druk op Enter. Scan de testbon om de scanner te proberen.</p>
     </fieldset>
     <p id="i-fout" class="fout" role="alert"></p>
+  </div>
+</dialog>
+
+<!-- Prijslijsten afdrukken -->
+<dialog id="prijslijsten" class="paneel">
+  <div class="paneel-kop">
+    <h2>Prijslijsten</h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div class="paneel-inhoud">
+    <p class="tijdlijn">Afdrukken op A4, met de prijzen zoals ze nu in het programma staan. Kies als printer "Microsoft Print to PDF" voor een PDF.</p>
+    <div class="pl-knoppen">
+      <button type="button" class="knop" id="pl-strijk">🖨 Strijken &amp; wassen</button>
+      <button type="button" class="knop" id="pl-actie" hidden>🖨 Met actie</button>
+      <button type="button" class="knop" id="pl-droog">🖨 Nieuwkuis / droogkuis</button>
+      <button type="button" class="knop" id="pl-na">🖨 Briefjes "niet aansprakelijk" (10 per A4)</button>
+      <button type="button" class="knop" id="pl-aanpassen">✎ Prijzen aanpassen</button>
+    </div>
   </div>
 </dialog>
 

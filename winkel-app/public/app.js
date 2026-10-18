@@ -41,8 +41,10 @@
 
   const BEHANDELING = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis', ander: 'Overige' };
   const VOLGORDE = ['strijk', 'was', 'droogkuis', 'ander'];
-  // Veelvoorkomende droogkuisstukken: zonder prijs, die volgt na het bekijken van het stuk.
-  const DROOGKUIS = ['Mantel', 'Jas', 'Kostuum (2-delig)', 'Colbert', 'Broek', 'Kleed', 'Avondkleed', 'Rok', 'Hemd', 'Bloes', 'Trui', 'Das', 'Donsdeken', 'Deken', 'Gordijn'];
+  // Nieuwkuis (droogkuis): prijs per stuk voor luxe, zijde en linnen (uit prijzen.js).
+  const DROOGKUIS = window.DROOGKUIS || [];
+  const DROOG_KOL = [['luxe', 'Luxe'], ['zijde', 'Zijde'], ['linne', 'Linnen']];
+  const droogStuk = (d) => (typeof d === 'string' ? { naam: d } : d);
   // De testbon heeft nummer 00-000: scannen toont dan enkel dat de scanner werkt.
   const TEST_NR = '00-000';
 
@@ -999,8 +1001,9 @@
   // ---------- Prijslijst ----------
   // De standaardprijzen komen uit prijzen.js. Past de winkel ze aan (⚙ Instellingen),
   // dan worden ze samen met de bonnen bewaard en gelden ze voor nieuwe bonnen.
-  const STANDAARD_PRIJSLIJST = { groepen: window.PRIJSLIJST || [], droogkuis: DROOGKUIS };
-  const prijslijst = () => staat.prijslijst || STANDAARD_PRIJSLIJST;
+  const STANDAARD_PRIJSLIJST = { versie: 2, groepen: window.PRIJSLIJST || [], droogkuis: DROOGKUIS };
+  // Een eigen lijst van vóór de nieuwe prijslijsten (zonder versie) telt niet meer.
+  const prijslijst = () => (staat.prijslijst?.versie >= 2 ? staat.prijslijst : STANDAARD_PRIJSLIJST);
 
   let artikelBron = null;
   let artikelLijst = [];
@@ -1008,6 +1011,8 @@
   /** De actie die vandaag loopt (bv. oktoberactie op strijken), of niets. */
   const actieVandaag = () => (window.ACTIES || []).find((a) => a.van <= vandaagIso() && vandaagIso() <= a.tot) || null;
   let artikelDag = '';
+  /** De strijkprijs met de korting van een actie, afgerond op 5 cent. */
+  const actiePrijs = (actie, prijs) => (actie?.korting ? Math.round(prijs * (100 - actie.korting) / 5) * 5 / 100 : prijs);
   function artikelen() {
     const p = prijslijst();
     if (artikelBron === p && artikelDag === vandaagIso()) return artikelLijst;
@@ -1015,13 +1020,21 @@
     const lijst = [];
     for (const g of p.groepen || []) {
       for (const s of g.stukken) {
-        if (s.prijs != null) lijst.push({ naam: s.naam, kort: s.naam, soort: '', prijs: s.prijs, behandeling: 'ander' });
-        if (s.strijken != null) lijst.push({ naam: `${s.naam} (strijken)`, kort: s.naam, soort: 'strijken', prijs: actie?.strijken?.[s.naam] ?? s.strijken, behandeling: 'strijk' });
-        if (s.wassen != null) lijst.push({ naam: `${s.naam} (${g.wassenLabel || 'wassen'})`, kort: s.naam, soort: g.wassenLabel || 'wassen', prijs: s.wassen, behandeling: 'was' });
-        if (s.prijs == null && s.strijken == null && s.wassen == null) lijst.push({ naam: s.naam, kort: s.naam, soort: '', prijs: null, behandeling: 'ander' });
+        const groep = g.titel;
+        if (s.prijs != null) lijst.push({ groep, naam: s.naam, kort: s.naam, soort: '', prijs: s.prijs, behandeling: 'ander' });
+        if (s.strijken != null) lijst.push({ groep, naam: `${s.naam} (strijken)`, kort: s.naam, soort: 'strijken', prijs: actiePrijs(actie, s.strijken), behandeling: 'strijk' });
+        if (s.wassen != null) lijst.push({ groep, naam: `${s.naam} (${g.wassenLabel || 'wassen'})`, kort: s.naam, soort: g.wassenLabel || 'wassen', prijs: s.wassen, behandeling: 'was' });
+        if (s.prijs == null && s.strijken == null && s.wassen == null) lijst.push({ groep, naam: s.naam, kort: s.naam, soort: '', prijs: null, behandeling: 'ander' });
       }
     }
-    for (const naam of p.droogkuis || []) lijst.push({ naam, kort: naam, soort: 'droogkuis', prijs: null, behandeling: 'droogkuis' });
+    for (const d of (p.droogkuis || []).map(droogStuk)) {
+      const prijzen = DROOG_KOL.filter(([k]) => d[k] != null);
+      if (!prijzen.length) lijst.push({ groep: 'Droogkuis', naam: d.naam, kort: d.naam, soort: 'droogkuis', prijs: null, behandeling: 'droogkuis' });
+      for (const [k, label] of prijzen) {
+        const soort = k === 'luxe' ? 'droogkuis' : 'droogkuis ' + label.toLowerCase();
+        lijst.push({ groep: 'Droogkuis', naam: `${d.naam} (${soort})`, kort: d.naam, soort, prijs: d[k], behandeling: 'droogkuis' });
+      }
+    }
     for (const a of lijst) a.zoek = zoekVorm(a.kort + ' ' + a.soort);
     artikelBron = p;
     artikelDag = vandaagIso();
@@ -1032,7 +1045,7 @@
 
   // Snelknoppen: wat de winkel het vaakst gebruikt, aangevuld met de klassiekers.
   const KLASSIEKERS = ['strijk|Hemd (strijken)', 'strijk|Broek (strijken)', 'strijk|T-shirt/topje (strijken)', 'strijk|Bloes (strijken)',
-    'strijk|Trui (strijken)', 'strijk|Kleed (strijken)', 'was|Hemd (wassen + strijken)', 'droogkuis|Mantel', 'droogkuis|Kostuum (2-delig)', 'droogkuis|Jas'];
+    'strijk|Trui (strijken)', 'strijk|Kleed (strijken)', 'was|Hemd (wassen + strijken)', 'droogkuis|Mantel (droogkuis)', 'droogkuis|Kostuum 2 stuks (droogkuis)', 'droogkuis|Kleed (droogkuis)'];
   function veelgebruikt() {
     const tel = new Map();
     for (const b of (staat.bonnen || []).slice(-300)) {
@@ -1055,12 +1068,20 @@
       .slice(0, 12);
   }
 
+  let open = '';
   function toonSuggesties() {
     const tekst = $('#f-stuk').value.trim();
     if (!tekst) {
       const snel = veelgebruikt();
       const actie = actieVandaag();
-      $('#f-suggesties').innerHTML = (actie ? `<p class="actie-melding">🏷 ${esc(actie.naam)} · t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long' }))}</p>` : '') + (snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '');
+      // Zonder typen: kies een groep en tik het stuk aan.
+      const groepNamen = [...new Set(artikelen().map((a) => a.groep))];
+      const gekozen = groepNamen.includes(open) ? open : '';
+      $('#f-suggesties').innerHTML = (actie ? `<p class="actie-melding">🏷 ${esc(actie.naam)} · t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long' }))}</p>` : '')
+        + `<div class="groep-keuze">${['', ...groepNamen].map((g) => `<button type="button" data-groep="${esc(g)}" aria-pressed="${g === gekozen}">${esc(g || 'Veelgebruikt')}</button>`).join('')}</div>`
+        + (gekozen
+          ? `<div class="tegels">${artikelen().filter((a) => a.groep === gekozen).map(tegel).join('')}</div>`
+          : snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '');
       return;
     }
     const gevonden = treffers(tekst);
@@ -1079,6 +1100,8 @@
     if (eerste) { voegToe(eerste.naam, eerste.prijs, eerste.behandeling); $('#f-stuk').value = ''; toonSuggesties(); }
   });
   $('#f-suggesties').addEventListener('click', (e) => {
+    const groep = e.target.closest('[data-groep]');
+    if (groep) { open = groep.dataset.groep; toonSuggesties(); return; }
     const knop = e.target.closest('[data-artikel], [data-nieuw]');
     if (!knop) return;
     if (knop.dataset.nieuw) {
@@ -1335,12 +1358,6 @@
   });
 
   // ---------- Instellingen ----------
-  const maandTekst = (n) => `${n} ${n === 1 ? 'maand' : 'maanden'}`;
-  function toonBewaarInfo() {
-    const opgehaald = (staat.bonnen || []).filter((b) => b.status === 'opgehaald');
-    const oudste = opgehaald.map((b) => b.opgehaaldOp).sort()[0];
-    $('#i-bewaar-info').textContent = `Nu bewaard: ${opgehaald.length} opgehaalde bon${opgehaald.length === 1 ? '' : 'nen'}${oudste ? ', de oudste opgehaald op ' + mooiDatum(oudste) : ''}.`;
-  }
   function toonPrinter() {
     if (!DESKTOP) return;
     window.crystal.printer().then((p) => {
@@ -1349,10 +1366,6 @@
     });
   }
   function openInstellingen() {
-    const m = staat.instellingen?.bewaarMaanden || 12;
-    $('#i-bewaar').innerHTML = Array.from({ length: 24 }, (_, i) => i + 1)
-      .map((n) => `<option value="${n}"${n === m ? ' selected' : ''}>${maandTekst(n)}</option>`).join('');
-    toonBewaarInfo();
     $('#i-print').checked = autoPrint;
     $('#i-fout').textContent = '';
     $('#i-printer').hidden = !DESKTOP;
@@ -1360,31 +1373,10 @@
     $('#i-kies-printer-a4').hidden = !DESKTOP;
     $('#i-formaat').value = standaardFormaat();
     $('#i-aanraak').value = aanraak;
-    $('#i-pl-actie').hidden = !actieVandaag();
-    if (actieVandaag()) $('#i-pl-actie').textContent = 'Prijslijst met ' + actieVandaag().naam.split(':')[0].toLowerCase() + ' afdrukken';
     toonPrinter();
     $('#instellingen').showModal();
   }
   $('#instellingen-knop').addEventListener('click', openInstellingen);
-  $('#i-bewaar').addEventListener('change', async (e) => {
-    const huidig = String(staat.instellingen?.bewaarMaanden || 12);
-    const m = Number(e.target.value);
-    const grens = new Date();
-    grens.setMonth(grens.getMonth() - m);
-    const weg = (staat.bonnen || []).filter((b) => b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < grens.toISOString()).length;
-    if (weg && !confirm(`${weg} opgehaalde bon${weg === 1 ? ' is' : 'nen zijn'} langer dan ${maandTekst(m)} geleden opgehaald en ${weg === 1 ? 'wordt' : 'worden'} nu gewist. Doorgaan?`)) {
-      e.target.value = huidig;
-      return;
-    }
-    try {
-      await doe({ op: 'instellingen', bewaarMaanden: m });
-      toonBewaarInfo();
-      $('#i-fout').textContent = '';
-    } catch (err) {
-      e.target.value = huidig;
-      if (err.message !== 'pin') $('#i-fout').textContent = err.message;
-    }
-  });
   $('#i-print').addEventListener('change', (e) => zetAutoPrint(e.target.checked));
   $('#i-kies-printer').addEventListener('click', () => window.crystal.kiesPrinter('bon').then(toonPrinter));
   $('#i-kies-printer-a4').addEventListener('click', () => window.crystal.kiesPrinter('a4').then(toonPrinter));
@@ -1393,7 +1385,6 @@
   });
   $('#i-aanraak').addEventListener('change', (e) => zetAanraak(e.target.value));
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
-  $('#i-prijzen').addEventListener('click', () => { $('#instellingen').close(); openPrijslijst(); });
   // ---------- Prijslijst afdrukken: altijd de prijzen zoals ze nu in het programma staan ----------
   async function drukPrijslijst(metActie) {
     const actie = metActie ? actieVandaag() : null;
@@ -1401,7 +1392,7 @@
     const groepen = (prijslijst().groepen || []).map((g) => `
       <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
       ${g.stukken.map((st) => {
-        const strijk = st.strijken != null ? (actie?.strijken?.[st.naam] ?? st.strijken) : null;
+        const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
         const tweede = st.wassen ?? st.prijs ?? null;
         return `<tr><td>${esc(st.naam)}</td><td>${strijk == null ? (tweede == null ? '' : '/') : pr(strijk)}</td><td></td><td>${pr(tweede)}</td><td></td></tr>`;
       }).join('')}
@@ -1414,8 +1405,41 @@
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
-  $('#i-pl-print').addEventListener('click', () => drukPrijslijst(false));
-  $('#i-pl-actie').addEventListener('click', () => drukPrijslijst(true));
+  // Nieuwkuis: in de layout van de oude kassaprijslijst (Luxe, Zijde, Linnen, Verv., Strijk).
+  async function drukDroogkuis() {
+    const pr = (v) => (v == null ? '' : Number(v).toFixed(2).replace('.', ','));
+    const lijst = (prijslijst().droogkuis || []).map(droogStuk);
+    $('#afdruk').innerHTML = `<section class="pl-blad dk-blad">
+      <div class="dk-kop"><span>Prijslijst Eur</span><b>${esc(WINKEL.naam.toUpperCase())}</b><span>${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
+      <div class="dk-titel">Nieuwkuis</div>
+      <table class="dk-tabel"><thead><tr><th></th><th>Luxe</th><th>Zijde</th><th>Linnen</th><th>Verv.</th><th>Strijk</th></tr></thead>
+      <tbody>${lijst.map((d) => `<tr><td>${esc(d.naam.toUpperCase())}</td><td>${pr(d.luxe)}</td><td>${pr(d.zijde)}</td><td>${pr(d.linne)}</td><td></td><td></td></tr>`).join('')}</tbody></table>
+      <div class="dk-aantal">Aantal : ${lijst.length}</div>
+    </section>`;
+    $('#afdruk').className = 'a4';
+    await afdrukken('a4');
+  }
+  // Een A4 vol kleine briefjes om uit te knippen: niet aansprakelijk voor schade aan de stoffen.
+  async function drukAansprakelijk() {
+    const briefje = `<div class="na-briefje"><b>${esc(WINKEL.naam)}</b>
+      <p>Wij zijn niet aansprakelijk voor schade aan de stoffen.</p>
+      <small>Bij het reinigen, wassen of strijken kunnen stoffen, kleuren, knopen en versieringen beschadigd raken. Het binnenbrengen van een stuk geldt als akkoord.</small></div>`;
+    $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(10)}</section>`;
+    $('#afdruk').className = 'a4';
+    await afdrukken('a4');
+  }
+  function openPrijslijsten() {
+    const actie = actieVandaag();
+    $('#pl-actie').hidden = !actie;
+    if (actie) $('#pl-actie').textContent = 'Strijken & wassen met ' + actie.naam.split(':')[0].toLowerCase();
+    $('#prijslijsten').showModal();
+  }
+  $('#prijslijsten-knop').addEventListener('click', openPrijslijsten);
+  $('#pl-strijk').addEventListener('click', () => drukPrijslijst(false));
+  $('#pl-actie').addEventListener('click', () => drukPrijslijst(true));
+  $('#pl-droog').addEventListener('click', drukDroogkuis);
+  $('#pl-na').addEventListener('click', drukAansprakelijk);
+  $('#pl-aanpassen').addEventListener('click', () => { $('#prijslijsten').close(); openPrijslijst(); });
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
 
   // ---------- Indeling aanpassen ----------
@@ -1466,7 +1490,7 @@
 
   function openPrijslijst() {
     werk = JSON.parse(JSON.stringify(prijslijst()));
-    werk.droogkuis = werk.droogkuis || [];
+    werk.droogkuis = (werk.droogkuis || []).map(droogStuk);
     $('#p-zoek').value = '';
     $('#p-fout').textContent = '';
     toonPrijslijst();
@@ -1485,9 +1509,11 @@
         <div class="p-rij k${kol.length} p-kop"><span>Stuk</span>${kop}<span></span></div>${rijen}
         <button type="button" class="knop klein" data-plus="${gi}">+ Stuk toevoegen</button></section>`;
     }).join('');
-    const droog = `<section class="p-groep"><h3>Droogkuis <small>(prijs volgt altijd, na het bekijken van het stuk)</small></h3>
-      ${werk.droogkuis.map((n, di) => `<div class="p-rij k0" data-d="${di}">
-        <input data-veld="droog" value="${esc(n)}" aria-label="Naam" placeholder="Naam van het stuk">
+    const droog = `<section class="p-groep"><h3>Nieuwkuis / droogkuis <small>(leeg = prijs volgt na het bekijken van het stuk)</small></h3>
+      <div class="p-rij k3 p-kop"><span>Stuk</span>${DROOG_KOL.map(([, l]) => `<span>${l}</span>`).join('')}<span></span></div>
+      ${werk.droogkuis.map((d, di) => `<div class="p-rij k3" data-d="${di}">
+        <input data-veld="naam" value="${esc(d.naam)}" aria-label="Naam" placeholder="Naam van het stuk">
+        ${DROOG_KOL.map(([k, l]) => `<input data-veld="${k}" class="prijs" inputmode="decimal" value="${esc(prijsTekst(d[k]))}" placeholder="–" aria-label="${l}">`).join('')}
         <button type="button" class="weg" data-weg aria-label="Weghalen">✕</button></div>`).join('')}
       <button type="button" class="knop klein" data-plus="droog">+ Stuk toevoegen</button></section>`;
     $('#p-groepen').innerHTML = groepenHtml + droog;
@@ -1503,14 +1529,14 @@
   $('#p-groepen').addEventListener('input', (e) => {
     const rij = e.target.closest('.p-rij');
     if (!rij) return;
-    if (e.target.dataset.veld === 'droog') werk.droogkuis[Number(rij.dataset.d)] = e.target.value;
+    if (rij.dataset.d !== undefined) werk.droogkuis[Number(rij.dataset.d)][e.target.dataset.veld] = e.target.value;
     else werk.groepen[Number(rij.dataset.g)].stukken[Number(rij.dataset.s)][e.target.dataset.veld] = e.target.value;
   });
   $('#p-groepen').addEventListener('click', (e) => {
     const plus = e.target.closest('[data-plus]');
     if (plus) {
       const droog = plus.dataset.plus === 'droog';
-      if (droog) werk.droogkuis.push('');
+      if (droog) werk.droogkuis.push({ naam: '' });
       else werk.groepen[Number(plus.dataset.plus)].stukken.push({ naam: '' });
       $('#p-zoek').value = '';
       toonPrijslijst();
@@ -1556,10 +1582,20 @@
       }
       groepenUit.push({ titel: g.titel, wassenLabel: g.wassenLabel || '', stukken });
     }
-    const droogkuis = werk.droogkuis.map((n) => String(n).trim()).filter(Boolean);
+    const droogkuis = [];
+    for (const d of werk.droogkuis) {
+      const naam = String(d.naam || '').trim();
+      const stuk = { naam };
+      for (const [k] of DROOG_KOL) {
+        const v = leesPrijs(d[k]);
+        if (Number.isNaN(v)) return fout(`"${d[k]}" bij ${naam || 'een nieuw droogkuisstuk'} is geen geldige prijs.`);
+        if (v !== undefined) stuk[k] = v;
+      }
+      if (naam) droogkuis.push(stuk);
+    }
     $('#p-bewaar').disabled = true;
     try {
-      await doe({ op: 'prijslijst', prijslijst: { groepen: groepenUit, droogkuis } });
+      await doe({ op: 'prijslijst', prijslijst: { versie: 2, groepen: groepenUit, droogkuis } });
       $('#prijslijst').close();
       toast('Prijslijst opgeslagen ✓');
     } catch (err) {
