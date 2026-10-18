@@ -1397,8 +1397,7 @@
   async function drukPrijslijst(metActie, samen = false) {
     const actie = metActie ? actieVandaag() : null;
     const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    // Schoenen en motorkleding staan niet op de papieren prijslijst.
-    const groepen = (prijslijst().groepen || []).filter((g) => !/^schoenen/i.test(g.titel)).map((g) => `
+    const groepen = (prijslijst().groepen || []).map((g) => `
       <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
       ${g.stukken.map((st) => {
         const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
@@ -1413,7 +1412,7 @@
     </section>`;
     $('#afdruk').className = 'a4';
     if (samen) return;
-    await afdrukken('a4');
+    await afdrukken('a4-dubbel');
   }
   // Nieuwkuis: in de layout van de oude kassaprijslijst (Luxe, Zijde, Linnen, Verv., Strijk).
   async function drukDroogkuis(samen = false) {
@@ -1431,7 +1430,7 @@
     else $('#afdruk').innerHTML = html;
     $('#afdruk').className = 'a4';
     if (samen) return;
-    await afdrukken('a4');
+    await afdrukken('a4-dubbel');
   }
   // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
   async function drukAansprakelijk() {
@@ -1454,12 +1453,6 @@
   $('#pl-strijk').addEventListener('click', () => drukPrijslijst(false));
   $('#pl-actie').addEventListener('click', () => drukPrijslijst(true));
   $('#pl-droog').addEventListener('click', () => drukDroogkuis());
-  // Voorkant strijken & wassen, achterkant nieuwkuis: één blad, recto verso.
-  $('#pl-beide').addEventListener('click', async () => {
-    await drukPrijslijst(false, true);
-    await drukDroogkuis(true);
-    await afdrukken('a4-dubbel');
-  });
   $('#pl-na').addEventListener('click', drukAansprakelijk);
   $('#pl-aanpassen').addEventListener('click', () => { $('#prijslijsten').close(); openPrijslijst(); });
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
