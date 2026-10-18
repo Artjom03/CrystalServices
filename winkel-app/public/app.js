@@ -1386,45 +1386,57 @@
   $('#i-aanraak').addEventListener('change', (e) => zetAanraak(e.target.value));
   $('#i-testbon').addEventListener('click', () => drukAf(testBon(), 'afgifte', standaardFormaat()));
   // ---------- Prijslijst afdrukken: altijd de prijzen zoals ze nu in het programma staan ----------
+  // Gemeenschappelijke kop van de A4-prijslijsten: naam, gegevens van de winkel en de titel.
+  const plKop = (titel, sub) => `<header class="pl-kop2">
+      <div><div class="pl-merk">${esc(WINKEL.naam)}</div><div class="pl-slogan">Strijkatelier · Wasserij · Droogkuis</div></div>
+      <div class="pl-gegevens">${esc(WINKEL.adres)}<br>Tel. ${esc(WINKEL.telefoon)}</div>
+    </header>
+    <div class="pl-titelbalk"><h1>${titel}</h1>${sub ? `<span>${sub}</span>` : ''}</div>`;
+  const plDatum = () => new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
+
   async function drukPrijslijst(metActie) {
     const actie = metActie ? actieVandaag() : null;
     const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    const groepen = (prijslijst().groepen || []).map((g) => `
-      <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
+    const groepen = (prijslijst().groepen || []).map((g) => `<tbody class="pl-groep">
+      <tr class="pl-groepkop"><th>${esc(g.titel)}</th><th>Strijken</th><th>Aantal</th><th>${esc(hoofdletter(g.wassenLabel || 'prijs'))}</th><th>Aantal</th></tr>
       ${g.stukken.map((st) => {
         const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
         const tweede = st.wassen ?? st.prijs ?? null;
-        return `<tr><td>${esc(st.naam)}</td><td>${strijk == null ? (tweede == null ? '' : '/') : pr(strijk)}</td><td></td><td>${pr(tweede)}</td><td></td></tr>`;
-      }).join('')}
-      <tr class="pl-leeg"><td colspan="5"></td></tr>`).join('');
-    $('#afdruk').innerHTML = `<section class="pl-blad">
-      <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}</div>
-      ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
-      <table class="pl-tabel">${groepen}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
+        return `<tr><td>${esc(st.naam)}</td><td class="p">${strijk == null ? '<span class="pl-geen">–</span>' : pr(strijk)}</td><td class="a"></td><td class="p">${tweede == null ? '<span class="pl-geen">–</span>' : pr(tweede)}</td><td class="a"></td></tr>`;
+      }).join('')}</tbody>`).join('');
+    const sub = actie
+      ? `<b>${esc(actie.naam)}</b> · geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}`
+      : 'Prijzen per stuk, btw inbegrepen · ' + esc(plDatum());
+    $('#afdruk').innerHTML = `<section class="pl-blad2">
+      ${plKop('Prijslijst strijken &amp; wassen', sub)}
+      <table class="pl-tabel2">${groepen}
+        <tbody><tr class="pl-totaal2"><td colspan="3"></td><td>Totaal</td><td></td></tr></tbody></table>
     </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
-  // Nieuwkuis: in de layout van de oude kassaprijslijst (Luxe, Zijde, Linnen, Verv., Strijk).
   async function drukDroogkuis() {
-    const pr = (v) => (v == null ? '' : Number(v).toFixed(2).replace('.', ','));
+    const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
     const lijst = (prijslijst().droogkuis || []).map(droogStuk);
-    $('#afdruk').innerHTML = `<section class="pl-blad dk-blad">
-      <div class="dk-kop"><span>Prijslijst Eur</span><b>${esc(WINKEL.naam.toUpperCase())}</b><span>${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
-      <div class="dk-titel">Nieuwkuis</div>
-      <table class="dk-tabel"><thead><tr><th></th><th>Luxe</th><th>Zijde</th><th>Linnen</th><th>Verv.</th><th>Strijk</th></tr></thead>
-      <tbody>${lijst.map((d) => `<tr><td>${esc(d.naam.toUpperCase())}</td><td>${pr(d.luxe)}</td><td>${pr(d.zijde)}</td><td>${pr(d.linne)}</td><td></td><td></td></tr>`).join('')}</tbody></table>
-      <div class="dk-aantal">Aantal : ${lijst.length}</div>
+    $('#afdruk').innerHTML = `<section class="pl-blad2">
+      ${plKop('Prijslijst nieuwkuis', 'Droogkuis per stuk, btw inbegrepen · ' + esc(plDatum()))}
+      <table class="pl-tabel2 dk2"><tbody class="pl-groep">
+        <tr class="pl-groepkop"><th>Stuk</th><th>Luxe</th><th>Zijde</th><th>Linnen</th></tr>
+        ${lijst.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="pl-voet">Vlekken, bijzondere stoffen of versieringen: de prijs kan na het bekijken van het stuk verschillen.</p>
     </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
-  // Een A4 vol kleine briefjes om uit te knippen: niet aansprakelijk voor schade aan de stoffen.
+  // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
   async function drukAansprakelijk() {
-    const briefje = `<div class="na-briefje"><b>${esc(WINKEL.naam)}</b>
-      <p>Wij zijn niet aansprakelijk voor schade aan de stoffen.</p>
-      <small>Bij het reinigen, wassen of strijken kunnen stoffen, kleuren, knopen en versieringen beschadigd raken. Het binnenbrengen van een stuk geldt als akkoord.</small></div>`;
-    $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(10)}</section>`;
+    const briefje = `<div class="na-briefje">
+      <div class="na-kop"><b>${esc(WINKEL.naam)}</b><span>Bonnr. ………………</span></div>
+      <p>Ik ga ermee akkoord dat ${esc(WINKEL.naam)} niet aansprakelijk is voor schade aan de stoffen.</p>
+      <small>Bij reinigen, wassen of strijken kunnen stoffen, kleuren, knopen en versieringen beschadigd raken.</small>
+      <div class="na-velden"><span>Naam</span><span>Datum</span><span class="na-handtekening">Handtekening</span></div></div>`;
+    $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(8)}</section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
