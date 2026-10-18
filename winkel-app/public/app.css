@@ -470,9 +470,38 @@ a{color:var(--navy);}
   .dk-tabel tr{break-inside:avoid;}
   .dk-aantal{margin-top:2mm;}
   #afdruk.a4:has(.na-blad){padding:8mm;}
-  .na-blad{display:grid;grid-template-columns:1fr 1fr;color:#000;font:10pt/1.35 Arial,sans-serif;}
-  .na-briefje{border:.3mm dashed #000;height:55mm;box-sizing:border-box;padding:6mm;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:2mm;break-inside:avoid;}
-  .na-briefje b{font-size:12pt;}
-  .na-briefje p{margin:0;font-size:12.5pt;font-weight:700;}
-  .na-briefje small{font-size:8.5pt;}
+  .na-blad{display:grid;grid-template-columns:1fr 1fr;color:#000;font:9.5pt/1.3 Arial,sans-serif;}
+  .na-briefje{border:.3mm dashed #888;height:69mm;box-sizing:border-box;padding:5mm 6mm;display:flex;flex-direction:column;gap:2mm;break-inside:avoid;}
+  .na-kop{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.5mm solid #0E1F42;padding-bottom:1mm;}
+  .na-kop b{font-size:12pt;color:#0E1F42;}
+  .na-kop span{font-size:8.5pt;}
+  .na-briefje p{margin:0;font-size:10.5pt;font-weight:700;}
+  .na-briefje small{font-size:7.5pt;color:#333;}
+  .na-velden{display:grid;grid-template-columns:1fr 1fr;gap:4mm 5mm;margin-top:auto;}
+  .na-velden span{border-bottom:.25mm solid #000;padding-top:5mm;font-size:7.5pt;color:#444;}
+  .na-velden .na-handtekening{grid-column:1/-1;padding-top:9mm;}
+  .pl-blad2{color:#1B2422;font:9pt/1.25 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .pl-kop2{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:2.5mm;border-bottom:1.2mm solid #0E1F42;}
+  .pl-merk{font-size:20pt;font-weight:800;color:#0E1F42;line-height:1;}
+  .pl-slogan{color:#B98D4A;font-weight:600;font-size:9pt;margin-top:1mm;letter-spacing:.04em;}
+  .pl-gegevens{text-align:right;font-size:8.5pt;color:#444;}
+  .pl-titelbalk{display:flex;justify-content:space-between;align-items:baseline;margin:3mm 0 2.5mm;}
+  .pl-titelbalk h1{margin:0;font-size:14pt;color:#0E1F42;}
+  .pl-titelbalk span{font-size:8.5pt;color:#555;}
+  .pl-titelbalk b{color:#8A6829;}
+  .pl-tabel2{width:100%;border-collapse:collapse;}
+  .pl-tabel2 td,.pl-tabel2 th{padding:.6mm 2.5mm;border-bottom:.2mm solid #DDE1E6;}
+  .pl-groepkop th{background:#0E1F42;color:#fff;text-align:right;font-size:8.5pt;font-weight:600;padding:1.4mm 2.5mm;border:0;}
+  .pl-groepkop th:first-child{text-align:left;font-size:10pt;font-weight:700;}
+  .pl-groep tr:nth-child(odd):not(.pl-groepkop) td{background:#F4F1EA;}
+  .pl-groepkop{break-after:avoid;}
+  .pl-groep + .pl-groep .pl-groepkop th{border-top:3mm solid #fff;}
+  .pl-tabel2 tr{break-inside:avoid;}
+  .pl-tabel2 .p{text-align:right;white-space:nowrap;width:24mm;font-variant-numeric:tabular-nums;}
+  .pl-tabel2 .a{width:15mm;border-left:.2mm solid #DDE1E6;}
+  .pl-geen{color:#AAB;}
+  .pl-totaal2 td{border:0;padding-top:3mm;font-weight:700;text-align:right;}
+  .pl-totaal2 td:last-child{border-bottom:.4mm solid #000;}
+  .dk2 .p{width:26mm;}
+  .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }
