@@ -1394,10 +1394,11 @@
     <div class="pl-titelbalk"><h1>${titel}</h1>${sub ? `<span>${sub}</span>` : ''}</div>`;
   const plDatum = () => new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  async function drukPrijslijst(metActie) {
+  async function drukPrijslijst(metActie, samen = false) {
     const actie = metActie ? actieVandaag() : null;
     const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    const groepen = (prijslijst().groepen || []).map((g) => `
+    // Schoenen en motorkleding staan niet op de papieren prijslijst.
+    const groepen = (prijslijst().groepen || []).filter((g) => !/^schoenen/i.test(g.titel)).map((g) => `
       <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
       ${g.stukken.map((st) => {
         const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
@@ -1411,13 +1412,14 @@
       <table class="pl-tabel">${groepen}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
     </section>`;
     $('#afdruk').className = 'a4';
+    if (samen) return;
     await afdrukken('a4');
   }
   // Nieuwkuis: in de layout van de oude kassaprijslijst (Luxe, Zijde, Linnen, Verv., Strijk).
-  async function drukDroogkuis() {
+  async function drukDroogkuis(samen = false) {
     const pr = (v) => (v == null ? '' : Number(v).toFixed(2).replace('.', ','));
     const lijst = (prijslijst().droogkuis || []).map(droogStuk);
-    $('#afdruk').innerHTML = `<section class="pl-blad dk-blad">
+    const html = `<section class="pl-blad dk-blad${samen ? ' pl-nieuwe-pagina' : ''}">
       <div class="dk-kop"><span>Prijslijst Eur</span><b>${esc(WINKEL.naam.toUpperCase())}</b><span>${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
       <div class="dk-titel">Nieuwkuis</div>
       <table class="dk-tabel"><thead><tr><th></th><th>Luxe<br>vanaf</th><th>Zijde<br>vanaf</th><th>Linnen<br>vanaf</th><th>Verv.</th><th>Strijk</th></tr></thead>
@@ -1425,7 +1427,10 @@
       <div class="dk-aantal">Aantal : ${lijst.length}</div>
       <div class="dk-aantal"><b>Alle prijzen zijn vanafprijzen.</b> De juiste prijs krijgt u na het bekijken van het stuk.</div>
     </section>`;
+    if (samen) $('#afdruk').insertAdjacentHTML('beforeend', html);
+    else $('#afdruk').innerHTML = html;
     $('#afdruk').className = 'a4';
+    if (samen) return;
     await afdrukken('a4');
   }
   // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
@@ -1448,7 +1453,13 @@
   $('#prijslijsten-knop').addEventListener('click', openPrijslijsten);
   $('#pl-strijk').addEventListener('click', () => drukPrijslijst(false));
   $('#pl-actie').addEventListener('click', () => drukPrijslijst(true));
-  $('#pl-droog').addEventListener('click', drukDroogkuis);
+  $('#pl-droog').addEventListener('click', () => drukDroogkuis());
+  // Voorkant strijken & wassen, achterkant nieuwkuis: één blad, recto verso.
+  $('#pl-beide').addEventListener('click', async () => {
+    await drukPrijslijst(false, true);
+    await drukDroogkuis(true);
+    await afdrukken('a4');
+  });
   $('#pl-na').addEventListener('click', drukAansprakelijk);
   $('#pl-aanpassen').addEventListener('click', () => { $('#prijslijsten').close(); openPrijslijst(); });
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
