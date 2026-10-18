@@ -517,7 +517,21 @@ a{color:var(--navy);}
   .pl-kolommen .pl-groepkop th:first-child{font-size:8.5pt;}
   .pl-kolommen .p{width:15mm;}
   .pl-twee .p{width:13mm;}
-  .pl-tabel2 tr:nth-child(even):not(.pl-groepkop) td{background:#F4F1EA;}
   .pl-groepkop small{font-weight:400;opacity:.8;font-size:6.5pt;}
+  .pl-blad2 > .pl-tabel2 td,.pl-blad2 > .pl-tabel2 th{font-size:11pt;padding:1.3mm 3mm;}
+  .pl-blad2 > .pl-tabel2 .pl-groepkop th{font-size:10pt;padding:2mm 3mm;}
+  .pl-blad2 > .pl-tabel2 .pl-groepkop th:first-child{font-size:12pt;}
+  .pl-blad2 > .pl-tabel2 .p{width:30mm;}
+  .pl-blad2 > .pl-tabel2 .a{width:20mm;}
+  .pl-blad2 > .pl-tabel2 .pl-groepkop small{font-size:8pt;}
+  .pl-blad2 .pl-voet{font-size:10pt;}
+  /* Prijslijsten in zwart-wit. */
+  .pl-blad2,.pl-blad2 .pl-merk,.pl-blad2 .pl-titelbalk h1,.pl-blad2 .pl-titelbalk b,.pl-blad2 .pl-slogan,.pl-blad2 .pl-gegevens,.pl-blad2 .pl-titelbalk span{color:#000;}
+  .pl-blad2 .pl-kop2{border-bottom-color:#000;}
+  .pl-blad2 .pl-groepkop th{background:#000;color:#fff;}
+  .pl-blad2 .pl-groep tr:nth-child(odd):not(.pl-groepkop) td{background:#fff;}
+  .pl-blad2 .pl-tabel2 td{border-bottom:.2mm solid #000;}
+  .pl-blad2 .pl-tabel2 .a{border-left:.2mm solid #000;}
+  .pl-blad2 .pl-geen{color:#000;}
   .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }

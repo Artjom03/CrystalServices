@@ -1394,29 +1394,37 @@
     <div class="pl-titelbalk"><h1>${titel}</h1>${sub ? `<span>${sub}</span>` : ''}</div>`;
   const plDatum = () => new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Prijslijsten: één staande A4, in twee kolommen.
+  // Prijslijsten: staande A4, één kolom in grote letters.
   async function drukPrijslijst(metActie) {
     const actie = metActie ? actieVandaag() : null;
-    const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    const groepen = (prijslijst().groepen || []).map((g) => `<table class="pl-tabel2">
-      <tr class="pl-groepkop"><th>${esc(g.titel)}</th><th>Strijken</th><th>${esc(hoofdletter(g.wassenLabel || 'prijs'))}</th></tr>
-      ${g.stukken.map((st) => `<tr><td>${esc(st.naam)}</td><td class="p">${pr(st.strijken != null ? actiePrijs(actie, st.strijken) : null)}</td><td class="p">${pr(st.wassen ?? st.prijs ?? null)}</td></tr>`).join('')}</table>`).join('');
+    const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
+    const groepen = (prijslijst().groepen || []).map((g) => `<tbody class="pl-groep">
+      <tr class="pl-groepkop"><th>${esc(g.titel)}</th><th>Strijken</th><th>Aantal</th><th>${esc(hoofdletter(g.wassenLabel || 'prijs'))}</th><th>Aantal</th></tr>
+      ${g.stukken.map((st) => {
+        const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
+        const tweede = st.wassen ?? st.prijs ?? null;
+        return `<tr><td>${esc(st.naam)}</td><td class="p">${strijk == null ? '<span class="pl-geen">–</span>' : pr(strijk)}</td><td class="a"></td><td class="p">${tweede == null ? '<span class="pl-geen">–</span>' : pr(tweede)}</td><td class="a"></td></tr>`;
+      }).join('')}</tbody>`).join('');
     const sub = actie
       ? `<b>${esc(actie.naam)}</b> · geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}`
       : 'Prijzen per stuk, btw inbegrepen · ' + esc(plDatum());
-    $('#afdruk').innerHTML = `<section class="pl-blad2">${plKop('Prijslijst strijken &amp; wassen', sub)}<div class="pl-kolommen">${groepen}</div></section>`;
+    $('#afdruk').innerHTML = `<section class="pl-blad2">
+      ${plKop('Prijslijst strijken &amp; wassen', sub)}
+      <table class="pl-tabel2">${groepen}
+        <tbody><tr class="pl-totaal2"><td colspan="3"></td><td>Totaal</td><td></td></tr></tbody></table>
+    </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
   async function drukDroogkuis() {
     const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
     const lijst = (prijslijst().droogkuis || []).map(droogStuk);
-    const helft = Math.ceil(lijst.length / 2);
-    const tabel = (deel) => `<table class="pl-tabel2 dk2"><tr class="pl-groepkop"><th>Stuk</th><th>Luxe <small>vanaf</small></th><th>Zijde <small>vanaf</small></th><th>Linnen <small>vanaf</small></th></tr>
-      ${deel.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}</table>`;
     $('#afdruk').innerHTML = `<section class="pl-blad2">
       ${plKop('Prijslijst nieuwkuis', '<b>Vanafprijzen</b> per stuk, btw inbegrepen · ' + esc(plDatum()))}
-      <div class="pl-twee">${tabel(lijst.slice(0, helft))}${tabel(lijst.slice(helft))}</div>
+      <table class="pl-tabel2 dk2"><tbody class="pl-groep">
+        <tr class="pl-groepkop"><th>Stuk</th><th>Luxe <small>vanaf</small></th><th>Zijde <small>vanaf</small></th><th>Linnen <small>vanaf</small></th></tr>
+        ${lijst.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}
+      </tbody></table>
       <p class="pl-voet"><b>Alle droogkuisprijzen zijn vanafprijzen.</b> De juiste prijs hangt af van de stof, vlekken en versieringen en krijgt u na het bekijken van het stuk.</p>
     </section>`;
     $('#afdruk').className = 'a4';
