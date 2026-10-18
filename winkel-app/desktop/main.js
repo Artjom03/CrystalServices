@@ -136,7 +136,9 @@ async function bestand(pad) {
 
 /** Druk de huidige pagina af; de afdruk-CSS toont dan enkel de bon. Klein gaat naar de bonprinter, A4 naar de A4-printer. */
 function drukAf(webContents, formaat) {
-  const a4 = formaat === 'a4';
+  const a4 = formaat === 'a4' || formaat === 'a4-dubbel';
+  // Prijslijsten voor- en achterkant: dubbelzijdig, als de printer dat kan.
+  const dubbel = formaat === 'a4-dubbel' ? { duplexMode: 'longEdge' } : {};
   // Enkel voor tests: de afdruk als PDF bewaren in plaats van naar een printer te sturen.
   if (process.env.CRYSTAL_TEST_PDF) {
     const opties = a4 ? { pageSize: 'A4', landscape: false, preferCSSPageSize: true, printBackground: true } : { pageSize: { width: 3.15, height: 11.7 }, margins: { marginType: 'none' }, printBackground: true };
@@ -144,33 +146,56 @@ function drukAf(webContents, formaat) {
       .then((pdf) => writeFile(process.env.CRYSTAL_TEST_PDF, pdf))
       .then(() => ({ ok: true }));
   }
-  const printer = a4 ? instellingen.printerA4 : instellingen.printer;
+  return gekozenPrinters(webContents).then(({ bon, a4: groot }) => {
+  const printer = a4 ? groot : bon;
   return new Promise((resolve) => {
     // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
     webContents.print(
       a4
-        ? { silent: Boolean(printer), deviceName: printer || undefined, printBackground: true, pageSize: 'A4', landscape: false }
+        ? { silent: Boolean(printer), deviceName: printer || undefined, printBackground: true, pageSize: 'A4', landscape: false, ...dubbel }
         : { silent: Boolean(printer), deviceName: printer || undefined, printBackground: true, margins: { marginType: 'printableArea' } },
       (ok, fout) => resolve({ ok, fout: ok ? '' : String(fout || '') }),
     );
   });
+  });
+}
+
+// Printers die geen papier geven (PDF, XPS, OneNote, fax) kiest het programma nooit zelf.
+const VIRTUEEL = /pdf|xps|onenote|fax|send to|document writer/i;
+// Bonprinters herkennen aan hun naam: POS-58/80, Epson TM-…, Star, Xprinter, Rongta, Bixolon, "receipt", "thermal"…
+const BONPRINTER = /\bpos(\b|-|\d)|receipt|thermal|\btm[- ]?[a-z]?\d|tsp\d|\bstar\b|xprinter|xp-\d|rongta|bixolon|citizen|\b(58|80) ?mm|bonprinter|kassa/i;
+
+/**
+ * De printers om naar af te drukken. Zelf gekozen gaat voor; anders kiest het programma automatisch:
+ * de bonprinter op naam, en voor A4 de standaardprinter van Windows (of anders de eerste echte printer).
+ * "venster" betekent: telkens het afdrukvenster tonen.
+ */
+async function gekozenPrinters(webContents) {
+  let printers = [];
+  try { printers = await webContents.getPrintersAsync(); } catch {}
+  const echt = printers.filter((p) => !VIRTUEEL.test(p.name));
+  const bonAuto = echt.find((p) => BONPRINTER.test(p.name))?.name || '';
+  const a4Echt = echt.filter((p) => p.name !== bonAuto);
+  const a4Auto = (a4Echt.find((p) => p.isDefault) || a4Echt[0])?.name || '';
+  const kies = (gekozen, auto) => (gekozen === 'venster' ? '' : gekozen && printers.some((p) => p.name === gekozen) ? gekozen : auto);
+  return { bon: kies(instellingen.printer, bonAuto), a4: kies(instellingen.printerA4, a4Auto) };
 }
 
 async function kiesPrinter(venster, soort = 'bon') {
   const veld = soort === 'a4' ? 'printerA4' : 'printer';
   const printers = await venster.webContents.getPrintersAsync();
   const namen = printers.map((p) => p.name);
-  const knoppen = [...namen, 'Telkens het afdrukvenster tonen', 'Annuleren'];
+  const knoppen = [...namen, 'Automatisch kiezen', 'Telkens het afdrukvenster tonen', 'Annuleren'];
   const { response } = await dialog.showMessageBox(venster, {
     type: 'question',
     title: 'Printer kiezen',
     message: soort === 'a4' ? 'Naar welke printer moeten A4-afdrukken (facturen, grote bonnen) gaan?' : 'Naar welke bonprinter moeten de kleine bonnetjes gaan?',
-    detail: instellingen[veld] ? `Nu: ${instellingen[veld]}` : 'Nu: telkens het afdrukvenster',
+    detail: instellingen[veld] === 'venster' ? 'Nu: telkens het afdrukvenster' : instellingen[veld] ? `Nu: ${instellingen[veld]}` : 'Nu: automatisch',
     buttons: knoppen,
     cancelId: knoppen.length - 1,
   });
   if (response === knoppen.length - 1) return;
-  instellingen[veld] = response < namen.length ? namen[response] : '';
+  instellingen[veld] = response < namen.length ? namen[response] : response === namen.length ? '' : 'venster';
   await bewaarInstellingen();
 }
 
@@ -256,7 +281,7 @@ function maakMenu(venster) {
         label: 'Over Crystal Winkel',
         click: () => dialog.showMessageBox(venster, {
           message: `Crystal Winkel ${app.getVersion()}`,
-          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nBonprinter: ${instellingen.printer || 'afdrukvenster'}\nA4-printer: ${instellingen.printerA4 || 'afdrukvenster'}`,
+          detail: `Bonnen voor strijk, was en droogkuis. Werkt volledig offline.\n\nGegevens: ${DATA()}\nBonprinter: ${instellingen.printer || 'automatisch'}\nA4-printer: ${instellingen.printerA4 || 'automatisch'}`,
         }),
       }],
     },
@@ -321,10 +346,15 @@ if (!app.requestSingleInstanceLock()) {
     });
     ipcMain.handle('afdrukken', (e, formaat) => drukAf(e.sender, formaat));
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
-    ipcMain.handle('printer', () => ({ bon: instellingen.printer, a4: instellingen.printerA4 }));
+    const printerInfo = async (wc) => {
+      const g = await gekozenPrinters(wc);
+      const tekst = (eigen, naam) => (eigen === 'venster' ? '' : naam ? naam + (eigen ? '' : ' (automatisch)') : '');
+      return { bon: tekst(instellingen.printer, g.bon), a4: tekst(instellingen.printerA4, g.a4) };
+    };
+    ipcMain.handle('printer', (e) => printerInfo(e.sender));
     ipcMain.handle('kies-printer', async (e, soort) => {
       await kiesPrinter(BrowserWindow.fromWebContents(e.sender), soort);
-      return { bon: instellingen.printer, a4: instellingen.printerA4 };
+      return printerInfo(e.sender);
     });
     maakVenster();
   });

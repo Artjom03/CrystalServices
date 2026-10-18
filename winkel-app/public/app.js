@@ -972,7 +972,7 @@
 
   function afdrukken(formaat = 'klein') {
     // Paginaformaat: A4 of een smalle rol voor de bonprinter. De marge zit in #afdruk (zie app.css).
-    $('#pagina-stijl').textContent = formaat === 'a4' ? '@media print{@page{size:A4 portrait;margin:0}}' : '@media print{@page{margin:0}}';
+    $('#pagina-stijl').textContent = formaat.startsWith('a4') ? '@media print{@page{size:A4 portrait;margin:0}}' : '@media print{@page{margin:0}}';
     if (!DESKTOP) return Promise.resolve(window.print());
     return window.crystal.afdrukken(formaat).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
@@ -1361,7 +1361,7 @@
   function toonPrinter() {
     if (!DESKTOP) return;
     window.crystal.printer().then((p) => {
-      const nog = 'nog niet gekozen (het afdrukvenster komt tevoorschijn)';
+      const nog = 'geen printer gevonden (het afdrukvenster komt tevoorschijn)';
       $('#i-printer').textContent = `Bonprinter: ${p.bon || nog} · A4-printer: ${p.a4 || nog}`;
     });
   }
@@ -1458,7 +1458,7 @@
   $('#pl-beide').addEventListener('click', async () => {
     await drukPrijslijst(false, true);
     await drukDroogkuis(true);
-    await afdrukken('a4');
+    await afdrukken('a4-dubbel');
   });
   $('#pl-na').addEventListener('click', drukAansprakelijk);
   $('#pl-aanpassen').addEventListener('click', () => { $('#prijslijsten').close(); openPrijslijst(); });
