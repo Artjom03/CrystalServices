@@ -1429,14 +1429,19 @@
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }
-  // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
+  // Eén staande A4 die de klant invult en ondertekent: de winkel is niet aansprakelijk voor schade aan de stoffen.
   async function drukAansprakelijk() {
-    const briefje = `<div class="na-briefje">
-      <div class="na-kop"><b>${esc(WINKEL.naam)}</b><span>Bonnr. ………………</span></div>
-      <p>Ik ga ermee akkoord dat ${esc(WINKEL.naam)} niet aansprakelijk is voor schade aan de stoffen.</p>
-      <small>Bij reinigen, wassen of strijken kunnen stoffen, kleuren, knopen en versieringen beschadigd raken.</small>
-      <div class="na-velden"><span>Naam</span><span>Datum</span><span class="na-handtekening">Handtekening</span></div></div>`;
-    $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(8)}</section>`;
+    $('#afdruk').innerHTML = `<section class="pl-blad2 na-a4">
+      ${plKop('Verklaring van de klant', '')}
+      <p class="na-groot">Ik ga ermee akkoord dat ${esc(WINKEL.naam)} niet aansprakelijk is voor schade aan de stoffen.</p>
+      <p>Bij reinigen, wassen of strijken kunnen stoffen, kleuren, knopen, ritsen en versieringen beschadigd raken, ook bij een zorgvuldige behandeling. Door mijn handtekening bevestig ik dat ik dit weet en aanvaard.</p>
+      <div class="na-a4-velden">
+        <div><span>Bonnummer</span></div>
+        <div><span>Naam</span></div>
+        <div><span>Datum</span></div>
+        <div class="na-a4-hand"><span>Handtekening</span></div>
+      </div>
+    </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
   }

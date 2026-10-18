@@ -503,5 +503,11 @@ a{color:var(--navy);}
   .pl-totaal2 td{border:0;padding-top:3mm;font-weight:700;text-align:right;}
   .pl-totaal2 td:last-child{border-bottom:.4mm solid #000;}
   .dk2 .p{width:26mm;}
+  .na-a4{font-size:11pt;line-height:1.5;}
+  .na-groot{font-size:15pt;font-weight:700;color:#0E1F42;margin:10mm 0 5mm;}
+  .na-a4-velden{display:grid;gap:12mm;margin-top:18mm;}
+  .na-a4-velden div{border-bottom:.3mm solid #000;height:12mm;display:flex;align-items:flex-start;}
+  .na-a4-velden span{font-size:9pt;color:#555;}
+  .na-a4-velden .na-a4-hand{height:35mm;border:.3mm solid #000;border-radius:2mm;padding:2mm 3mm;}
   .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }
