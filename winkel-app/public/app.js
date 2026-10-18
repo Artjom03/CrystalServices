@@ -1058,7 +1058,7 @@
 
   // ---------- Formulier: stukken ----------
   const tegel = (a) => `<button type="button" class="tegel" data-artikel="${esc(artikelSleutel(a))}">
-      <span>${esc(a.kort)}</span><small>${esc(a.soort || 'per stuk')} · ${a.prijs == null ? 'prijs volgt' : eur(a.prijs)}</small></button>`;
+      <span>${esc(a.kort)}</span><small>${esc(a.soort || 'per stuk')} · ${a.prijs == null ? 'prijs volgt' : (a.behandeling === 'droogkuis' ? 'vanaf ' : '') + eur(a.prijs)}</small></button>`;
 
   function treffers(q) {
     const woorden = zoekVorm(q).split(/\s+/).filter(Boolean);
@@ -1412,12 +1412,12 @@
     const pr = (v) => (v == null ? '<span class="pl-geen">–</span>' : '€ ' + Number(v).toFixed(2).replace('.', ','));
     const lijst = (prijslijst().droogkuis || []).map(droogStuk);
     const helft = Math.ceil(lijst.length / 2);
-    const tabel = (deel) => `<table class="pl-tabel2 dk2"><tr class="pl-groepkop"><th>Stuk</th><th>Luxe</th><th>Zijde</th><th>Linnen</th></tr>
+    const tabel = (deel) => `<table class="pl-tabel2 dk2"><tr class="pl-groepkop"><th>Stuk</th><th>Luxe <small>vanaf</small></th><th>Zijde <small>vanaf</small></th><th>Linnen <small>vanaf</small></th></tr>
       ${deel.map((d) => `<tr><td>${esc(d.naam)}</td><td class="p">${pr(d.luxe)}</td><td class="p">${pr(d.zijde)}</td><td class="p">${pr(d.linne)}</td></tr>`).join('')}</table>`;
     $('#afdruk').innerHTML = `<section class="pl-blad2">
-      ${plKop('Prijslijst nieuwkuis', 'Droogkuis per stuk, btw inbegrepen · ' + esc(plDatum()))}
+      ${plKop('Prijslijst nieuwkuis', '<b>Vanafprijzen</b> per stuk, btw inbegrepen · ' + esc(plDatum()))}
       <div class="pl-twee">${tabel(lijst.slice(0, helft))}${tabel(lijst.slice(helft))}</div>
-      <p class="pl-voet">Vlekken, bijzondere stoffen of versieringen: de prijs kan na het bekijken van het stuk verschillen.</p>
+      <p class="pl-voet"><b>Alle droogkuisprijzen zijn vanafprijzen.</b> De juiste prijs hangt af van de stof, vlekken en versieringen en krijgt u na het bekijken van het stuk.</p>
     </section>`;
     $('#afdruk').className = 'a4';
     await afdrukken('a4');
