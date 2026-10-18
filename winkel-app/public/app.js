@@ -1397,18 +1397,21 @@
   async function drukPrijslijst(metActie, samen = false) {
     const actie = metActie ? actieVandaag() : null;
     const pr = (v) => (v == null ? '' : '€ ' + Number(v).toFixed(2).replace('.', ','));
-    const groepen = (prijslijst().groepen || []).map((g) => `
+    const groepHtml = (g) => `
       <tr class="pl-kop"><th>${esc(g.titel)}</th><th>Prijs strijken</th><th>Aantal</th><th>Prijs ${esc(g.wassenLabel || 'wassen')}</th><th>Aantal</th></tr>
       ${g.stukken.map((st) => {
         const strijk = st.strijken != null ? actiePrijs(actie, st.strijken) : null;
         const tweede = st.wassen ?? st.prijs ?? null;
         return `<tr><td>${esc(st.naam)}</td><td>${strijk == null ? (tweede == null ? '' : '/') : pr(strijk)}</td><td></td><td>${pr(tweede)}</td><td></td></tr>`;
       }).join('')}
-      <tr class="pl-leeg"><td colspan="5"></td></tr>`).join('');
+      <tr class="pl-leeg"><td colspan="5"></td></tr>`;
+    // Zoals de papieren lijst V43: voorkant dames- en herenkleding, achterkant de rest.
+    const [eerste, ...rest] = prijslijst().groepen || [];
     $('#afdruk').innerHTML = `<section class="pl-blad">
       <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}</div>
       ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
-      <table class="pl-tabel">${groepen}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
+      <table class="pl-tabel">${eerste ? groepHtml(eerste) : ''}</table>
+      <table class="pl-tabel pl-nieuwe-pagina">${rest.map(groepHtml).join('')}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
     </section>`;
     $('#afdruk').className = 'a4';
     if (samen) return;
