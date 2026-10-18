@@ -448,16 +448,17 @@ a{color:var(--navy);}
 
 /* Prijslijst afdrukken, in de layout van de papieren prijslijst */
 @media print{
-  .pl-blad{color:#000;font:9.5pt/1.25 Calibri,Carlito,Arial,sans-serif;}
+  .pl-blad{color:#000;font:10pt/1.2 Calibri,Carlito,Arial,sans-serif;}
   .pl-titel{font-size:12pt;font-weight:700;margin-bottom:1mm;}
   .pl-sub{font-size:9pt;margin-bottom:2mm;}
   .pl-tabel{width:100%;border-collapse:collapse;}
-  .pl-tabel td,.pl-tabel th{border:.2mm solid #000;padding:.4mm 2mm;text-align:center;}
-  .pl-tabel td:nth-child(3),.pl-tabel td:nth-child(5),.pl-tabel th:nth-child(3),.pl-tabel th:nth-child(5){width:16mm;}
-  .pl-tabel td:nth-child(2),.pl-tabel td:nth-child(4){width:34mm;}
+  .pl-tabel td,.pl-tabel th{border:.25mm solid #000;padding:.45mm 2mm;text-align:center;}
+  .pl-kop th{padding:1mm 2mm;}
+  .pl-tabel td:nth-child(3),.pl-tabel td:nth-child(5),.pl-tabel th:nth-child(3),.pl-tabel th:nth-child(5){width:20mm;}
+  .pl-tabel td:nth-child(2),.pl-tabel td:nth-child(4){width:38mm;}
   .pl-kop th{text-decoration:underline;font-weight:700;}
   .pl-kop th:first-child{text-align:center;}
-  .pl-leeg td{height:4mm;}
+  .pl-leeg td{height:3mm;}
   .pl-totaal td:nth-child(2){text-align:right;font-weight:700;}
   .pl-tabel tr{break-inside:avoid;}
   .dk-blad{font:10pt/1.3 "Courier New",Courier,monospace;}
