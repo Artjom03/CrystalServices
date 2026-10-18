@@ -518,5 +518,6 @@ a{color:var(--navy);}
   .pl-kolommen .p{width:15mm;}
   .pl-twee .p{width:13mm;}
   .pl-tabel2 tr:nth-child(even):not(.pl-groepkop) td{background:#F4F1EA;}
+  .pl-groepkop small{font-weight:400;opacity:.8;font-size:6.5pt;}
   .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }
