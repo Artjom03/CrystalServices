@@ -19,7 +19,9 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 - **Kassa verbeteren:** zolang de dag open is, tik je in de kassa op het beginbedrag, een "geld in/uit" of een betaling om ze te verbeteren (bedrag, betaalwijze) of te schrappen. Een geschrapte betaling zet de bon terug op niet betaald. Elke verbetering blijft zichtbaar in de kassa en op het dagoverzicht. Is de dag al afgesloten, dan eerst "Opnieuw openen".
 - **Kassa bewaren:** de kassa en alle betalingen blijven altijd bewaard, ook als de opgehaalde bonnen gewist worden. Met "Maand exporteren" download je de kassa van een maand als bestand voor Excel (per dag de ontvangsten per betaalwijze, het verschil bij het afsluiten, en alle betalingen) om aan de boekhouder te geven.
 - **Aanraakscherm:** bij ⚙ Instellingen > Scherm (automatisch, aan of uit; per toestel) worden alle knoppen groter en krijgen de bedragen in de kassa een cijferklavier op het scherm.
-- **Instellingen (⚙):** hoe lang opgehaalde bonnen bewaard blijven (1 tot 24 maanden, standaard 12, gerekend vanaf het ophalen; niet-opgehaalde bonnen blijven altijd), automatisch afdrukken, testbon, en de **prijslijst** aanpassen (prijzen, stukken toevoegen of weghalen, standaard terugzetten). Nieuwe prijzen gelden voor nieuwe bonnen.
+- **Instellingen (⚙):** automatisch afdrukken, printers, testbon, aanraakscherm en de indeling van de winkel.
+- **Prijslijsten:** afdrukken op A4 (strijken & wassen, eventueel met de actie, en nieuwkuis/droogkuis met luxe, zijde en linnen), een A4 met 10 briefjes "niet aansprakelijk voor schade aan de stoffen", en de prijzen aanpassen. Nieuwe prijzen gelden voor nieuwe bonnen.
+- **Stukken zonder typen:** bij een nieuwe bon kies je een groep (bv. Linnen of Droogkuis) en tik je het stuk aan.
 - Te installeren op gsm, tablet of computer ("Toevoegen aan beginscherm"), achter een pincode.
 - **Klantenportaal** (`/klant/`): klanten melden zich aan met hun gsm-nummer en een code van 6 cijfers en zien al hun eigen bonnen (klaar, in behandeling, eerder). In de winkel-app tik je bij een bon op "Toegang geven"; de code verschijnt één keer en gaat via WhatsApp of sms naar de klant. Bewaard wordt enkel een hash van de code. Na 5 foute codes is het gsm-nummer 15 minuten geblokkeerd, en een nieuwe code meldt oude sessies af.
 
@@ -28,7 +30,7 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 - `public/` is de app (gewone HTML, CSS en JavaScript, geen build nodig).
 - `api/bonnen.js` is de server-functie voor de winkel (achter de winkelpincode), `api/klant.js` die voor het klantenportaal.
 - De bonnen staan in één **privé**-bestand in Vercel Blob. Wijzigingen worden veilig samengevoegd als twee toestellen tegelijk bewaren.
-- `public/prijzen.js` is de standaardprijslijst, overgenomen uit de website (`src/app/api/chat/kennis.ts` in Artjom03/CrystalServices). Past de winkel prijzen aan via ⚙ Instellingen, dan worden die samen met de bonnen bewaard; de website verandert daar niet door.
+- `public/prijzen.js` is de standaardprijslijst, overgenomen van de papieren prijslijsten van de winkel (strijk/was en nieuwkuis). Past de winkel prijzen aan via Prijslijsten, dan worden die samen met de bonnen bewaard; de website verandert daar niet door.
 - Over de bewaartermijn heen: bij elke wijziging worden opgehaalde bonnen die te oud zijn gewist, en de app toont ze ook niet meer.
 
 ## Online
