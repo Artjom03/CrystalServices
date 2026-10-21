@@ -186,6 +186,13 @@
     const naam = zoekVorm(k.naam).trim();
     return Object.values(staat.klantenboek || {}).some((x) => x.vlekkenrapport && (x.sleutel === sleutel || zoekVorm(x.naam).trim() === naam));
   }
+  /** Moet bij deze klant het vliegtuig op de bon? (vinkje in Klanten, anders op naam: Flying Group, ASL/ISL) */
+  function vliegtuigKlant(k) {
+    if (!k) return false;
+    const x = (staat.klantenboek || {})[klantSleutel(k)];
+    if (x && typeof x.vliegtuig === 'boolean') return x.vliegtuig;
+    return /flying|\basl\b|\bisl\b/i.test(k.naam || '');
+  }
   const vlekTag = (s) => (s.vlek ? '<span class="vlek-tag">⚠ met vlek</span>' : '');
   /** Hoeveel stukken van een regel een vlek hebben (oudere bonnen: allemaal). */
   const vlekAantalVan = (s) => (s.vlek ? Math.min(s.aantal, Number(s.vlekAantal) || s.aantal) : 0);
@@ -203,7 +210,7 @@
   function zoekTekst(b) {
     const intl = telefoonIntl(b.klant.telefoon);
     return zoekVorm([
-      b.nr, scanCode(b.nr), b.klant.naam, b.klant.email, b.locatie, b.factuur && !b.factuur.gemaaktOp ? 'factuur' : '',
+      b.nr, scanCode(b.nr), b.klant.naam, b.klant.email, b.locatie, b.vliegtuig || '', b.factuur && !b.factuur.gemaaktOp ? 'factuur' : '',
       // Het nummer in elke schrijfwijze: 0470123456, 32470123456
       b.klant.telefoon.replace(/\D/g, ''), intl, intl.startsWith('32') ? '0' + intl.slice(2) : '',
     ].join(' '));
@@ -457,6 +464,7 @@
       <div class="d-blok">
         <h3>${esc(b.soort)}${b.klaarTegen ? ' · klaar tegen ' + esc(mooiDatum(b.klaarTegen)) : ''}</h3>
         ${stukken}
+        ${b.vliegtuig ? `<p style="margin-top:8px">✈ Vliegtuig: <b>${esc(b.vliegtuig)}</b></p>` : ''}
         ${b.opmerking ? `<p style="margin-top:8px">📝 ${esc(b.opmerking)}</p>` : ''}
         <p class="tijdlijn" style="margin-top:8px">${b.betaald ? 'Betaald' + (b.betaalwijze ? ' (' + esc(b.betaalwijze) + ')' : '') : 'Nog niet betaald'}</p>
       </div>
@@ -781,6 +789,7 @@
         ${code ? streepjescode(code) : ''}
         <table class="pr-info">
           <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
+          ${b.vliegtuig ? `<tr><th>Vliegtuig</th><td><b>${esc(b.vliegtuig)}</b></td></tr>` : ''}
           <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
           <tr class="pr-klaar-rij"><th>Klaar</th><td><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten'}</b></td></tr>
           ${lijst}
@@ -806,6 +815,7 @@
         <div class="pr-nr"><span>Bonnummer</span>${esc(b.nr)}</div>
         <table class="pr-info">
           <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
+          ${b.vliegtuig ? `<tr><th>Vliegtuig</th><td><b>${esc(b.vliegtuig)}</b></td></tr>` : ''}
           <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp))}</td></tr>
           <tr><th>Opgehaald</th><td>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</td></tr>
         </table>
@@ -835,6 +845,7 @@
         <div class="pr-ticket-nr">${esc(b.nr)}</div>
         <div class="pr-label-naam">${esc(b.klant.naam)}</div>
         <div class="pr-ticket-info">${b.klant.telefoon ? esc(b.klant.telefoon) + ' · ' : ''}klaar <b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</b>${aantal ? ` · ${aantal} st.` : ''}${b.betaald ? ' · betaald' : ''}</div>
+        ${b.vliegtuig ? `<div class="pr-label-loc">✈ Vliegtuig: ${esc(b.vliegtuig)}</div>` : ''}
         ${b.locatie ? `<div class="pr-label-loc">Locatie: ${esc(b.locatie)}</div>` : ''}
         ${b.opmerking ? `<div class="pr-ticket-opm">${esc(b.opmerking)}</div>` : ''}
         ${plaatsen || teTellen ? `<div class="pr-ticket-titel">Indeling</div>${plaatsen}${teTellen ? `<div class="pr-plaats">${teTellen}</div>` : ''}` : ''}
@@ -856,6 +867,7 @@
       </div>
       <div class="a4-vakken">
         <div class="a4-vak"><h4>Klant</h4><b>${esc(k.naam)}</b>${k.telefoon ? '<br>' + esc(k.telefoon) : ''}${k.email ? '<br>' + esc(k.email) : ''}</div>
+        ${b.vliegtuig ? `<div class="a4-vak a4-accent"><h4>Vliegtuig</h4><b>${esc(b.vliegtuig)}</b></div>` : ''}
         <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, true))}</div>
         ${afhaal
           ? `<div class="a4-vak"><h4>Opgehaald</h4>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</div>`
@@ -945,6 +957,7 @@
       </div>
       <div class="a4-vakken">
         <div class="a4-vak"><h4>Klant</h4><b>${esc(k.naam)}</b>${k.adres ? '<br>' + esc(k.adres) : ''}${k.btw ? '<br>' + esc(k.btw) : ''}</div>
+        ${b.vliegtuig ? `<div class="a4-vak a4-accent"><h4>Vliegtuig</h4><b>${esc(b.vliegtuig)}</b></div>` : ''}
         <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, true))}</div>
         ${afhaal
           ? `<div class="a4-vak"><h4>Opgehaald</h4>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</div>`
@@ -1273,7 +1286,11 @@
     $('#f-klanten').hidden = true;
     toonVlekUitleg();
   }
-  const toonVlekUitleg = () => { $('#f-vlekken').hidden = !vlekkenKlant({ naam: $('#f').naam.value, telefoon: $('#f').telefoon.value }); };
+  const toonVlekUitleg = () => {
+    const k = { naam: $('#f').naam.value, telefoon: $('#f').telefoon.value };
+    $('#f-vlekken').hidden = !vlekkenKlant(k);
+    $('#f-vliegtuig-veld').hidden = !vliegtuigKlant(k) && !$('#f').vliegtuig.value;
+  };
   $('#f').naam.addEventListener('input', toonVlekUitleg);
   $('#f').telefoon.addEventListener('input', toonVlekUitleg);
   $('#f').naam.addEventListener('input', toonKlantSuggesties);
@@ -1302,6 +1319,7 @@
     f.betaald.checked = b ? b.betaald : false;
     f.betaalwijze.value = b ? b.betaalwijze : '';
     f.opmerking.value = b ? b.opmerking : '';
+    f.vliegtuig.value = b ? b.vliegtuig || '' : '';
     regels = b ? b.stukken.map((s) => ({ ...s, behandeling: s.behandeling || 'ander' })) : [];
     soorten = new Set(b ? (b.soorten || [b.soort]) : ['Strijk']);
     toonSoorten();
@@ -1328,6 +1346,9 @@
       return;
     }
     if (!soorten.size) { $('#f-fout').textContent = 'Kies wat de klant binnenbrengt.'; return; }
+    if (!bewerkId && !f.vliegtuig.value.trim() && vliegtuigKlant({ naam: f.naam.value, telefoon: f.telefoon.value })) {
+      $('#f-fout').textContent = 'Vul het vliegtuig in (bv. de registratie OO-ABC).'; f.vliegtuig.focus(); return;
+    }
     const bon = {
       klant: { naam: f.naam.value, telefoon: f.telefoon.value, email: f.email.value },
       soorten: [...soorten],
@@ -1337,6 +1358,7 @@
       betaald: f.betaald.checked,
       betaalwijze: f.betaalwijze.value,
       opmerking: f.opmerking.value,
+      vliegtuig: f.vliegtuig.value,
     };
     $('#f-bewaar').disabled = true;
     try {
@@ -1983,7 +2005,7 @@
     return `<h3>Factuuraanvragen nog te maken (${lijst.length})</h3>
       <table class="stukken"><tbody>${lijst.map((b) => `<tr>
         <td>${esc(mooiDatum(b.factuur.gevraagdOp))}</td>
-        <td><b>${esc(factuurNaam(b))}</b> · bon ${esc(b.nr)}<br><span class="tijdlijn">${esc([b.factuur.adres, b.factuur.btw, b.klant.telefoon, b.factuur.email].filter(Boolean).join(' · ') || 'geen gegevens ingevuld')}</span></td>
+        <td><b>${esc(factuurNaam(b))}</b> · bon ${esc(b.nr)}${b.vliegtuig ? ' · ✈ ' + esc(b.vliegtuig) : ''}<br><span class="tijdlijn">${esc([b.factuur.adres, b.factuur.btw, b.klant.telefoon, b.factuur.email].filter(Boolean).join(' · ') || 'geen gegevens ingevuld')}</span></td>
         <td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td>
         <td><button class="knop klein" type="button" data-gemaakt="${esc(b.id)}">Gemaakt ✓</button></td>
       </tr>`).join('')}</tbody></table>`;
@@ -2007,7 +2029,7 @@
     const blok = (b) => `<div class="pr-factuurvraag">
         <b>${esc(factuurNaam(b))}</b>${b.factuur.naam && b.factuur.naam !== b.klant.naam ? ' (' + esc(b.klant.naam) + ')' : ''}<br>
         ${b.factuur.adres ? esc(b.factuur.adres) + '<br>' : ''}${b.factuur.btw ? 'Btw ' + esc(b.factuur.btw) + '<br>' : ''}${[b.klant.telefoon, b.factuur.email].filter(Boolean).map(esc).join(' · ')}${b.klant.telefoon || b.factuur.email ? '<br>' : ''}
-        Bon ${esc(b.nr)} · ${esc(b.stukken.map((s) => s.aantal + '× ' + s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, '')).join(', ') || b.soort)}<br>
+        ${b.vliegtuig ? 'Vliegtuig: <b>' + esc(b.vliegtuig) + '</b><br>' : ''}Bon ${esc(b.nr)} · ${esc(b.stukken.map((s) => s.aantal + '× ' + s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, '')).join(', ') || b.soort)}<br>
         <b>${eur(b.totaal)}</b>${b.prijsOpen ? ' + prijs volgt' : ''} · ${b.betaald ? 'betaald' + (b.betaalwijze ? ' (' + esc(b.betaalwijze) + ')' : '') : 'nog niet betaald'}
       </div>`;
     return `<div class="pr-groep-kop">Factuur gevraagd vandaag (${vandaag.length})</div>
@@ -2090,6 +2112,7 @@
     const f = $('#kl-form');
     for (const veld of ['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie']) f[veld].value = k[veld] || '';
     f.vlekkenrapport.checked = Boolean(k.vlekkenrapport);
+    f.vliegtuig.checked = vliegtuigKlant(k);
     $('#kl-titel').textContent = k.naam;
     $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem`;
     $('#kl-lijst').hidden = true;
@@ -2102,7 +2125,7 @@
     const f = e.target;
     try {
       if (!staat.klantenboek?.[klantOpen.sleutel]) throw new Error('Deze klant staat nog niet in het klantenbestand.');
-      await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant: { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked } });
+      await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant: { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked, vliegtuig: f.vliegtuig.checked } });
       toast('Klant opgeslagen ✓');
       f.hidden = true;
       toonKlanten();

@@ -32,7 +32,7 @@ export function telefoonSleutel(tel) {
 const BLOKKEER_NA = 5;
 const BLOKKEER_MS = 15 * 60 * 1000;
 
-const MAX = { naam: 80, telefoon: 30, email: 120, opmerking: 500, stukNaam: 80, stukken: 60, locatie: 40 };
+const MAX = { naam: 80, telefoon: 30, email: 120, vliegtuig: 40, opmerking: 500, stukNaam: 80, stukken: 60, locatie: 40 };
 
 function tekst(v, max) {
   return String(v ?? '').trim().slice(0, max);
@@ -118,6 +118,7 @@ function velden(invoer) {
     stukken,
     totaal: totaal(stukken),
     prijsOpen: prijsOpen(stukken),
+    vliegtuig: tekst(invoer.vliegtuig, MAX.vliegtuig),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
     locatie: tekst(invoer.locatie, MAX.locatie),
     klaarTegen: datum(invoer.klaarTegen),
@@ -207,6 +208,17 @@ export function klantenboekVan(staat) {
   for (const b of bonnen) zetKlant(boek, b.klant, b.binnenOp || '');
   return boek;
 }
+
+/**
+ * Klanten uit de luchtvaart (Flying Group, ASL/ISL) moeten op elke bon het vliegtuig vermelden.
+ * Standaard herkend op naam; in Klanten kan het vinkje dit aan of uit zetten.
+ */
+export function vliegtuigKlant(boek, klant) {
+  const k = boek?.[klantSleutel(klant)];
+  if (k && typeof k.vliegtuig === 'boolean') return k.vliegtuig;
+  return VLIEGTUIG_NAAM.test(String(klant?.naam || ''));
+}
+export const VLIEGTUIG_NAAM = /flying|\basl\b|\bisl\b/i;
 
 function zetKlant(boek, klant, iso, extra = {}) {
   const naam = tekst(klant?.naam, MAX.naam);
@@ -327,6 +339,7 @@ function handeling(oud, actie, nu) {
     case 'nieuw': {
       const v = velden(actie.bon || {});
       if (!v.klant.naam) throw new Fout('Vul de naam van de klant in');
+      if (!v.vliegtuig && vliegtuigKlant(staat.klantenboek, v.klant)) throw new Fout('Vul het vliegtuig in (bv. de registratie OO-ABC)');
       const bon = {
         id: 'b' + nu.getTime().toString(36) + Math.random().toString(36).slice(2, 6),
         nr: volgendNummer(staat),
@@ -443,6 +456,8 @@ function handeling(oud, actie, nu) {
         notitie: tekst(k.notitie ?? oud.notitie, 300),
         // Klant krijgt een aparte A4-bon met vlekkencontrole (bv. een bedrijf dat dat vraagt).
         vlekkenrapport: Boolean(k.vlekkenrapport ?? oud.vlekkenrapport),
+        // Op elke bon het vliegtuig vermelden (luchtvaartklanten).
+        ...(typeof (k.vliegtuig ?? oud.vliegtuig) === 'boolean' ? { vliegtuig: Boolean(k.vliegtuig ?? oud.vliegtuig) } : {}),
         gewijzigdOp: iso,
       };
       return { staat, klant: staat.klantenboek[sleutel] };
