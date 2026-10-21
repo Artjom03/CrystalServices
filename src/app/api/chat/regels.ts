@@ -154,11 +154,8 @@ export function regelAntwoord(vraag: string, nu = new Date()): string {
       ? ACTIE.tekst.join('\n\n')
       : `Op dit moment loopt er geen actie. Vragen over prijzen? ${BEL_ZIN}.`;
   }
-  if (/schoen|sneaker|bottine|laars/.test(t)) {
-    return 'Wij reinigen schoenen en sneakers in drie pakketten:\n• Pakket 1, buitenkant: € 30\n• Pakket 2, binnen- en buitenkant: € 40\n• Pakket 3, met ozonbehandeling: vanaf € 50\nDe definitieve prijs spreken we bij afgifte met u af.';
-  }
-  if (/motor/.test(t)) {
-    return 'Een lederen motorjas reinigen en voeden kost € 59, een lederen broek € 49, een 2-delig pak € 95 en een 1-delig racepak € 99. Alle prijzen staan op onze pagina Motorkleding.';
+  if (/schoen|sneaker|bottine|laars|motor/.test(t)) {
+    return `Schoenen en motorkleding reinigen wij niet. Voor uw kleding, linnen, droogkuis, handtassen en leer helpen wij u wel graag. ${BEL_ZIN}.`;
   }
 
   const prijs = prijsAntwoord(vraag, actie);
@@ -174,7 +171,7 @@ export function regelAntwoord(vraag: string, nu = new Date()): string {
     return `U kan uw was gewoon naar ons atelier brengen, een afspraak is niet nodig. Ophalen en leveren doen wij voor zakelijke klanten op vaste dagen. Wilt u laten ophalen? ${BEL_ZIN}.`;
   }
   if (/dienst|strijk|was|droog|reinig|kleding|handtas|leer/.test(t)) {
-    return 'Wij strijken, wassen en drogen uw kleding en linnen, doen droogkuis en wetcleaning, en reinigen ook handtassen, leer, schoenen en motorkleding. Daarnaast hebben we een zelfbedieningswassalon.';
+    return 'Wij strijken, wassen en drogen uw kleding en linnen, doen droogkuis en wetcleaning, en reinigen ook handtassen en leer. Daarnaast hebben we een zelfbedieningswassalon.';
   }
   if (/adres|locatie|waar|route/.test(t)) return `Ons adres is ${CONTACT.adres}.`;
   if (/contact|bel|mail|telefoon|nummer/.test(t)) {

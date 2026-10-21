@@ -5,7 +5,9 @@ const nextConfig = {
   async redirects() {
     return [
       { source: '/index.html', destination: '/', permanent: true },
-      { source: '/:pagina(schoenen|motorkleding|wassalon|zakelijk|contact).html', destination: '/:pagina', permanent: true },
+      { source: '/:pagina(wassalon|zakelijk|contact).html', destination: '/:pagina', permanent: true },
+      // Schoenen en motorkleding staan niet meer in het aanbod: oude links gaan naar de startpagina.
+      { source: '/:pagina(schoenen|motorkleding){.html}?', destination: '/', permanent: true },
     ];
   },
   async rewrites() {
@@ -14,14 +16,6 @@ const nextConfig = {
         {
           source: '/',
           destination: '/index.html',
-        },
-        {
-          source: '/schoenen',
-          destination: '/schoenen.html',
-        },
-        {
-          source: '/motorkleding',
-          destination: '/motorkleding.html',
         },
         {
           source: '/wassalon',

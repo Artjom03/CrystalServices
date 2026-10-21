@@ -21,8 +21,6 @@ const MAX_PER_VENSTER = 20;
 
 const PAGINAS: Record<string, string> = {
   '/': 'de startpagina',
-  '/schoenen': 'de pagina over schoenreiniging',
-  '/motorkleding': 'de pagina over motorkleding',
   '/wassalon': 'de pagina over het zelfbedieningswassalon',
   '/zakelijk': 'de pagina voor zakelijke klanten',
   '/contact': 'de contactpagina',
