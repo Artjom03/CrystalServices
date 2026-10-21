@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "./" },
   icons: { icon: "/favicon-48.png", apple: "/apple-touch-icon.png" },
   title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
-  description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook schoenen en sneakers, handtassen, motorkleding en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
+  description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen. Ook handtassen en leer. Snel, betrouwbaar, ook met dienstencheques. Bel 0494 40 38 41.",
   keywords: [
     "wasserij Antwerpen",
     "droogkuis Antwerpen",
@@ -17,8 +17,6 @@ export const metadata: Metadata = {
     "wasserij Deurne",
     "wasserij Berchem",
     "wasserij Merksem",
-    "schoenen reinigen Antwerpen",
-    "sneakers reinigen Antwerpen",
     "dienstencheques strijken",
   ],
   openGraph: {
@@ -84,10 +82,8 @@ gtag('config', 'G-FZ10NJFRPN');`}
         "Strijken van kleding",
         "Wassen en drogen",
         "Reiniging van handtassen",
-        "Reiniging van motorkleding",
         "Reiniging van leren kledij",
         "Bedrijfskleding reinigen",
-        "Reiniging van schoenen en sneakers",
       ].map((name) => ({
         "@type": "Offer",
         itemOffered: { "@type": "Service", name },
