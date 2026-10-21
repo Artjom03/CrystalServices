@@ -296,6 +296,7 @@ test('klanten importeren: nieuwe klanten erbij, bestaande enkel aangevuld', () =
 test('vlekken per stuk en een klant met vlekkenrapport', () => {
   let { staat, bon } = nieuw(LEEG, {
     klant: { naam: 'Flying Service NV' },
+    vliegtuig: 'OO-ABC',
     stukken: [
       { naam: 'Hemd (strijken)', aantal: 3, prijs: 2.3, vlek: '  1 hemd: kraag ' },
       { naam: 'Broek (strijken)', aantal: 1, prijs: 2.3, vlek: '' },
@@ -375,4 +376,18 @@ test('dag wissen: betalingen en opgehaalde bonnen weg, de rest blijft', () => {
   ({ staat } = pasToe(staat, { op: 'dagWissen' }, nu));
   assert.deepEqual(staat.bonnen.map((x) => x.id).sort(), [b.id, c.id].sort());
   assert.equal(staat.betalingen.length, 0);
+});
+
+test('luchtvaartklanten: vliegtuig verplicht en bewaard op de bon', () => {
+  assert.throws(() => nieuw(LEEG, { klant: { naam: 'Flying Service NV' } }), /vliegtuig/i);
+  assert.throws(() => nieuw(LEEG, { klant: { naam: 'Asl Jet Handling NV' } }), /vliegtuig/i);
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'Flying Service NV' }, vliegtuig: 'OO-ABC' });
+  assert.equal(bon.vliegtuig, 'OO-ABC');
+  // Gewone klant: geen vliegtuig nodig.
+  ({ bon } = nieuw(staat, { klant: { naam: 'Jan Peeters' } }));
+  assert.equal(bon.vliegtuig, '');
+  // Vinkje uit in Klanten: dan niet meer verplicht.
+  ({ staat } = pasToe(staat, { op: 'klant', sleutel: 'naam:flying service nv', klant: { vliegtuig: false } }, nu));
+  ({ bon } = nieuw(staat, { klant: { naam: 'Flying Service NV' } }));
+  assert.equal(bon.vliegtuig, '');
 });

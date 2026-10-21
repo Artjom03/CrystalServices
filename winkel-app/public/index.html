@@ -99,6 +99,7 @@
 
       <fieldset>
         <legend>Stukken <small>(droogkuis altijd invullen; strijk en was mag ook later)</small></legend>
+        <label id="f-vliegtuig-veld" class="vlek-uitleg" hidden>✈ Vliegtuig <small>(verplicht voor deze klant, bv. registratie OO-ABC)</small><input name="vliegtuig" maxlength="40" placeholder="Vliegtuig" autocomplete="off"></label>
         <p id="f-vlekken" class="vlek-uitleg" hidden>⚠ Deze klant krijgt een bon met vlekkencontrole. Kijk elk stuk na en duid met "Vlek" aan hoeveel stukken een vlek hebben.</p>
         <div class="stuk-toevoegen">
           <input id="f-stuk" placeholder="Zoek of typ een stuk: hemd, mantel, laken…" aria-label="Stuk zoeken" autocomplete="off" enterkeyhint="done">
@@ -353,6 +354,7 @@
       <label>Btw-nummer <small>(enkel voor bedrijven)</small><input name="btw" maxlength="30"></label>
       <label>Notitie<textarea name="notitie" rows="2" maxlength="300" placeholder="Bv. altijd geen stijfsel"></textarea></label>
       <label class="vink"><input type="checkbox" name="vlekkenrapport"> Speciale A4-bon met vlekkencontrole <small>(per stuk: vlek ja/nee)</small></label>
+      <label class="vink"><input type="checkbox" name="vliegtuig"> Vliegtuig vermelden op elke bon <small>(luchtvaartklanten)</small></label>
       <p id="kl-info" class="tijdlijn"></p>
       <div class="d-knoppen">
         <button class="knop hoofd" type="submit">Opslaan</button>
