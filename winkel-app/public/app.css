@@ -279,6 +279,11 @@ a{color:var(--navy);}
 .t-rij.ok .t-nr{background:#1E8E4E;}
 .t-rij.ok .t-status{color:#1E8E4E;font-weight:700;}
 .aanraak .t-rij input{min-height:48px;}
+/* Instellingen: printer per soort bonnetje. */
+.i-sub{margin:14px 0 6px;font-size:.95rem;}
+.i-printer-rij{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center;margin-bottom:8px;}
+.i-printer-rij select{min-width:0;}
+@media (max-width:560px){.i-printer-rij{grid-template-columns:1fr auto;}.i-printer-rij span{grid-column:1/-1;}}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}

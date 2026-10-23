@@ -13,7 +13,7 @@ const DATA = () => path.join(app.getPath('userData'), 'bonnen.json');
 const INSTELLINGEN = () => path.join(app.getPath('userData'), 'instellingen.json');
 
 // Wat de winkel mag doen; klantcodes horen bij het online klantenportaal en bestaan hier niet.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'dagWissen', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'verwittigd', 'verwijder', 'instellingen', 'prijslijst', 'klant', 'klantNieuw', 'klantWeg', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'dagWissen', 'factuurVraag', 'factuurGemaakt', 'klantenImport'];
 
 const TYPES = { '.pdf': 'application/pdf',
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -42,7 +42,9 @@ async function schrijfJson(bestand, data) {
   await rename(tijdelijk, bestand);
 }
 
-const instellingen = { pin: '', printer: '', printerA4: '', zoom: 1 };
+// printers: per soort bonnetje een eigen printer ('' = automatisch, 'venster' = telkens vragen).
+const instellingen = { pin: '', printer: '', printerA4: '', printers: {}, zoom: 1 };
+const PRINT_SOORTEN = ['klant', 'ticket', 'afhaal', 'a4', 'prijslijst', 'dag'];
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
 }
@@ -135,7 +137,7 @@ async function bestand(pad) {
 // ---------- Afdrukken ----------
 
 /** Druk de huidige pagina af; de afdruk-CSS toont dan enkel de bon. Klein gaat naar de bonprinter, A4 naar de A4-printer. */
-function drukAf(webContents, formaat) {
+function drukAf(webContents, formaat, soort = '') {
   const a4 = formaat === 'a4' || formaat === 'a4-dubbel';
   // Prijslijsten voor- en achterkant: dubbelzijdig, als de printer dat kan.
   const dubbel = formaat === 'a4-dubbel' ? { duplexMode: 'longEdge' } : {};
@@ -148,9 +150,11 @@ function drukAf(webContents, formaat) {
   }
   // A4 (prijslijsten, facturen, grote bonnen) mag nooit op de bonprinter belanden:
   // is er nog geen A4-printer gekozen, dan vraagt het programma het één keer.
-  const vraag = a4 && !instellingen.printerA4 ? kiesPrinter(BrowserWindow.fromWebContents(webContents), 'a4') : Promise.resolve();
-  return vraag.then(() => gekozenPrinters(webContents)).then(({ bon, a4: groot }) => {
-  const printer = a4 ? groot : bon;
+  const eigen = PRINT_SOORTEN.includes(soort) ? instellingen.printers?.[soort] || '' : '';
+  const vraag = a4 && !eigen && !instellingen.printerA4 ? kiesPrinter(BrowserWindow.fromWebContents(webContents), 'a4') : Promise.resolve();
+  return vraag.then(() => gekozenPrinters(webContents)).then(({ bon, a4: groot, alle }) => {
+  // De printer die in Instellingen voor deze soort bonnetje gekozen is, gaat voor.
+  const printer = eigen === 'venster' ? '' : eigen && alle.includes(eigen) ? eigen : a4 ? groot : bon;
   return new Promise((resolve) => {
     // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
     webContents.print(
@@ -181,7 +185,7 @@ async function gekozenPrinters(webContents) {
   const a4Echt = echt.filter((p) => p.name !== bonAuto && p.name !== instellingen.printer && !BONPRINTER.test(p.name));
   const a4Auto = (a4Echt.find((p) => p.isDefault) || a4Echt[0])?.name || '';
   const kies = (gekozen, auto) => (gekozen === 'venster' ? '' : gekozen !== 'auto' && printers.some((p) => p.name === gekozen) ? gekozen : auto);
-  return { bon: kies(instellingen.printer, bonAuto), a4: kies(instellingen.printerA4, a4Auto) };
+  return { bon: kies(instellingen.printer, bonAuto), a4: kies(instellingen.printerA4, a4Auto), alle: printers.map((p) => p.name) };
 }
 
 async function kiesPrinter(venster, soort = 'bon') {
@@ -347,7 +351,18 @@ if (!app.requestSingleInstanceLock()) {
       const { pathname } = new URL(request.url);
       return pathname === '/api/bonnen' ? api(request) : bestand(pathname);
     });
-    ipcMain.handle('afdrukken', (e, formaat) => drukAf(e.sender, formaat));
+    ipcMain.handle('afdrukken', (e, formaat, soort) => drukAf(e.sender, formaat, soort));
+    // Instellingen: alle printers, en welke printer per soort bonnetje.
+    ipcMain.handle('printers', async (e) => {
+      const g = await gekozenPrinters(e.sender);
+      return { lijst: g.alle, keuze: { ...instellingen.printers }, auto: { bon: g.bon, a4: g.a4 } };
+    });
+    ipcMain.handle('zet-printer', async (e, soort, naam) => {
+      if (!PRINT_SOORTEN.includes(soort)) return false;
+      instellingen.printers = { ...instellingen.printers, [soort]: String(naam || '').slice(0, 200) };
+      await bewaarInstellingen();
+      return true;
+    });
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
     const printerInfo = async (wc) => {
       const g = await gekozenPrinters(wc);

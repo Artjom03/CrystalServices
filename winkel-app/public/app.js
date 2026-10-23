@@ -183,7 +183,12 @@
   // Elk ticket heeft een eigen streepjescode: het bonnummer met het ticketnummer erachter (bv. 482913 02).
   const ticketCode = (b, i) => scanCode(b.nr) + String(i + 1).padStart(2, '0');
   // Welke tickets bij het teruggeven al gescand zijn (op dit toestel): bon-id → nummers.
+  // Blijft bewaard als het programma tussendoor sluit.
   const gescandeTickets = new Map();
+  try { for (const [id, l] of Object.entries(JSON.parse(localStorage.getItem('winkel-gescand') || '{}'))) gescandeTickets.set(id, new Set(l)); } catch (e) {}
+  const bewaarGescand = () => {
+    try { localStorage.setItem('winkel-gescand', JSON.stringify(Object.fromEntries([...gescandeTickets].map(([id, set]) => [id, [...set]])))); } catch (e) {}
+  };
   const nietGescand = (b) => ticketsVan(b).map((t, i) => ({ ...t, i })).filter((t) => !gescandeTickets.get(b.id)?.has(t.i));
   const ticketNaam = (t) => `ticket ${t.i + 1}${t.locatie ? ' (' + t.locatie + ')' : ''}`;
   const klantSleutel = (k) => telefoonIntl(k.telefoon) || 'naam:' + zoekVorm(k.naam).trim();
@@ -236,7 +241,7 @@
     return zoekVorm(q).split(/\s+/).every((w) => t.includes(w));
   }
 
-  /** Alle gekende klanten (het klantenbestand blijft, ook als bonnen gewist zijn), met hun bonnen. */
+  /** De klanten in Klanten (enkel wie bewaard is; ook als hun bonnen gewist zijn), met hun bonnen. */
   function klanten() {
     const per = new Map();
     for (const k of Object.values(staat.klantenboek || {})) {
@@ -245,8 +250,8 @@
     const opDatum = [...(staat.bonnen || [])].sort((a, b) => a.binnenOp.localeCompare(b.binnenOp));
     for (const b of opDatum) {
       const sleutel = klantSleutel(b.klant);
-      const k = per.get(sleutel) || { sleutel, naam: '', telefoon: '', email: '', adres: '', btw: '', bonnen: 0, open: 0 };
-      if (!staat.klantenboek?.[sleutel]) k.naam = b.klant.naam;
+      const k = per.get(sleutel);
+      if (!k) continue;
       k.telefoon = b.klant.telefoon || k.telefoon;
       k.email = b.klant.email || k.email;
       k.bonnen += 1;
@@ -574,7 +579,7 @@
     try {
       await doe({ op: 'locatie', id, tickets });
       // Andere tickets: wat al gescand was, telt niet meer.
-      if (tickets.length !== voor) gescandeTickets.delete(id);
+      if (tickets.length !== voor) { gescandeTickets.delete(id); bewaarGescand(); }
       openDetail(id);
       toast(tickets.length !== voor ? 'Opgeslagen ✓ Druk de tickets opnieuw af.' : 'Opgeslagen ✓');
     } catch (err) {
@@ -614,6 +619,7 @@
         const betaal = knop.dataset.betaal;
         const { bon: na } = await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
         gescandeTickets.delete(id);
+        bewaarGescand();
         $('#detail').close();
         if (autoPrint) drukAf(na, 'afhaal', standaardFormaat());
       } else if (actie === 'klantcode') {
@@ -759,6 +765,7 @@
     if (ticket >= 0 && b.status !== 'opgehaald') {
       if (!gescandeTickets.has(b.id)) gescandeTickets.set(b.id, new Set());
       gescandeTickets.get(b.id).add(ticket);
+      bewaarGescand();
     }
     const missen = nietGescand(b);
     const n = ticketsVan(b).length;
@@ -805,11 +812,11 @@
     const a4 = rapport || formaat === 'a4';
     const klantBon = (afhaal) => (rapport ? vlekkenA4(b, afhaal) : a4 ? bonA4(b, afhaal) : bonKlein(b, afhaal));
     const delen = [];
-    if (soortBon === 'afhaal') delen.push({ html: klantBon(true), a4 });
-    if (soortBon === 'afgifte' || soortBon === 'klant') delen.push({ html: klantBon(false), a4 });
+    if (soortBon === 'afhaal') delen.push({ html: klantBon(true), a4, soort: 'afhaal' });
+    if (soortBon === 'afgifte' || soortBon === 'klant') delen.push({ html: klantBon(false), a4, soort: 'klant' });
     if (soortBon === 'afgifte' || soortBon === 'mand') {
       const n = Math.max(1, ticketsVan(b).length);
-      for (let i = 0; i < n; i++) delen.push({ html: mandTicket(b, ticketsVan(b).length ? i : -1), a4: false });
+      for (let i = 0; i < n; i++) delen.push({ html: mandTicket(b, ticketsVan(b).length ? i : -1), a4: false, soort: 'ticket' });
     }
     drukDelen(delen);
   }
@@ -824,7 +831,8 @@
         $('#afdruk').innerHTML = d.html;
         $('#afdruk').className = d.a4 ? 'a4' : '';
         await logoGeladen();
-        await afdrukken(d.a4 ? 'a4' : 'klein');
+        // Een A4 gaat naar de printer voor grote bonnen, ook als het een klantenbon is.
+        await afdrukken(d.a4 ? 'a4' : 'klein', d.a4 ? 'a4' : d.soort);
       }
       return;
     }
@@ -1071,11 +1079,11 @@
 
   const standaardFormaat = () => (staat.instellingen?.formaat === 'a4' ? 'a4' : 'klein');
 
-  function afdrukken(formaat = 'klein') {
+  function afdrukken(formaat = 'klein', soort = '') {
     // Paginaformaat: A4 of een smalle rol voor de bonprinter. De marge zit in #afdruk (zie app.css).
     $('#pagina-stijl').textContent = formaat.startsWith('a4') ? '@media print{@page{size:A4 portrait;margin:0}}' : '@media print{@page{margin:0}}';
     if (!DESKTOP) return Promise.resolve(window.print());
-    return window.crystal.afdrukken(formaat).then((r) => {
+    return window.crystal.afdrukken(formaat, soort).then((r) => {
       if (r && !r.ok && !/cancel/i.test(r.fout || '')) {
         alert('Afdrukken lukte niet' + (r.fout ? ' (' + r.fout + ')' : '') + '. Kies de printer via ⚙ Instellingen.');
       }
@@ -1376,6 +1384,8 @@
   }
   const toonVlekUitleg = () => {
     const k = { naam: $('#f').naam.value, telefoon: $('#f').telefoon.value };
+    // "Klant bewaren" enkel voor wie nog niet in Klanten staat.
+    $('#f-bewaar-klant').hidden = Boolean(staat.klantenboek?.[klantSleutel(k)]) || !k.naam.trim();
     $('#f-vlekken').hidden = !vlekkenKlant(k);
     $('#f-vliegtuig-veld').hidden = !vliegtuigKlant(k) && !$('#f').vliegtuig.value;
   };
@@ -1484,7 +1494,8 @@
     };
     $('#f-bewaar').disabled = true;
     try {
-      const { bon: nieuw } = await doe(bewerkId ? { op: 'wijzig', id: bewerkId, bon } : { op: 'nieuw', bon });
+      const bewaarKlant = !$('#f-bewaar-klant').hidden && f.bewaarKlant.checked;
+      const { bon: nieuw } = await doe(bewerkId ? { op: 'wijzig', id: bewerkId, bon, bewaarKlant } : { op: 'nieuw', bon, bewaarKlant });
       $('#formulier').close();
       if (!bewerkId) {
         tab = 'binnen';
@@ -1502,19 +1513,51 @@
   });
 
   // ---------- Instellingen ----------
-  function toonPrinter() {
+  // Per soort bonnetje een eigen printer (enkel in het Windows-programma).
+  const PRINT_SOORTEN = [
+    ['klant', 'Klantenbon (klein)', false], ['ticket', 'Tickets voor de zakken en hangers', false],
+    ['afhaal', 'Afhaalbon (klein)', false], ['a4', 'Grote bonnen op A4 en vlekkenbonnen', true],
+    ['prijslijst', 'Prijslijsten en briefjes', true], ['dag', 'Dagoverzicht', false],
+  ];
+  async function toonPrinter() {
     if (!DESKTOP) return;
-    window.crystal.printer().then((p) => {
-      const nog = 'geen printer gevonden (het afdrukvenster komt tevoorschijn)';
-      $('#i-printer').textContent = `Bonprinter: ${p.bon || nog} · A4-printer: ${p.a4 || nog}`;
-    });
+    const p = await window.crystal.printers();
+    const geen = 'nog geen printer';
+    $('#i-printer-rijen').innerHTML = PRINT_SOORTEN.map(([soort, label, a4]) => {
+      const auto = a4 ? p.auto.a4 : p.auto.bon;
+      const keuze = p.keuze[soort] || '';
+      const opties = [['', `Automatisch (${auto || geen})`], ...p.lijst.map((n) => [n, n]), ['venster', 'Telkens vragen']];
+      // Een gekozen printer die er nu niet is (bv. uitgeschakeld) blijft zichtbaar.
+      if (keuze && keuze !== 'venster' && !p.lijst.includes(keuze)) opties.push([keuze, keuze + ' (niet gevonden)']);
+      return `<div class="i-printer-rij"><span>${esc(label)}</span>
+        <select data-printer-soort="${soort}" aria-label="Printer voor ${esc(label)}">${opties.map(([v, t]) => `<option value="${esc(v)}"${v === keuze ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
+        <button type="button" class="knop klein" data-printer-test="${soort}">Test</button></div>`;
+    }).join('');
   }
+  $('#i-printer-rijen').addEventListener('change', async (e) => {
+    const soort = e.target.dataset.printerSoort;
+    if (!soort) return;
+    await window.crystal.zetPrinter(soort, e.target.value);
+    toast('Printer gekozen ✓');
+  });
+  // Een proefafdruk op de printer van die soort.
+  $('#i-printer-rijen').addEventListener('click', async (e) => {
+    const soort = e.target.closest('[data-printer-test]')?.dataset.printerTest;
+    if (!soort) return;
+    const b = testBon();
+    const label = PRINT_SOORTEN.find((x) => x[0] === soort)[1];
+    const a4 = soort === 'a4' || soort === 'prijslijst';
+    $('#afdruk').innerHTML = soort === 'ticket' ? mandTicket(b) : soort === 'afhaal' ? bonKlein(b, true) : soort === 'a4' ? bonA4(b, false)
+      : soort === 'klant' ? bonKlein(b, false)
+      : `<section class="${a4 ? 'a4-blad' : 'pr-bon'}"><div class="pr-merk">${esc(WINKEL.naam)}</div><p><b>Testafdruk</b></p><p>${esc(label)}</p><p>${esc(new Date().toLocaleString('nl-BE'))}</p></section>`;
+    $('#afdruk').className = a4 ? 'a4' : '';
+    await logoGeladen();
+    await afdrukken(a4 ? 'a4' : 'klein', soort);
+  });
   function openInstellingen() {
     $('#i-print').checked = autoPrint;
     $('#i-fout').textContent = '';
-    $('#i-printer').hidden = !DESKTOP;
-    $('#i-kies-printer').hidden = !DESKTOP;
-    $('#i-kies-printer-a4').hidden = !DESKTOP;
+    $('#i-printers').hidden = !DESKTOP;
     $('#i-formaat').value = standaardFormaat();
     $('#i-aanraak').value = aanraak;
     toonPrinter();
@@ -1522,8 +1565,6 @@
   }
   $('#instellingen-knop').addEventListener('click', openInstellingen);
   $('#i-print').addEventListener('change', (e) => zetAutoPrint(e.target.checked));
-  $('#i-kies-printer').addEventListener('click', () => window.crystal.kiesPrinter('bon').then(toonPrinter));
-  $('#i-kies-printer-a4').addEventListener('click', () => window.crystal.kiesPrinter('a4').then(toonPrinter));
   $('#i-formaat').addEventListener('change', (e) => {
     doe({ op: 'instellingen', formaat: e.target.value }).catch((err) => { if (err.message !== 'pin') $('#i-fout').textContent = err.message; });
   });
@@ -1559,7 +1600,7 @@
     </section>`;
     $('#afdruk').className = 'a4';
     if (samen) return;
-    await afdrukken('a4-dubbel');
+    await afdrukken('a4-dubbel', 'prijslijst');
   }
   // Nieuwkuis: in de layout van de oude kassaprijslijst (Luxe, Zijde, Linnen, Verv., Strijk).
   async function drukDroogkuis(samen = false) {
@@ -1577,7 +1618,7 @@
     else $('#afdruk').innerHTML = html;
     $('#afdruk').className = 'a4';
     if (samen) return;
-    await afdrukken('a4-dubbel');
+    await afdrukken('a4-dubbel', 'prijslijst');
   }
   // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
   async function drukAansprakelijk() {
@@ -1588,7 +1629,7 @@
       <div class="na-velden"><span>Naam</span><span>Datum</span><span class="na-handtekening">Handtekening</span></div></div>`;
     $('#afdruk').innerHTML = `<section class="na-blad">${briefje.repeat(8)}</section>`;
     $('#afdruk').className = 'a4';
-    await afdrukken('a4');
+    await afdrukken('a4', 'prijslijst');
   }
   function openPrijslijsten() {
     const actie = actieVandaag();
@@ -2200,7 +2241,7 @@
       <div class="pr-voet">Bonnen binnengebracht: ${k.binnen} · opgehaald: ${k.opgehaald}<br>Afgedrukt ${esc(new Date().toLocaleString('nl-BE'))}</div>
     </section>`;
     $('#afdruk').className = formaat === 'a4' ? 'a4-zoom' : '';
-    return afdrukken(formaat);
+    return afdrukken(formaat, 'dag');
   }
 
   // ---------- Klanten ----------
@@ -2236,19 +2277,55 @@
     f.vlekkenrapport.checked = Boolean(k.vlekkenrapport);
     f.vliegtuig.checked = vliegtuigKlant(k);
     $('#kl-titel').textContent = k.naam;
+    $('#kl-bonnen').hidden = false;
+    $('#kl-nieuw').hidden = false;
+    $('#kl-weg').hidden = false;
     $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem`;
     $('#kl-lijst').hidden = true;
     f.hidden = false;
   });
+  // Een klant zelf toevoegen: een leeg formulier.
+  $('#kl-toevoegen').addEventListener('click', () => {
+    klantOpen = null;
+    const f = $('#kl-form');
+    f.reset();
+    // Wat in het zoekveld staat, is meestal de naam of het gsm-nummer.
+    const zoek = $('#kl-zoek').value.trim();
+    if (zoek) f[/^[\d\s+/.-]+$/.test(zoek) ? 'telefoon' : 'naam'].value = zoek;
+    f.vliegtuig.checked = false;
+    $('#kl-titel').textContent = 'Nieuwe klant';
+    $('#kl-info').textContent = '';
+    $('#kl-bonnen').hidden = true;
+    $('#kl-nieuw').hidden = true;
+    $('#kl-weg').hidden = true;
+    $('#kl-lijst').hidden = true;
+    f.hidden = false;
+    f.naam.focus();
+  });
+  $('#kl-weg').addEventListener('click', async () => {
+    if (!klantOpen || !confirm(`${klantOpen.naam} uit Klanten verwijderen? De bonnen van deze klant blijven staan.`)) return;
+    try {
+      await doe({ op: 'klantWeg', sleutel: klantOpen.sleutel });
+      toast('Klant verwijderd ✓');
+      $('#kl-form').hidden = true;
+      toonKlanten();
+    } catch (err) {
+      if (err.message !== 'pin') alert(err.message);
+    }
+  });
   $('#kl-form [data-annuleer]').addEventListener('click', () => { $('#kl-form').hidden = true; toonKlanten(); });
   $('#kl-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!klantOpen) return;
     const f = e.target;
+    const klant = { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked, vliegtuig: f.vliegtuig.checked };
     try {
-      if (!staat.klantenboek?.[klantOpen.sleutel]) throw new Error('Deze klant staat nog niet in het klantenbestand.');
-      await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant: { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked, vliegtuig: f.vliegtuig.checked } });
-      toast('Klant opgeslagen ✓');
+      if (klantOpen) await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant });
+      else {
+        // Niet aangevinkt: dan herkent het programma luchtvaartklanten nog zelf op naam.
+        if (!klant.vliegtuig) delete klant.vliegtuig;
+        await doe({ op: 'klantNieuw', klant });
+      }
+      toast(klantOpen ? 'Klant opgeslagen ✓' : 'Klant toegevoegd ✓');
       f.hidden = true;
       toonKlanten();
     } catch (err) {

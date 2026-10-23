@@ -365,7 +365,8 @@ function handeling(oud, actie, nu) {
         gewijzigdOp: iso,
       };
       staat.bonnen.push(bon);
-      zetKlant(staat.klantenboek, bon.klant, iso);
+      // Enkel bewaren in Klanten als de winkel dat vraagt; een gekende klant wordt aangevuld.
+      if (actie.bewaarKlant || staat.klantenboek[klantSleutel(bon.klant)]) zetKlant(staat.klantenboek, bon.klant, iso);
       if (bon.betaald) noteerBetaling(staat, bon, bon.betaalwijze, iso);
       return { staat, bon };
     }
@@ -375,7 +376,7 @@ function handeling(oud, actie, nu) {
       if (!v.klant.naam) throw new Fout('Vul de naam van de klant in');
       const wasBetaald = staat.bonnen[i].betaald;
       staat.bonnen[i] = { ...staat.bonnen[i], ...v, gewijzigdOp: iso };
-      zetKlant(staat.klantenboek, v.klant, iso);
+      if (actie.bewaarKlant || staat.klantenboek[klantSleutel(v.klant)]) zetKlant(staat.klantenboek, v.klant, iso);
       if (!wasBetaald && v.betaald) noteerBetaling(staat, staat.bonnen[i], v.betaalwijze, iso);
       return { staat, bon: staat.bonnen[i] };
     }
@@ -453,6 +454,26 @@ function handeling(oud, actie, nu) {
         }
       }
       return { staat, nieuw, aangevuld };
+    }
+    case 'klantNieuw': {
+      // Een klant zelf toevoegen in Klanten.
+      const k = actie.klant || {};
+      const naam = tekst(k.naam, MAX.naam);
+      if (!naam) throw new Fout('Vul de naam van de klant in');
+      const sleutel = klantSleutel({ naam, telefoon: k.telefoon });
+      if (staat.klantenboek[sleutel]) throw new Fout(`${staat.klantenboek[sleutel].naam} staat al in Klanten`);
+      zetKlant(staat.klantenboek, { naam, telefoon: k.telefoon, email: k.email }, iso, {
+        adres: tekst(k.adres, 160), btw: tekst(k.btw, 30), notitie: tekst(k.notitie, 300),
+        vlekkenrapport: Boolean(k.vlekkenrapport), ...(typeof k.vliegtuig === 'boolean' ? { vliegtuig: k.vliegtuig } : {}),
+      });
+      return { staat, klant: staat.klantenboek[sleutel] };
+    }
+    case 'klantWeg': {
+      // Uit Klanten halen; de bonnen van de klant blijven gewoon staan.
+      const sleutel = String(actie.sleutel || '');
+      if (!staat.klantenboek[sleutel]) throw new Fout('Klant niet gevonden', 404);
+      delete staat.klantenboek[sleutel];
+      return { staat };
     }
     case 'klant': {
       // Klantgegevens aanvullen (adres, btw-nummer voor facturen, notitie).
