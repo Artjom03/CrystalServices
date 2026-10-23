@@ -32,7 +32,7 @@ export function telefoonSleutel(tel) {
 const BLOKKEER_NA = 5;
 const BLOKKEER_MS = 15 * 60 * 1000;
 
-const MAX = { naam: 80, telefoon: 30, email: 120, vliegtuig: 40, opmerking: 500, stukNaam: 80, stukken: 60, locatie: 40 };
+const MAX = { naam: 80, telefoon: 30, email: 120, vliegtuig: 40, opmerking: 500, stukNaam: 80, stukken: 60, locatie: 40, tickets: 20 };
 
 function tekst(v, max) {
   return String(v ?? '').trim().slice(0, max);
@@ -101,13 +101,26 @@ function soortenVan(invoer, stukken) {
   return SOORTEN.filter((x) => set.has(x));
 }
 
+/**
+ * De tickets van een bon: één per zak, mand of hanger, elk met een eigen locatie in de winkel.
+ * Bij het teruggeven scant de winkel elk ticket. Oude bonnen hebben geen tickets, enkel een locatie.
+ */
+export function schoonTickets(lijst) {
+  if (!Array.isArray(lijst)) return null;
+  const tickets = lijst.slice(0, MAX.tickets).map((t) => ({ locatie: tekst(typeof t === 'string' ? t : t?.locatie, MAX.locatie) }));
+  return tickets.length ? tickets : [{ locatie: '' }];
+}
+const ticketLocaties = (tickets) => tekst(tickets.map((t) => t.locatie).filter(Boolean).join(', '), 200);
+
 function velden(invoer) {
   const stukken = schoonStukken(invoer.stukken);
   const soorten = soortenVan(invoer, stukken);
   if (soorten.includes('Droogkuis') && !stukken.some((st) => st.behandeling === 'droogkuis')) {
     throw new Fout('Vul bij droogkuis in welke stukken de klant binnenbrengt');
   }
+  const tickets = schoonTickets(invoer.tickets);
   return {
+    ...(tickets ? { tickets } : {}),
     klant: {
       naam: tekst(invoer.klant?.naam, MAX.naam),
       telefoon: tekst(invoer.klant?.telefoon, MAX.telefoon),
@@ -120,7 +133,7 @@ function velden(invoer) {
     prijsOpen: prijsOpen(stukken),
     vliegtuig: tekst(invoer.vliegtuig, MAX.vliegtuig),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
-    locatie: tekst(invoer.locatie, MAX.locatie),
+    locatie: tickets ? ticketLocaties(tickets) : tekst(invoer.locatie, MAX.locatie),
     klaarTegen: datum(invoer.klaarTegen),
     betaald: Boolean(invoer.betaald),
     betaalwijze: BETAALWIJZEN.includes(invoer.betaalwijze) ? invoer.betaalwijze : '',
@@ -387,7 +400,10 @@ function handeling(oud, actie, nu) {
     case 'locatie': {
       // Waar de kleren liggen of hangen (rek, plank, mand), los van de rest van de bon.
       const i = zoek(actie.id);
-      staat.bonnen[i] = { ...staat.bonnen[i], locatie: tekst(actie.locatie, MAX.locatie), gewijzigdOp: iso };
+      const tickets = schoonTickets(actie.tickets);
+      staat.bonnen[i] = tickets
+        ? { ...staat.bonnen[i], tickets, locatie: ticketLocaties(tickets), gewijzigdOp: iso }
+        : { ...staat.bonnen[i], locatie: tekst(actie.locatie, MAX.locatie), gewijzigdOp: iso };
       return { staat, bon: staat.bonnen[i] };
     }
     case 'instellingen': {

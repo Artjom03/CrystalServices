@@ -391,3 +391,19 @@ test('luchtvaartklanten: vliegtuig verplicht en bewaard op de bon', () => {
   ({ bon } = nieuw(staat, { klant: { naam: 'Flying Service NV' } }));
   assert.equal(bon.vliegtuig, '');
 });
+
+test('tickets: elk een eigen locatie, de bon toont ze samen', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A' }, tickets: [{ locatie: 'Rek 2' }, { locatie: '' }, 'Mand 12'] });
+  assert.deepEqual(bon.tickets, [{ locatie: 'Rek 2' }, { locatie: '' }, { locatie: 'Mand 12' }]);
+  assert.equal(bon.locatie, 'Rek 2, Mand 12');
+  ({ staat, bon } = pasToe(staat, { op: 'locatie', id: bon.id, tickets: [{ locatie: 'Hangrek B' }] }, nu));
+  assert.deepEqual(bon.tickets, [{ locatie: 'Hangrek B' }]);
+  assert.equal(bon.locatie, 'Hangrek B');
+  ({ staat, bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { opmerking: 'x' } }, nu));
+  assert.deepEqual(bon.tickets, [{ locatie: 'Hangrek B' }], 'blijven bij wijzigen');
+  ({ bon } = nieuw(LEEG, { klant: { naam: 'B' }, tickets: [] }));
+  assert.equal(bon.tickets.length, 1, 'minstens één ticket');
+  ({ bon } = nieuw(LEEG, { klant: { naam: 'C' }, locatie: 'Rek 1' }));
+  assert.equal(bon.tickets, undefined, 'zonder tickets zoals vroeger');
+  assert.equal(bon.locatie, 'Rek 1');
+});
