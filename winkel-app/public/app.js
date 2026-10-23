@@ -326,11 +326,23 @@
     </li>`;
   }
 
+  const vasteLocaties = () => staat.instellingen?.locaties || [];
+  /** Locaties waar nu nog iets ligt of hangt (bonnen die nog niet opgehaald zijn), met hoeveel tickets. */
+  function bezetteLocaties() {
+    const bezet = new Map();
+    for (const b of staat.bonnen || []) {
+      if (b.status === 'opgehaald') continue;
+      for (const l of ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie]) {
+        if (l) bezet.set(zoekVorm(l), (bezet.get(zoekVorm(l)) || 0) + 1);
+      }
+    }
+    return bezet;
+  }
   function toonLocaties() {
-    // Voorstellen voor het locatieveld: wat nu in gebruik is eerst.
+    // Voorstellen voor het locatieveld: eerst de vaste locaties, dan wat nu in gebruik is.
     const gebruikt = (staat.bonnen || []).slice().sort((a, b) => (a.status === 'opgehaald') - (b.status === 'opgehaald'))
       .flatMap((b) => (ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie])).filter(Boolean);
-    $('#locaties').innerHTML = [...new Set(gebruikt)].slice(0, 40).map((l) => `<option value="${esc(l)}"></option>`).join('');
+    $('#locaties').innerHTML = [...new Set([...vasteLocaties(), ...gebruikt])].slice(0, 200).map((l) => `<option value="${esc(l)}"></option>`).join('');
   }
 
   $('#lijst').addEventListener('click', (e) => {
@@ -1408,9 +1420,15 @@
     $('#f-t-aantal').textContent = `${fTickets.length} ticket${fTickets.length > 1 ? 's' : ''}`;
     $('#f-tickets').innerHTML = fTickets.map((l, i) => `<label class="t-rij"><span class="t-nr">${i + 1}</span>
       <input data-ticket="${i}" list="locaties" maxlength="40" value="${esc(l)}" placeholder="Locatie, bv. rek 3, mand 12" autocomplete="off"></label>`).join('');
-    // Snelknoppen: de locaties die het vaakst gebruikt worden, één tik vult het ticket in.
-    const opties = $$('#locaties option').map((o) => o.value).slice(0, 12);
-    $('#f-loc-snel').innerHTML = opties.map((l) => `<button type="button" data-loc="${esc(l)}">${esc(l)}</button>`).join('');
+    // Snelknoppen: alle vaste locaties (anders de laatst gebruikte); één tik vult het ticket in.
+    // Een locatie waar nog iets ligt, krijgt een bolletje met het aantal tickets.
+    const vast = vasteLocaties();
+    const opties = vast.length ? vast : $$('#locaties option').map((o) => o.value).slice(0, 12);
+    const bezet = bezetteLocaties();
+    $('#f-loc-snel').innerHTML = opties.map((l) => {
+      const n = bezet.get(zoekVorm(l)) || 0;
+      return `<button type="button" data-loc="${esc(l)}"${n ? ` class="bezet" title="Hier ligt al iets (${n} ticket${n > 1 ? 's' : ''})"` : ''}>${esc(l)}${n ? `<i>${n}</i>` : ''}</button>`;
+    }).join('');
   }
   $('#f-tickets').addEventListener('input', (e) => { if (e.target.dataset.ticket) fTickets[Number(e.target.dataset.ticket)] = e.target.value; });
   $('#f-tickets').addEventListener('focusin', (e) => { if (e.target.dataset.ticket) tVeld = Number(e.target.dataset.ticket); });
@@ -1554,7 +1572,49 @@
     await logoGeladen();
     await afdrukken(a4 ? 'a4' : 'klein', soort);
   });
+  // ---------- Vaste locaties ----------
+  // "Rek 1-10" wordt Rek 1, Rek 2 ... Rek 10.
+  function locatieReeks(tekst) {
+    const m = /^(.*?)(\d+)\s*(?:-|t\.?e\.?m\.?|tot)\s*(\d+)\s*$/i.exec(tekst.trim());
+    if (!m) return [tekst.trim()].filter(Boolean);
+    const [van, tot] = [Number(m[2]), Number(m[3])];
+    if (tot < van || tot - van > 99) return [tekst.trim()];
+    return Array.from({ length: tot - van + 1 }, (_, i) => `${m[1]}${van + i}`.trim());
+  }
+  function toonVasteLocaties() {
+    const lijst = vasteLocaties();
+    $('#i-loc-lijst').innerHTML = lijst.length
+      ? lijst.map((l, i) => `<span class="loc-chip">${esc(l)}<button type="button" data-loc-weg="${i}" aria-label="${esc(l)} weghalen">✕</button></span>`).join('')
+      : '<p class="tijdlijn">Nog geen vaste locaties.</p>';
+  }
+  async function bewaarLocaties(lijst, melding) {
+    try {
+      await doe({ op: 'instellingen', locaties: lijst });
+      toonVasteLocaties();
+      if (melding) toast(melding);
+    } catch (err) {
+      if (err.message !== 'pin') $('#i-fout').textContent = err.message;
+    }
+  }
+  $('#i-loc-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nieuw = locatieReeks($('#i-loc-nieuw').value);
+    if (!nieuw.length) return;
+    await bewaarLocaties([...vasteLocaties(), ...nieuw], nieuw.length > 1 ? `${nieuw.length} locaties toegevoegd ✓` : 'Locatie toegevoegd ✓');
+    $('#i-loc-nieuw').value = '';
+    $('#i-loc-nieuw').focus();
+  });
+  $('#i-loc-lijst').addEventListener('click', (e) => {
+    const i = e.target.closest('[data-loc-weg]')?.dataset.locWeg;
+    if (i === undefined) return;
+    bewaarLocaties(vasteLocaties().filter((_, j) => j !== Number(i)));
+  });
+  $('#i-loc-wis').addEventListener('click', () => {
+    if (vasteLocaties().length && confirm('Alle vaste locaties weghalen?')) bewaarLocaties([], 'Vaste locaties gewist');
+  });
+
   function openInstellingen() {
+    toonVasteLocaties();
     $('#i-print').checked = autoPrint;
     $('#i-fout').textContent = '';
     $('#i-printers').hidden = !DESKTOP;

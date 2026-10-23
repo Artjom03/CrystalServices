@@ -284,6 +284,13 @@ a{color:var(--navy);}
 .i-printer-rij{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center;margin-bottom:8px;}
 .i-printer-rij select{min-width:0;}
 @media (max-width:560px){.i-printer-rij{grid-template-columns:1fr auto;}.i-printer-rij span{grid-column:1/-1;}}
+/* Vaste locaties. */
+.loc-lijst{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.loc-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 6px 6px 12px;border-radius:999px;border:1px solid var(--lijn,#ccc);}
+.loc-chip button{border:0;background:transparent;cursor:pointer;color:#B23A3A;font-size:.9rem;padding:2px 6px;}
+.aanraak .loc-chip{padding:9px 8px 9px 14px;}
+#f-loc-snel button.bezet{border-style:dashed;}
+#f-loc-snel button i{font-style:normal;font-size:.75rem;font-weight:700;background:#B98D4A;color:#fff;border-radius:999px;padding:1px 6px;margin-left:6px;}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}

@@ -197,6 +197,16 @@
       <p class="tijdlijn">Geldt enkel voor dit toestel.</p>
     </fieldset>
     <fieldset>
+      <legend>Vaste locaties</legend>
+      <p class="tijdlijn">De rekken, manden en kasten van de winkel. Bij een nieuwe bon tik je ze aan voor elk ticket; een bolletje toont waar al iets ligt. Typ bv. "Rek 1-10" om Rek 1 tot Rek 10 in één keer toe te voegen.</p>
+      <form id="i-loc-form" class="rij">
+        <input id="i-loc-nieuw" maxlength="40" placeholder="Bv. Rek 3, Mand 1-20, Hangrek B" autocomplete="off" aria-label="Nieuwe locatie">
+        <button type="submit" class="knop">Toevoegen</button>
+      </form>
+      <div id="i-loc-lijst" class="loc-lijst"></div>
+      <div class="d-knoppen"><button type="button" class="knop klein gevaar" id="i-loc-wis">Alles weghalen</button></div>
+    </fieldset>
+    <fieldset>
       <legend>Indeling van de winkel</legend>
       <p class="tijdlijn">Op het mandticket staan de stukken per plaats (kast, rek...), zodat je weet wat waar moet. Kies zelf de plaatsen en welke stukken erbij horen.</p>
       <div class="d-knoppen"><button type="button" class="knop" id="i-indeling">Indeling aanpassen</button></div>
