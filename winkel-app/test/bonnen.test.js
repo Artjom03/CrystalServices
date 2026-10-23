@@ -423,3 +423,10 @@ test('klanten: enkel bewaard als gevraagd, zelf toevoegen en verwijderen', () =>
   assert.deepEqual(staat.klantenboek, {});
   assert.equal(staat.bonnen.length, 2, 'de bonnen blijven');
 });
+
+test('vaste locaties in de instellingen', () => {
+  let { staat } = pasToe(LEEG, { op: 'instellingen', locaties: ['Rek 1', ' Rek 1 ', '', 'Mand 2'] }, nu);
+  assert.deepEqual(staat.instellingen.locaties, ['Rek 1', 'Mand 2']);
+  ({ staat } = pasToe(staat, { op: 'instellingen', formaat: 'a4' }, nu));
+  assert.deepEqual(staat.instellingen.locaties, ['Rek 1', 'Mand 2'], 'blijven bij andere instellingen');
+});

@@ -185,7 +185,13 @@ export function instellingenVan(staat) {
   };
   // Zonder eigen indeling gebruikt de app een standaardindeling.
   if (Array.isArray(i.indeling)) uit.indeling = indelingVan(i.indeling);
+  if (Array.isArray(i.locaties)) uit.locaties = locatiesVan(i.locaties);
   return uit;
+}
+
+/** De vaste locaties van de winkel (rekken, manden...), om bij een ticket aan te tikken. */
+function locatiesVan(lijst) {
+  return [...new Set(lijst.map((l) => tekst(l, MAX.locatie)).filter(Boolean))].slice(0, 200);
 }
 
 /**
@@ -418,6 +424,10 @@ function handeling(oud, actie, nu) {
       if (actie.indeling !== undefined) {
         if (actie.indeling === null) delete nieuw.indeling;
         else nieuw.indeling = indelingVan(actie.indeling);
+      }
+      if (actie.locaties !== undefined) {
+        if (actie.locaties === null) delete nieuw.locaties;
+        else nieuw.locaties = locatiesVan(Array.isArray(actie.locaties) ? actie.locaties : []);
       }
       staat.instellingen = nieuw;
       return { staat };
