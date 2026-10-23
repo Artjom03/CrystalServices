@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { pasToe, LEEG } from '../lib/bonnen.js';
 
 const nu = new Date('2026-10-09T09:00:00Z');
-const nieuw = (staat, bon) => pasToe(staat, { op: 'nieuw', bon }, nu);
+// De testen bewaren de klant in Klanten, zoals met het vinkje "Klant bewaren".
+const nieuw = (staat, bon) => pasToe(staat, { op: 'nieuw', bon, bewaarKlant: true }, nu);
 
 test('nieuwe bon krijgt een volgnummer per jaar en een totaal', () => {
   let { staat, bon } = nieuw(LEEG, {
@@ -198,7 +199,7 @@ test('eigen prijslijst: wordt opgeschoond, blijft bewaard bij andere wijzigingen
 test('klantenbestand: blijft bewaard als de bonnen gewist zijn, en is aan te vullen', async () => {
   const { voorWinkel, klantSleutel } = await import('../lib/bonnen.js');
   const toen = new Date('2025-01-10T09:00:00Z');
-  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'René Peeters', telefoon: '0470 12 34 56' } } }, toen);
+  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bewaarKlant: true, bon: { klant: { naam: 'René Peeters', telefoon: '0470 12 34 56' } } }, toen);
   ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, toen));
   const sleutel = klantSleutel(bon.klant);
   ({ staat } = pasToe(staat, { op: 'klant', sleutel, klant: { adres: 'Kerkstraat 1, 2000 Antwerpen', btw: 'BE0123456789' } }, toen));
@@ -238,7 +239,7 @@ test('kassa: openen, geld in/uit, afsluiten', () => {
 test('factuur aanvragen: gegevens bij de klant bewaard, afvinken, en de bon blijft tot de factuur gemaakt is', async () => {
   const { voorWinkel, klantSleutel } = await import('../lib/bonnen.js');
   const toen = new Date('2025-01-10T09:00:00Z');
-  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'Firma X', telefoon: '0470 00 00 01' }, stukken: [{ naam: 'Hemd', prijs: 2.3 }] } }, toen);
+  let { staat, bon } = pasToe(LEEG, { op: 'nieuw', bewaarKlant: true, bon: { klant: { naam: 'Firma X', telefoon: '0470 00 00 01' }, stukken: [{ naam: 'Hemd', prijs: 2.3 }] } }, toen);
   ({ staat, bon } = pasToe(staat, { op: 'factuurVraag', id: bon.id }, toen));
   assert.ok(bon.factuur.gevraagdOp);
   assert.equal(bon.factuur.gemaaktOp, '');
@@ -406,4 +407,19 @@ test('tickets: elk een eigen locatie, de bon toont ze samen', () => {
   ({ bon } = nieuw(LEEG, { klant: { naam: 'C' }, locatie: 'Rek 1' }));
   assert.equal(bon.tickets, undefined, 'zonder tickets zoals vroeger');
   assert.equal(bon.locatie, 'Rek 1');
+});
+
+test('klanten: enkel bewaard als gevraagd, zelf toevoegen en verwijderen', () => {
+  let { staat } = pasToe(LEEG, { op: 'nieuw', bon: { klant: { naam: 'Passant', telefoon: '0470 11 22 33' } } }, nu);
+  assert.deepEqual(staat.klantenboek, {}, 'niet bewaard zonder vinkje');
+  ({ staat } = pasToe(staat, { op: 'klantNieuw', klant: { naam: 'Vaste Klant', telefoon: '0470 99 88 77', btw: 'BE0123' } }, nu));
+  const sleutel = Object.keys(staat.klantenboek)[0];
+  assert.equal(staat.klantenboek[sleutel].btw, 'BE0123');
+  assert.throws(() => pasToe(staat, { op: 'klantNieuw', klant: { naam: 'Dubbel', telefoon: '0470998877' } }, nu), /staat al/);
+  // Een gekende klant wordt bij een nieuwe bon wel aangevuld.
+  ({ staat } = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Vaste Klant', telefoon: '0470 99 88 77', email: 'a@b.be' } } }, nu));
+  assert.equal(staat.klantenboek[sleutel].email, 'a@b.be');
+  ({ staat } = pasToe(staat, { op: 'klantWeg', sleutel }, nu));
+  assert.deepEqual(staat.klantenboek, {});
+  assert.equal(staat.bonnen.length, 2, 'de bonnen blijven');
 });

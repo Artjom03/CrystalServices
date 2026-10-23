@@ -83,6 +83,7 @@
           <label>E-mail<input name="email" type="email" autocomplete="off"></label>
         </div>
         <div id="f-klanten" class="klant-sug" hidden></div>
+        <label class="vink" id="f-bewaar-klant" hidden><input type="checkbox" name="bewaarKlant"> Klant bewaren in Klanten <small>(voor een vaste klant; anders wordt de klant niet bewaard)</small></label>
       </fieldset>
 
       <fieldset>
@@ -167,7 +168,7 @@
   <div class="paneel-inhoud">
     <fieldset>
       <legend>Afdrukken</legend>
-      <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de klantenbon en het mandticket bij een nieuwe bon, de afhaalbon bij het ophalen</label>
+      <label class="vink"><input type="checkbox" id="i-print"> Bonnen meteen afdrukken: de klantenbon en de tickets bij een nieuwe bon, de afhaalbon bij het ophalen</label>
       <label>Bonnen standaard afdrukken als
         <select id="i-formaat">
           <option value="klein">Klein bonnetje (bonprinter)</option>
@@ -175,10 +176,12 @@
         </select>
       </label>
       <p class="tijdlijn">Bij elke bon kan je het formaat ook apart kiezen.</p>
-      <p id="i-printer" class="tijdlijn" hidden></p>
+      <div id="i-printers" hidden>
+        <h4 class="i-sub">Welke printer voor welk bonnetje?</h4>
+        <div id="i-printer-rijen"></div>
+        <p class="tijdlijn">"Automatisch": kleine bonnetjes naar de bonprinter, A4 naar de gewone printer. Met "Test" komt er een proefafdruk uit die printer.</p>
+      </div>
       <div class="d-knoppen">
-        <button type="button" class="knop" id="i-kies-printer" hidden>Bonprinter kiezen (of automatisch)</button>
-        <button type="button" class="knop" id="i-kies-printer-a4" hidden>A4-printer kiezen (of automatisch)</button>
         <button type="button" class="knop" id="i-testbon">Testbon afdrukken</button>
       </div>
     </fieldset>
@@ -346,7 +349,10 @@
     <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
   </div>
   <div class="paneel-inhoud">
-    <input id="kl-zoek" type="search" placeholder="Zoek op naam, gsm-nummer of e-mail" autocomplete="off" aria-label="Klant zoeken">
+    <div class="rij">
+      <input id="kl-zoek" type="search" placeholder="Zoek op naam, gsm-nummer of e-mail" autocomplete="off" aria-label="Klant zoeken">
+      <button type="button" class="knop goud" id="kl-toevoegen">+ Klant toevoegen</button>
+    </div>
     <p id="kl-aantal" class="tijdlijn"></p>
     <ul id="kl-lijst" class="kl-lijst"></ul>
     <form id="kl-form" class="k-form" hidden>
@@ -367,6 +373,7 @@
         <button class="knop" type="button" id="kl-bonnen">Bonnen van deze klant</button>
         <button class="knop goud" type="button" id="kl-nieuw">+ Nieuwe bon</button>
         <button class="knop" type="button" data-annuleer>Terug</button>
+        <button class="knop gevaar" type="button" id="kl-weg">Klant verwijderen</button>
       </div>
     </form>
   </div>
