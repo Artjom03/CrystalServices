@@ -268,6 +268,17 @@ a{color:var(--navy);}
 .pl-knoppen{display:grid;gap:10px;}
 .pl-knoppen .knop{text-align:left;padding:14px 16px;font-size:1.05rem;}
 .p-rij.k3{grid-template-columns:1fr repeat(3,80px) 36px;}
+/* Tickets: één per zak, mand of hanger. */
+.t-aantal{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.t-aantal button{font:inherit;font-size:1.3rem;width:44px;height:44px;border-radius:12px;border:1px solid var(--lijn,#ccc);background:transparent;cursor:pointer;}
+.t-aantal b{min-width:90px;text-align:center;}
+.t-rij{display:grid;grid-template-columns:32px 1fr auto auto;gap:8px;align-items:center;margin-bottom:6px;}
+#f-tickets .t-rij{grid-template-columns:32px 1fr;}
+.t-nr{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--navy,#0E1F42);color:#fff;font-weight:700;font-size:.85rem;}
+.t-status{font-size:.85rem;color:var(--ink-soft,#666);white-space:nowrap;}
+.t-rij.ok .t-nr{background:#1E8E4E;}
+.t-rij.ok .t-status{color:#1E8E4E;font-weight:700;}
+.aanraak .t-rij input{min-height:48px;}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}

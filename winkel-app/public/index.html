@@ -124,8 +124,14 @@
       </fieldset>
 
       <fieldset>
-        <legend>Locatie in de winkel <small>(waar liggen of hangen de kleren?)</small></legend>
-        <input name="locatie" list="locaties" maxlength="40" autocomplete="off" placeholder="Bijvoorbeeld: rek 3, plank B, mand 12" aria-label="Locatie">
+        <legend>Tickets en locatie <small>(één ticket per zak, mand of hanger; elk ticket scan je bij het teruggeven)</small></legend>
+        <div class="t-aantal" id="f-t-stappen">
+          <button type="button" data-t-stap="-1" aria-label="Eén ticket minder">−</button>
+          <b id="f-t-aantal">1 ticket</b>
+          <button type="button" data-t-stap="1" aria-label="Eén ticket meer">+</button>
+        </div>
+        <div id="f-tickets"></div>
+        <div id="f-loc-snel" class="groep-keuze"></div>
       </fieldset>
 
       <fieldset>
@@ -145,7 +151,7 @@
       <p id="f-fout" class="fout" role="alert"></p>
     </div>
     <div class="paneel-voet">
-      <label class="vink" id="f-print-label" style="margin-right:auto;font-size:.9rem"><input type="checkbox" id="f-print"> Klantenbon en mandticket afdrukken</label>
+      <label class="vink" id="f-print-label" style="margin-right:auto;font-size:.9rem"><input type="checkbox" id="f-print"> Klantenbon en tickets afdrukken</label>
       <button type="button" class="knop" data-sluit>Annuleren</button>
       <button type="submit" class="knop hoofd" id="f-bewaar">Bon maken</button>
     </div>

@@ -178,6 +178,14 @@
   }
   // Wat in de streepjescode staat: het bonnummer zonder streepje (26-001 wordt 26001).
   const scanCode = (nr) => String(nr || '').replace(/\D/g, '');
+  // Tickets: één per zak, mand of hanger, elk met een eigen locatie. Oude bonnen hebben er geen.
+  const ticketsVan = (b) => (Array.isArray(b.tickets) ? b.tickets : []);
+  // Elk ticket heeft een eigen streepjescode: het bonnummer met het ticketnummer erachter (bv. 482913 02).
+  const ticketCode = (b, i) => scanCode(b.nr) + String(i + 1).padStart(2, '0');
+  // Welke tickets bij het teruggeven al gescand zijn (op dit toestel): bon-id → nummers.
+  const gescandeTickets = new Map();
+  const nietGescand = (b) => ticketsVan(b).map((t, i) => ({ ...t, i })).filter((t) => !gescandeTickets.get(b.id)?.has(t.i));
+  const ticketNaam = (t) => `ticket ${t.i + 1}${t.locatie ? ' (' + t.locatie + ')' : ''}`;
   const klantSleutel = (k) => telefoonIntl(k.telefoon) || 'naam:' + zoekVorm(k.naam).trim();
   /** Krijgt deze klant de aparte A4-bon met vlekkencontrole? (op sleutel, of anders op naam) */
   function vlekkenKlant(k) {
@@ -316,7 +324,7 @@
   function toonLocaties() {
     // Voorstellen voor het locatieveld: wat nu in gebruik is eerst.
     const gebruikt = (staat.bonnen || []).slice().sort((a, b) => (a.status === 'opgehaald') - (b.status === 'opgehaald'))
-      .map((b) => b.locatie).filter(Boolean);
+      .flatMap((b) => (ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie])).filter(Boolean);
     $('#locaties').innerHTML = [...new Set(gebruikt)].slice(0, 40).map((l) => `<option value="${esc(l)}"></option>`).join('');
   }
 
@@ -454,13 +462,13 @@
         ${b.klant.email ? `<p>${esc(b.klant.email)}</p>` : ''}
         <div class="d-knoppen" style="margin-top:6px"><button class="knop klein" data-actie="klant">Alle bonnen van deze klant</button></div>
       </div>
-      <div class="d-blok">
+      ${ticketsVan(b).length ? ticketBlok(b) : `<div class="d-blok">
         <h3>Locatie in de winkel</h3>
         <form class="d-locatie" data-locatie>
           <input name="locatie" list="locaties" maxlength="40" value="${esc(b.locatie || '')}" placeholder="Waar liggen de kleren? Bv. rek 3" aria-label="Locatie" autocomplete="off">
           <button class="knop" type="submit">Opslaan</button>
         </form>
-      </div>
+      </div>`}
       <div class="d-blok">
         <h3>${esc(b.soort)}${b.klaarTegen ? ' · klaar tegen ' + esc(mooiDatum(b.klaarTegen)) : ''}</h3>
         ${stukken}
@@ -507,7 +515,7 @@
             <option value="a4"${standaardFormaat() === 'a4' ? ' selected' : ''}>Groot op A4</option>
           </select>
           <button class="knop" data-actie="print" data-soort="klant">Klantenbon</button>
-          <button class="knop" data-actie="print" data-soort="mand">Mandticket</button>
+          <button class="knop" data-actie="print" data-soort="mand">Tickets</button>
           <button class="knop" data-actie="print" data-soort="afhaal">Afhaalbon</button>
         </div>
       </div>
@@ -522,6 +530,57 @@
       $('#d-ophalen').scrollIntoView({ block: 'nearest' });
     }
   }
+
+  /** De tickets van een bon in het detail: locatie aanpassen, en zien welke al gescand zijn. */
+  const ticketRij = (t, i, ok) => `<div class="t-rij${ok ? ' ok' : ''}">
+      <span class="t-nr">${i + 1}</span>
+      <input name="ticket" list="locaties" maxlength="40" value="${esc(t.locatie)}" placeholder="Locatie, bv. rek 3" aria-label="Locatie van ticket ${i + 1}" autocomplete="off">
+      <span class="t-status">${ok ? '✓ gescand' : 'nog scannen'}</span>
+      <button type="button" class="weg" data-ticket-weg aria-label="Ticket weghalen">✕</button>
+    </div>`;
+  function ticketBlok(b) {
+    const tickets = ticketsVan(b);
+    const ok = gescandeTickets.get(b.id) || new Set();
+    const klaar = b.status !== 'opgehaald';
+    return `<div class="d-blok">
+        <h3>Tickets <small>(${ok.size} van ${tickets.length} gescand${klaar ? ': scan elk ticket bij het teruggeven' : ''})</small></h3>
+        <form class="d-tickets" data-tickets>
+          <div class="t-rijen">${tickets.map((t, i) => ticketRij(t, i, ok.has(i))).join('')}</div>
+          <div class="d-knoppen">
+            <button class="knop klein" type="button" data-ticket-plus>+ Ticket</button>
+            <button class="knop" type="submit">Opslaan</button>
+            <button class="knop" type="button" data-actie="print" data-soort="mand">Tickets afdrukken</button>
+          </div>
+        </form>
+      </div>`;
+  }
+  $('#detail').addEventListener('click', (e) => {
+    if (e.target.closest('[data-ticket-plus]')) {
+      const rijen = $('#detail .t-rijen');
+      rijen.insertAdjacentHTML('beforeend', ticketRij({ locatie: '' }, rijen.children.length, false));
+      rijen.lastElementChild.querySelector('input').focus();
+    } else if (e.target.closest('[data-ticket-weg]')) {
+      const rijen = $('#detail .t-rijen');
+      if (rijen.children.length > 1) e.target.closest('.t-rij').remove();
+      [...rijen.children].forEach((r, i) => { r.querySelector('.t-nr').textContent = i + 1; });
+    }
+  });
+  $('#detail').addEventListener('submit', async (e) => {
+    if (!e.target.matches('[data-tickets]')) return;
+    e.preventDefault();
+    const id = $('#detail').dataset.id;
+    const voor = ticketsVan(bonVan(id)).length;
+    const tickets = $$('input[name=ticket]', e.target).map((i) => ({ locatie: i.value }));
+    try {
+      await doe({ op: 'locatie', id, tickets });
+      // Andere tickets: wat al gescand was, telt niet meer.
+      if (tickets.length !== voor) gescandeTickets.delete(id);
+      openDetail(id);
+      toast(tickets.length !== voor ? 'Opgeslagen ✓ Druk de tickets opnieuw af.' : 'Opgeslagen ✓');
+    } catch (err) {
+      if (err.message !== 'pin') alert(err.message);
+    }
+  });
 
   $('#detail').addEventListener('click', async (e) => {
     const id = $('#detail').dataset.id;
@@ -548,9 +607,13 @@
           }
           return;
         }
+        // Elk ticket hoort gescand te zijn, zodat er geen zak of hanger achterblijft.
+        const missen = nietGescand(b);
+        if (missen.length && !confirm(`${missen.length} van de ${ticketsVan(b).length} tickets ${missen.length === 1 ? 'is' : 'zijn'} niet gescand: ${missen.map(ticketNaam).join(', ')}.\n\nToch afgeven?`)) return;
         // data-betaal="" betekent opgehaald maar nog niet betaald.
         const betaal = knop.dataset.betaal;
         const { bon: na } = await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
+        gescandeTickets.delete(id);
         $('#detail').close();
         if (autoPrint) drukAf(na, 'afhaal', standaardFormaat());
       } else if (actie === 'klantcode') {
@@ -681,14 +744,33 @@
   async function gescand(code) {
     $$('dialog[open]').forEach((d) => { if (d.id !== 'kassa-open') d.close(); });
     if (code === scanCode(TEST_NR)) { toast('De scanner werkt ✓'); return; }
-    const zoek = () => (staat.bonnen || []).find((b) => scanCode(b.nr) === code);
-    let b = zoek();
-    if (!b && !DESKTOP) { await laad(true); b = zoek(); }
-    if (!b) { toast(`Bon ${code.slice(0, 2)}-${code.slice(2)} niet gevonden. Misschien al gewist?`); return; }
+    // Een bon (klantenbon) of een ticket: het bonnummer met 2 cijfers voor het ticket erachter.
+    const zoek = () => {
+      const bonnen = staat.bonnen || [];
+      const bon = bonnen.find((b) => scanCode(b.nr) === code);
+      if (bon) return { b: bon, ticket: -1 };
+      const ticket = Number(code.slice(-2)) - 1;
+      const b = bonnen.find((x) => ticketsVan(x).length > ticket && ticket >= 0 && ticketCode(x, ticket) === code);
+      return b ? { b, ticket } : {};
+    };
+    let { b, ticket } = zoek();
+    if (!b && !DESKTOP) { await laad(true); ({ b, ticket } = zoek()); }
+    if (!b) { toast(`Bon ${code} niet gevonden. Misschien al gewist?`); return; }
+    if (ticket >= 0 && b.status !== 'opgehaald') {
+      if (!gescandeTickets.has(b.id)) gescandeTickets.set(b.id, new Set());
+      gescandeTickets.get(b.id).add(ticket);
+    }
+    const missen = nietGescand(b);
+    const n = ticketsVan(b).length;
+    const tickets = !n ? ''
+      : ticket >= 0 ? `Ticket ${ticket + 1} van ${n} gescand ✓ ` + (missen.length ? `Nog scannen: ${missen.map(ticketNaam).join(', ')}.` : 'Alle tickets gescand. ')
+      : missen.length ? `Haal ${missen.length === n ? `de ${n} ticket${n > 1 ? 's' : ''}` : `nog ${missen.length} ticket${missen.length > 1 ? 's' : ''}`} op en scan ze: ${missen.map(ticketNaam).join(', ')}. ` : 'Alle tickets gescand. ';
+    const betalen = b.prijsOpen ? 'Er staan nog stukken zonder prijs: vul die eerst in via Wijzigen.'
+      : b.betaald ? 'Al betaald: tik op Opgehaald.'
+      : `Te betalen: ${eur(b.totaal)}. Kies hoe de klant betaalt${autoPrint ? '; daarna komt de afhaalbon uit de printer' : ''}.`;
     const boodschap = b.status === 'opgehaald' ? `Deze bon is al opgehaald (${mooiDatum(b.opgehaaldOp, true)}).`
-      : b.prijsOpen ? 'Gescand. Er staan nog stukken zonder prijs: vul die eerst in via Wijzigen.'
-      : b.betaald ? 'Gescand. Al betaald: tik op Opgehaald.'
-      : `Gescand. Te betalen: ${eur(b.totaal)}. Kies hoe de klant betaalt${autoPrint ? '; daarna komt de afhaalbon uit de printer' : ''}.`;
+      : tickets ? tickets + (missen.length ? '' : betalen)
+      : 'Gescand. ' + betalen;
     openDetail(b.id, null, boodschap);
   }
 
@@ -725,7 +807,10 @@
     const delen = [];
     if (soortBon === 'afhaal') delen.push({ html: klantBon(true), a4 });
     if (soortBon === 'afgifte' || soortBon === 'klant') delen.push({ html: klantBon(false), a4 });
-    if (soortBon === 'afgifte' || soortBon === 'mand') delen.push({ html: mandTicket(b), a4: false });
+    if (soortBon === 'afgifte' || soortBon === 'mand') {
+      const n = Math.max(1, ticketsVan(b).length);
+      for (let i = 0; i < n; i++) delen.push({ html: mandTicket(b, ticketsVan(b).length ? i : -1), a4: false });
+    }
     drukDelen(delen);
   }
 
@@ -828,9 +913,12 @@
   }
 
   /** Het mandticket blijft in de winkel: op de mand plakken en de stukken per plaats indelen. */
-  function mandTicket(b) {
+  // Met tickets: één per zak, mand of hanger, elk met zijn eigen locatie en code; de indeling staat op het eerste.
+  function mandTicket(b, nr = -1) {
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
-    const code = scanCode(b.nr);
+    const tickets = ticketsVan(b);
+    const code = nr >= 0 ? ticketCode(b, nr) : scanCode(b.nr);
+    const locatie = nr >= 0 ? tickets[nr].locatie : b.locatie;
     const perPlaats = new Map([...indeling().map((r) => [r.plaats, []]), [ANDERE_PLAATS, []]]);
     splitsVlekken(b.stukken).forEach((s) => perPlaats.get(plaatsVan(kaleNaam(s)))?.push(s));
     const plaatsen = [...perPlaats].filter(([, l]) => l.length).map(([plaats, lijst]) => `
@@ -841,14 +929,14 @@
     // Strijk of was zonder getelde stukken: dat moet nog geteld en ingedeeld worden.
     const teTellen = blokkenVan(b).filter(([, l]) => !l.length).map(([titel]) => `<div class="pr-plaats-rij"><i></i><span>${esc(mandTekst(titel))}</span></div>`).join('');
     return `<section class="pr-ticket">
-        <div class="pr-ticket-kop"><span>Mandticket</span><span>${esc(b.soort)}</span></div>
+        <div class="pr-ticket-kop"><span>${nr >= 0 ? `Ticket ${nr + 1} van ${tickets.length}` : 'Mandticket'}</span><span>${esc(b.soort)}</span></div>
         <div class="pr-ticket-nr">${esc(b.nr)}</div>
         <div class="pr-label-naam">${esc(b.klant.naam)}</div>
         <div class="pr-ticket-info">${b.klant.telefoon ? esc(b.klant.telefoon) + ' · ' : ''}klaar <b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</b>${aantal ? ` · ${aantal} st.` : ''}${b.betaald ? ' · betaald' : ''}</div>
         ${b.vliegtuig ? `<div class="pr-label-loc">✈ Vliegtuig: ${esc(b.vliegtuig)}</div>` : ''}
-        ${b.locatie ? `<div class="pr-label-loc">Locatie: ${esc(b.locatie)}</div>` : ''}
-        ${b.opmerking ? `<div class="pr-ticket-opm">${esc(b.opmerking)}</div>` : ''}
-        ${plaatsen || teTellen ? `<div class="pr-ticket-titel">Indeling</div>${plaatsen}${teTellen ? `<div class="pr-plaats">${teTellen}</div>` : ''}` : ''}
+        ${locatie ? `<div class="pr-label-loc">Locatie: ${esc(locatie)}</div>` : ''}
+        ${b.opmerking && nr <= 0 ? `<div class="pr-ticket-opm">${esc(b.opmerking)}</div>` : ''}
+        ${(plaatsen || teTellen) && nr <= 0 ? `<div class="pr-ticket-titel">Indeling</div>${plaatsen}${teTellen ? `<div class="pr-plaats">${teTellen}</div>` : ''}` : ''}
         ${code ? streepjescode(code, 0.4) : ''}
       </section>`;
   }
@@ -1303,6 +1391,39 @@
     $('#f-stuk').focus();
   });
 
+  // Tickets in het formulier: hoeveel zakken, manden of hangers, en per ticket de locatie.
+  let fTickets = [''];
+  let tVeld = 0;
+  function toonFormTickets() {
+    $('#f-t-aantal').textContent = `${fTickets.length} ticket${fTickets.length > 1 ? 's' : ''}`;
+    $('#f-tickets').innerHTML = fTickets.map((l, i) => `<label class="t-rij"><span class="t-nr">${i + 1}</span>
+      <input data-ticket="${i}" list="locaties" maxlength="40" value="${esc(l)}" placeholder="Locatie, bv. rek 3, mand 12" autocomplete="off"></label>`).join('');
+    // Snelknoppen: de locaties die het vaakst gebruikt worden, één tik vult het ticket in.
+    const opties = $$('#locaties option').map((o) => o.value).slice(0, 12);
+    $('#f-loc-snel').innerHTML = opties.map((l) => `<button type="button" data-loc="${esc(l)}">${esc(l)}</button>`).join('');
+  }
+  $('#f-tickets').addEventListener('input', (e) => { if (e.target.dataset.ticket) fTickets[Number(e.target.dataset.ticket)] = e.target.value; });
+  $('#f-tickets').addEventListener('focusin', (e) => { if (e.target.dataset.ticket) tVeld = Number(e.target.dataset.ticket); });
+  $('#f-t-stappen').addEventListener('click', (e) => {
+    const stap = Number(e.target.closest('[data-t-stap]')?.dataset.tStap || 0);
+    if (!stap) return;
+    if (stap > 0 && fTickets.length < 20) fTickets.push('');
+    if (stap < 0 && fTickets.length > 1) fTickets.pop();
+    tVeld = Math.min(tVeld, fTickets.length - 1);
+    if (stap > 0) tVeld = fTickets.length - 1;
+    toonFormTickets();
+  });
+  $('#f-loc-snel').addEventListener('click', (e) => {
+    const k = e.target.closest('[data-loc]');
+    if (!k) return;
+    // Het gekozen ticket, of anders het eerste zonder locatie.
+    const leeg = fTickets.findIndex((l) => !l);
+    const i = fTickets[tVeld] === '' || leeg < 0 ? tVeld : leeg;
+    fTickets[i] = k.dataset.loc;
+    tVeld = Math.min(i + 1, fTickets.length - 1);
+    toonFormTickets();
+  });
+
   function openFormulier(b, klant) {
     const f = $('#f');
     f.reset();
@@ -1315,7 +1436,8 @@
     f.email.value = b ? b.klant.email : '';
     if (klant) vulKlant(klant);
     f.klaarTegen.value = b ? b.klaarTegen : plusDagen(2);
-    f.locatie.value = b ? b.locatie || '' : '';
+    fTickets = b ? (ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie || '']) : [''];
+    toonFormTickets();
     f.betaald.checked = b ? b.betaald : false;
     f.betaalwijze.value = b ? b.betaalwijze : '';
     f.opmerking.value = b ? b.opmerking : '';
@@ -1354,7 +1476,7 @@
       soorten: [...soorten],
       stukken,
       klaarTegen: f.klaarTegen.value,
-      locatie: f.locatie.value,
+      tickets: fTickets.map((locatie) => ({ locatie })),
       betaald: f.betaald.checked,
       betaalwijze: f.betaalwijze.value,
       opmerking: f.opmerking.value,
