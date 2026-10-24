@@ -5,6 +5,7 @@ import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import updaterPakket from 'electron-updater';
 import { pasToe, voorWinkel, teBewaren, Fout, LEEG, klantSleutel } from './app/lib/bonnen.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
@@ -298,6 +299,31 @@ function maakMenu(venster) {
   ]);
 }
 
+// ---------- Bijwerken ----------
+// Bij het opstarten kijkt het programma of er op GitHub een nieuwere versie staat en haalt die op.
+// Zonder internet gebeurt er niets en werkt alles gewoon verder.
+function zoekUpdate() {
+  if (!app.isPackaged || process.env.CRYSTAL_TEST_PDF) return;
+  const { autoUpdater } = updaterPakket;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('update-downloaded', async (info) => {
+    const venster = BrowserWindow.getAllWindows()[0];
+    const { response } = await dialog.showMessageBox(venster, {
+      type: 'info',
+      title: 'Nieuwe versie',
+      message: `Crystal Winkel ${info.version} is klaar om te installeren.`,
+      detail: 'Je bonnen blijven bewaard. Nu herstarten, of later (dan gebeurt het bij het afsluiten).',
+      buttons: ['Nu bijwerken', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) autoUpdater.quitAndInstall();
+  });
+  autoUpdater.on('error', (e) => console.error('Bijwerken mislukt', e));
+  autoUpdater.checkForUpdates().catch(() => {});
+}
+
 function maakVenster() {
   // Zo groot als het scherm (zonder taakbalk), en daarna ook echt gemaximaliseerd.
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -378,6 +404,7 @@ if (!app.requestSingleInstanceLock()) {
       return printerInfo(e.sender);
     });
     maakVenster();
+    zoekUpdate();
   });
 
   app.on('window-all-closed', () => app.quit());

@@ -1,0 +1,29 @@
+# Bouwt het Windows-programma Crystal Winkel en zet het als release op GitHub,
+# telkens als de versie in winkel-app/desktop/package.json verandert.
+# Het programma op de winkel-pc haalt die release zelf op (electron-updater).
+name: Crystal Winkel release
+
+on:
+  push:
+    branches: [main]
+    paths: ['winkel-app/desktop/package.json']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: winkel-app/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
