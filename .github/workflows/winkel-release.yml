@@ -24,6 +24,13 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # Een release heeft een tag nodig: v + de versie uit package.json.
+      - name: Tag maken
+        shell: bash
+        run: |
+          V=$(node -p "require('./package.json').version")
+          git tag "v$V" 2>/dev/null || true
+          git push origin "v$V" || true
       - run: npm run release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
