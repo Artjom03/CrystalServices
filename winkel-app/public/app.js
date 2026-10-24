@@ -1540,11 +1540,9 @@
   async function toonPrinter() {
     if (!DESKTOP) return;
     const p = await window.crystal.printers();
-    const geen = 'nog geen printer';
     $('#i-printer-rijen').innerHTML = PRINT_SOORTEN.map(([soort, label, a4]) => {
-      const auto = a4 ? p.auto.a4 : p.auto.bon;
       const keuze = p.keuze[soort] || '';
-      const opties = [['', `Automatisch (${auto || geen})`], ...p.lijst.map((n) => [n, n]), ['venster', 'Telkens vragen']];
+      const opties = [['', 'Afdrukvenster tonen (zoals vroeger)'], ...p.lijst.map((n) => [n, n])];
       // Een gekozen printer die er nu niet is (bv. uitgeschakeld) blijft zichtbaar.
       if (keuze && keuze !== 'venster' && !p.lijst.includes(keuze)) opties.push([keuze, keuze + ' (niet gevonden)']);
       return `<div class="i-printer-rij"><span>${esc(label)}</span>

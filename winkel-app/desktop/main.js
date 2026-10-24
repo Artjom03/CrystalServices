@@ -151,10 +151,13 @@ function drukAf(webContents, formaat, soort = '') {
   // A4 (prijslijsten, facturen, grote bonnen) mag nooit op de bonprinter belanden:
   // is er nog geen A4-printer gekozen, dan vraagt het programma het één keer.
   const eigen = PRINT_SOORTEN.includes(soort) ? instellingen.printers?.[soort] || '' : '';
-  const vraag = a4 && !eigen && !instellingen.printerA4 ? kiesPrinter(BrowserWindow.fromWebContents(webContents), 'a4') : Promise.resolve();
-  return vraag.then(() => gekozenPrinters(webContents)).then(({ bon, a4: groot, alle }) => {
+  return gekozenPrinters(webContents).then(({ alle }) => {
   // De printer die in Instellingen voor deze soort bonnetje gekozen is, gaat voor.
-  const printer = eigen === 'venster' ? '' : eigen && alle.includes(eigen) ? eigen : a4 ? groot : bon;
+  // Enkel een printer die de winkel zelf koos, krijgt de afdruk rechtstreeks.
+  // Anders komt het afdrukvenster van Windows, zoals vroeger: dat kent het juiste papier van de printer.
+  const vroeger = a4 ? instellingen.printerA4 : instellingen.printer;
+  const gekozen = eigen && eigen !== 'venster' ? eigen : !eigen && vroeger && vroeger !== 'auto' && vroeger !== 'venster' ? vroeger : '';
+  const printer = gekozen && alle.includes(gekozen) ? gekozen : '';
   return new Promise((resolve) => {
     // Bonprinter: printableArea, zodat er links of rechts niets wegvalt. A4: de marges uit de pagina.
     webContents.print(
