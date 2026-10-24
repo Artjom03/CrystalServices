@@ -289,6 +289,9 @@ function maakMenu(venster) {
     {
       label: 'Help',
       submenu: [{
+        label: 'Zoeken naar updates…',
+        click: () => zoekUpdate(true),
+      }, {
         label: 'Over Crystal Winkel',
         click: () => dialog.showMessageBox(venster, {
           message: `Crystal Winkel ${app.getVersion()}`,
@@ -302,26 +305,48 @@ function maakMenu(venster) {
 // ---------- Bijwerken ----------
 // Bij het opstarten kijkt het programma of er op GitHub een nieuwere versie staat en haalt die op.
 // Zonder internet gebeurt er niets en werkt alles gewoon verder.
-function zoekUpdate() {
+let updaterKlaar = false;
+// zelf = true: via het menu gevraagd, dan altijd laten zien wat er gebeurt (ook een fout).
+function zoekUpdate(zelf = false) {
   if (!app.isPackaged || process.env.CRYSTAL_TEST_PDF) return;
   const { autoUpdater } = updaterPakket;
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.on('update-downloaded', async (info) => {
-    const venster = BrowserWindow.getAllWindows()[0];
-    const { response } = await dialog.showMessageBox(venster, {
-      type: 'info',
-      title: 'Nieuwe versie',
-      message: `Crystal Winkel ${info.version} is klaar om te installeren.`,
-      detail: 'Je bonnen blijven bewaard. Nu herstarten, of later (dan gebeurt het bij het afsluiten).',
-      buttons: ['Nu bijwerken', 'Later'],
-      defaultId: 0,
-      cancelId: 1,
+  const venster = () => BrowserWindow.getAllWindows()[0];
+  const meld = (message, detail = '') => dialog.showMessageBox(venster(), { type: 'info', title: 'Bijwerken', message, detail });
+  const log = (t) => writeFile(path.join(app.getPath('userData'), 'bijwerken.log'), `${new Date().toISOString()} ${t}\n`, { flag: 'a' }).catch(() => {});
+  if (!updaterKlaar) {
+    updaterKlaar = true;
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('update-available', (info) => {
+      log('beschikbaar ' + info.version);
+      // Laten weten dat er iets gebeurt: het downloaden duurt even (± 110 MB).
+      venster()?.webContents.executeJavaScript(`window.toastExtern && window.toastExtern(${JSON.stringify(`Nieuwe versie ${info.version} wordt gedownload…`)})`).catch(() => {});
     });
-    if (response === 0) autoUpdater.quitAndInstall();
+    autoUpdater.on('update-downloaded', async (info) => {
+      log('gedownload ' + info.version);
+      const { response } = await dialog.showMessageBox(venster(), {
+        type: 'info',
+        title: 'Nieuwe versie',
+        message: `Crystal Winkel ${info.version} is klaar om te installeren.`,
+        detail: 'Je bonnen blijven bewaard. Nu herstarten, of later (dan gebeurt het bij het afsluiten).',
+        buttons: ['Nu bijwerken', 'Later'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response === 0) autoUpdater.quitAndInstall();
+    });
+    autoUpdater.on('error', (e) => log('fout ' + (e?.stack || e)));
+  }
+  autoUpdater.checkForUpdates().then((r) => {
+    log('gezocht: ' + (r?.updateInfo?.version || '?'));
+    if (!zelf) return;
+    const nieuw = r?.updateInfo?.version;
+    if (!nieuw || nieuw === app.getVersion()) meld(`Je hebt de nieuwste versie (${app.getVersion()}).`);
+    else meld(`Versie ${nieuw} wordt gedownload.`, 'Als het klaar is, vraagt het programma om te herstarten. Dat kan enkele minuten duren.');
+  }).catch((e) => {
+    log('fout ' + (e?.stack || e));
+    if (zelf) meld('Zoeken naar updates lukte niet.', String(e?.message || e).slice(0, 400));
   });
-  autoUpdater.on('error', (e) => console.error('Bijwerken mislukt', e));
-  autoUpdater.checkForUpdates().catch(() => {});
 }
 
 function maakVenster() {

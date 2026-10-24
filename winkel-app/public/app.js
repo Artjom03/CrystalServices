@@ -111,6 +111,8 @@
     clearTimeout(toastKlok);
     toastKlok = setTimeout(() => { el.hidden = true; }, 5000);
   }
+  // Het Windows-programma meldt zo dat er een nieuwe versie gedownload wordt.
+  window.toastExtern = toast;
 
   // ---------- Pincode ----------
   function vergrendel(fout) {
