@@ -24,13 +24,15 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      # Een release heeft een tag nodig: v + de versie uit package.json.
-      - name: Tag maken
+      # Eerst zelf één release (met tag) maken; anders maakt electron-builder er soms twee tegelijk,
+      # en vindt het programma latest.yml niet.
+      - name: Release maken
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           V=$(node -p "require('./package.json').version")
-          git tag "v$V" 2>/dev/null || true
-          git push origin "v$V" || true
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --title "Crystal Winkel $V" --notes "Crystal Winkel $V" --target "$GITHUB_SHA"
       - run: npm run release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
