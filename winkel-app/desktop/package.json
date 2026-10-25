@@ -43,7 +43,7 @@
       "provider": "github",
       "owner": "Artjom03",
       "repo": "CrystalServices",
-      "releaseType": "release"
+      "releaseType": "draft"
     }
   },
   "devDependencies": {
