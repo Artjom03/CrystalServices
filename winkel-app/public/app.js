@@ -448,8 +448,7 @@
         <div class="d-knoppen">
           ${b.betaald
             ? `<button class="knop ${stijl}" data-actie="opgehaald">Opgehaald</button>`
-            : ['cash', 'kaart', 'dienstencheques'].map((w) => `<button class="knop ${stijl}" data-actie="opgehaald" data-betaal="${w}">${w[0].toUpperCase() + w.slice(1)}</button>`).join('')
-              + '<button class="knop" data-actie="opgehaald" data-betaal="">Nog niet betaald</button>'}
+            : [['cash', 'Cash'], ['kaart', 'Kaart'], ['factuur', 'Via factuur']].map(([w, t]) => `<button class="knop ${stijl}" data-actie="opgehaald" data-betaal="${w}">${t}</button>`).join('')}
           ${extra}
         </div>
       </div>`;
@@ -631,6 +630,8 @@
         if (missen.length && !confirm(`${missen.length} van de ${ticketsVan(b).length} tickets ${missen.length === 1 ? 'is' : 'zijn'} niet gescand: ${missen.map(ticketNaam).join(', ')}.\n\nToch afgeven?`)) return;
         // data-betaal="" betekent opgehaald maar nog niet betaald.
         const betaal = knop.dataset.betaal;
+        // Via factuur: meteen ook een factuur aanvragen, zodat ze op het dagoverzicht staat.
+        if (betaal === 'factuur' && !b.factuur) await doe({ op: 'factuurVraag', id });
         const { bon: na } = await doe({ op: 'status', id, status: 'opgehaald', betaalwijze: betaal || undefined });
         gescandeTickets.delete(id);
         bewaarGescand();
@@ -801,7 +802,7 @@
   // Klein: voor de bonprinter (72 mm, zwart-wit). A4: een volle pagina, met onderaan onze prijslijst.
   const WEBSITE = 'crystal-services.be';
   const kaleNaam = (s) => s.naam.replace(/ \((strijken|wassen[^)]*)\)$/, '');
-  const BETAALWIJZE = { cash: 'cash', kaart: 'kaart', dienstencheques: 'dienstencheques', overschrijving: 'overschrijving' };
+  const BETAALWIJZE = { cash: 'cash', kaart: 'kaart', factuur: 'factuur', dienstencheques: 'dienstencheques', overschrijving: 'overschrijving' };
   const betaaldTekst = (b) => 'Betaald' + (b.betaalwijze ? ' met ' + esc(BETAALWIJZE[b.betaalwijze] || b.betaalwijze) : '');
 
   /** Wat binnenkwam, per soort. Strijk of was zonder stukken: de mand wordt later geteld. */
@@ -1895,7 +1896,7 @@
 
 
   // ---------- Geld ----------
-  const WIJZEN = [['cash', 'Cash'], ['kaart', 'Kaart'], ['dienstencheques', 'Dienstencheques'], ['overschrijving', 'Overschrijving'], ['onbekend', 'Onbekend']];
+  const WIJZEN = [['cash', 'Cash'], ['kaart', 'Kaart'], ['factuur', 'Factuur'], ['dienstencheques', 'Dienstencheques'], ['overschrijving', 'Overschrijving'], ['onbekend', 'Onbekend']];
   /** De dag (YYYY-MM-DD) van een tijdstip, in de tijd van deze pc. */
   function dagVan(iso) {
     const d = new Date(iso);
@@ -1988,7 +1989,7 @@
     $('#k-inhoud').innerHTML = `
       <p class="tijdlijn">${esc(mooieDag(k.dag))} · ${k.geslotenOp ? 'afgesloten om ' + esc(mooiDatum(k.geslotenOp, true).split(' ').pop()) : k.geopendOp ? 'open' : 'nog niet geopend'}</p>
       <div class="k-tegels">
-        ${WIJZEN.filter(([w]) => w !== 'onbekend' || k.per.onbekend).map(([w, label]) => `<div class="k-tegel"><span>${label}</span><b>${eur(k.per[w])}</b></div>`).join('')}
+        ${WIJZEN.filter(([w]) => ['cash', 'kaart', 'factuur'].includes(w) || k.per[w]).map(([w, label]) => `<div class="k-tegel"><span>${label}</span><b>${eur(k.per[w])}</b></div>`).join('')}
         <div class="k-tegel totaal"><span>Totaal ontvangen</span><b>${eur(k.totaal)}</b></div>
       </div>
       ${k.geslotenOp ? '<p class="k-hint">Iets verkeerd ingegeven? Kies onderaan "Opnieuw openen", verbeter het en sluit de dag daarna opnieuw af.</p>' : kan ? '<p class="k-hint">Tik op een bedrag of betaling om het te verbeteren.</p>' : ''}
@@ -2285,7 +2286,7 @@
       <table class="pr-stukken">
         <tbody>
           <tr class="pr-groep"><td colspan="2">Ontvangen</td></tr>
-          ${WIJZEN.filter(([w]) => w !== 'onbekend' || k.per.onbekend).map(([w, label]) => rij(label, eur(k.per[w]))).join('')}
+          ${WIJZEN.filter(([w]) => ['cash', 'kaart', 'factuur'].includes(w) || k.per[w]).map(([w, label]) => rij(label, eur(k.per[w]))).join('')}
         </tbody>
         <tfoot><tr><td>Totaal (${k.betalingen.length} betaling${k.betalingen.length === 1 ? '' : 'en'})</td><td class="r">${eur(k.totaal)}</td></tr></tfoot>
       </table>

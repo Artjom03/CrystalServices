@@ -2,14 +2,14 @@
 // Puur rekenwerk, zonder opslag, zodat het makkelijk te testen is.
 
 export const STATUSSEN = ['binnen', 'klaar', 'opgehaald'];
-export const BETAALWIJZEN = ['', 'cash', 'kaart', 'dienstencheques', 'overschrijving'];
+export const BETAALWIJZEN = ['', 'cash', 'kaart', 'factuur', 'dienstencheques', 'overschrijving'];
 export const SOORTEN = ['Strijk', 'Was', 'Droogkuis', 'Schoenen', 'Motorkleding', 'Ander'];
 export const BEHANDELINGEN = ['strijk', 'was', 'droogkuis', 'ander'];
 
 // Hoe lang opgehaalde bonnen bewaard blijven, in maanden; de winkel kiest zelf tussen 1 en 24.
 export const BEWAAR_MIN = 1;
 export const BEWAAR_MAX = 24;
-export const BETAALWIJZEN_KASSA = ['cash', 'kaart', 'dienstencheques', 'overschrijving'];
+export const BETAALWIJZEN_KASSA = ['cash', 'kaart', 'factuur', 'dienstencheques', 'overschrijving'];
 export const STANDAARD_INSTELLINGEN = { bewaarMaanden: 12, formaat: 'klein' };
 
 export const LEEG = {
