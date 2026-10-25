@@ -1,7 +1,7 @@
 :root{
-  --navy:#0E1F42; --navy-deep:#081430; --gold:#B98D4A; --gold-deep:#8A6829;
+  --navy:#0E1F42; --navy-deep:#081430; --gold:#2B7BB9; --gold-deep:#1D5A8A;
   --bg:#F5F3EE; --kaart:#FFFFFF; --ink:#1B2422; --ink-soft:#565B63; --lijn:#E3DED3;
-  --rood:#B3261E; --rood-zacht:#FBE9E7; --groen:#1E6B3A; --groen-zacht:#E6F2EA; --geel-zacht:#FBF3E2;
+  --rood:#B3261E; --rood-zacht:#FBE9E7; --groen:#1E6B3A; --groen-zacht:#E6F2EA; --geel-zacht:#E8F1F9;
   --radius:14px; --schaduw:0 6px 24px rgba(8,20,48,.08);
   color-scheme: light;
 }
@@ -290,7 +290,7 @@ a{color:var(--navy);}
 .loc-chip button{border:0;background:transparent;cursor:pointer;color:#B23A3A;font-size:.9rem;padding:2px 6px;}
 .aanraak .loc-chip{padding:9px 8px 9px 14px;}
 #f-loc-snel button.bezet{border-style:dashed;}
-#f-loc-snel button i{font-style:normal;font-size:.75rem;font-weight:700;background:#B98D4A;color:#fff;border-radius:999px;padding:1px 6px;margin-left:6px;}
+#f-loc-snel button i{font-style:normal;font-size:.75rem;font-weight:700;background:#2B7BB9;color:#fff;border-radius:999px;padding:1px 6px;margin-left:6px;}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}
@@ -378,17 +378,17 @@ a{color:var(--navy);}
   .a4-merk{display:flex;align-items:center;gap:3.5mm;}
   .a4-merk img{width:14mm;height:14mm;}
   .a4-naam{font-size:18pt;font-weight:800;color:#0E1F42;letter-spacing:.01em;line-height:1.05;}
-  .a4-slogan{font-size:7.5pt;font-weight:700;color:#8A6829;letter-spacing:.2em;text-transform:uppercase;margin-top:1mm;}
+  .a4-slogan{font-size:7.5pt;font-weight:700;color:#1D5A8A;letter-spacing:.2em;text-transform:uppercase;margin-top:1mm;}
   .a4-zaak{text-align:right;font-size:8pt;color:#565B63;line-height:1.5;}
   .a4-titelrij{display:flex;justify-content:space-between;align-items:flex-end;margin:3.5mm 0 2.5mm;}
-  .a4-soort{font-size:9pt;font-weight:800;color:#8A6829;letter-spacing:.24em;text-transform:uppercase;}
+  .a4-soort{font-size:9pt;font-weight:800;color:#1D5A8A;letter-spacing:.24em;text-transform:uppercase;}
   .a4-nr{font-size:22pt;font-weight:800;color:#0E1F42;line-height:1.05;}
   .a4-code .pr-streepjes{height:12mm;margin:0;}
   .a4-vakken{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:3mm;}
   .a4-vak{border:.3mm solid #E3DED3;border-radius:2.5mm;padding:2mm 3.5mm;font-size:9.5pt;}
   .a4-vak h4,.a4-opm h4{margin:0 0 1mm;font-size:7pt;font-weight:700;color:#565B63;letter-spacing:.14em;text-transform:uppercase;}
   .a4-accent{background:#0E1F42;border-color:#0E1F42;color:#fff;}
-  .a4-accent h4{color:#E2C48F;}
+  .a4-accent h4{color:#9CC7E8;}
   .a4-accent b{font-size:12.5pt;}
   .a4-tabel{width:100%;border-collapse:collapse;margin-top:4mm;font-size:9.5pt;}
   .a4-tabel th{background:#0E1F42;color:#fff;font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:1.5mm 3mm;}
@@ -397,7 +397,7 @@ a{color:var(--navy);}
   .a4-tabel td{padding:.7mm 3mm;border-bottom:.2mm solid #E3DED3;vertical-align:top;}
   .a4-tabel .r{text-align:right;white-space:nowrap;}
   .a4-tabel .a4-n{width:16mm;text-align:center;font-weight:700;}
-  .a4-groep td{padding-top:2.5mm!important;font-size:7.5pt;font-weight:800;color:#8A6829;letter-spacing:.14em;text-transform:uppercase;border-bottom:.4mm solid #B98D4A;}
+  .a4-groep td{padding-top:2.5mm!important;font-size:7.5pt;font-weight:800;color:#1D5A8A;letter-spacing:.14em;text-transform:uppercase;border-bottom:.4mm solid #2B7BB9;}
   .a4-zacht{color:#565B63;font-style:italic;}
   .a4-tabel tfoot td{border-bottom:0;border-top:.5mm solid #0E1F42;font-weight:700;}
   .a4-totaal{display:flex;justify-content:space-between;align-items:baseline;gap:6mm;width:85mm;margin:3mm 0 0 auto;background:#0E1F42;color:#fff;border-radius:2.5mm;padding:2.5mm 4mm;}
@@ -407,7 +407,7 @@ a{color:var(--navy);}
   .a4-betaling{flex:1;border:.3mm solid #E3DED3;border-radius:2.5mm;padding:2mm 4mm;font-size:10.5pt;}
   .a4-betaling small{font-size:8.5pt;color:#565B63;}
   .a4-betaald{color:#1E6B3A;font-weight:800;}
-  .a4-opm{flex:1.3;border-left:1mm solid #B98D4A;padding:1mm 0 1mm 3.5mm;font-size:9.5pt;}
+  .a4-opm{flex:1.3;border-left:1mm solid #2B7BB9;padding:1mm 0 1mm 3.5mm;font-size:9.5pt;}
   .a4-portaal{text-align:center;font-size:9pt;margin:3mm 0 0;}
   .a4-dank{text-align:center;font-size:9.5pt;font-weight:600;color:#0E1F42;margin:2.5mm 0 0;}
   /* Mandticket na een A4-bon (browser): smal en gecentreerd op een eigen pagina */
@@ -510,12 +510,12 @@ a{color:var(--navy);}
   .pl-blad2{color:#1B2422;font:9pt/1.25 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .pl-kop2{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:2.5mm;border-bottom:1.2mm solid #0E1F42;}
   .pl-merk{font-size:20pt;font-weight:800;color:#0E1F42;line-height:1;}
-  .pl-slogan{color:#B98D4A;font-weight:600;font-size:9pt;margin-top:1mm;letter-spacing:.04em;}
+  .pl-slogan{color:#2B7BB9;font-weight:600;font-size:9pt;margin-top:1mm;letter-spacing:.04em;}
   .pl-gegevens{text-align:right;font-size:8.5pt;color:#444;}
   .pl-titelbalk{display:flex;justify-content:space-between;align-items:baseline;margin:3mm 0 2.5mm;}
   .pl-titelbalk h1{margin:0;font-size:14pt;color:#0E1F42;}
   .pl-titelbalk span{font-size:8.5pt;color:#555;}
-  .pl-titelbalk b{color:#8A6829;}
+  .pl-titelbalk b{color:#1D5A8A;}
   .pl-tabel2{width:100%;border-collapse:collapse;}
   .pl-tabel2 td,.pl-tabel2 th{padding:.6mm 2.5mm;border-bottom:.2mm solid #DDE1E6;}
   .pl-groepkop th{background:#0E1F42;color:#fff;text-align:right;font-size:8.5pt;font-weight:600;padding:1.4mm 2.5mm;border:0;}
