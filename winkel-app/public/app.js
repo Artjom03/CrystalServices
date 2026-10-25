@@ -1653,7 +1653,7 @@
     // Zoals de papieren lijst V43: voorkant dames- en herenkleding, achterkant de rest.
     const [eerste, ...rest] = prijslijst().groepen || [];
     $('#afdruk').innerHTML = `<section class="pl-blad">
-      <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}</div>
+      <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}<span class="pl-datum">${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
       ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
       <table class="pl-tabel">${eerste ? groepHtml(eerste) : ''}</table>
       <table class="pl-tabel pl-nieuwe-pagina">${rest.map(groepHtml).join('')}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
