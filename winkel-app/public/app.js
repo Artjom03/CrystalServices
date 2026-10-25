@@ -24,7 +24,7 @@
   let tab = 'binnen';
   let bewerkId = null;
   let regels = [];
-  let soorten = new Set(['Strijk']);
+  let soorten = new Set();
   let autoPrint = true;
   try { autoPrint = localStorage.getItem('winkel-autoprint') !== 'nee'; } catch (e) {}
   // Aanraakscherm: grotere knoppen en een cijferklavier. Automatisch als het toestel een aanraakscherm heeft.
@@ -1175,7 +1175,7 @@
       for (const s of b.stukken) tel.set(s.behandeling + '|' + s.naam, (tel.get(s.behandeling + '|' + s.naam) || 0) + s.aantal);
     }
     const sleutels = [...[...tel.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k), ...KLASSIEKERS];
-    const per = new Map(artikelen().map((a) => [artikelSleutel(a), a]));
+    const per = new Map(toegelaten().map((a) => [artikelSleutel(a), a]));
     return [...new Set(sleutels)].map((k) => per.get(k)).filter(Boolean).slice(0, 10);
   }
 
@@ -1183,9 +1183,15 @@
   const tegel = (a) => `<button type="button" class="tegel" data-artikel="${esc(artikelSleutel(a))}">
       <span>${esc(a.kort)}</span><small>${esc(a.soort || 'per stuk')} · ${a.prijs == null ? 'prijs volgt' : (a.behandeling === 'droogkuis' ? 'vanaf ' : '') + eur(a.prijs)}</small></button>`;
 
+  // Enkel de stukken die passen bij wat de klant binnenbrengt (bv. Was: enkel "wassen + strijken").
+  const BEH_VAN_SOORT = { Strijk: 'strijk', Was: 'was', Droogkuis: 'droogkuis', Schoenen: 'ander', Motorkleding: 'ander', Ander: 'ander' };
+  const toegelaten = () => {
+    const beh = new Set([...soorten].map((x) => BEH_VAN_SOORT[x]).filter(Boolean));
+    return artikelen().filter((a) => beh.has(a.behandeling));
+  };
   function treffers(q) {
     const woorden = zoekVorm(q).split(/\s+/).filter(Boolean);
-    return artikelen()
+    return toegelaten()
       .filter((a) => woorden.every((w) => a.zoek.includes(w)))
       .sort((a, b) => b.zoek.startsWith(woorden[0]) - a.zoek.startsWith(woorden[0]))
       .slice(0, 12);
@@ -1194,16 +1200,20 @@
   let open = '';
   function toonSuggesties() {
     const tekst = $('#f-stuk').value.trim();
+    if (!soorten.size) {
+      $('#f-suggesties').innerHTML = '<p class="actie-melding">Kies eerst hierboven wat de klant binnenbrengt: Strijk, Was, Droogkuis…</p>';
+      return;
+    }
     if (!tekst) {
       const snel = veelgebruikt();
       const actie = actieVandaag();
       // Zonder typen: kies een groep en tik het stuk aan.
-      const groepNamen = [...new Set(artikelen().map((a) => a.groep))];
+      const groepNamen = [...new Set(toegelaten().map((a) => a.groep))];
       const gekozen = groepNamen.includes(open) ? open : '';
       $('#f-suggesties').innerHTML = (actie ? `<p class="actie-melding">🏷 ${esc(actie.naam)} · t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long' }))}</p>` : '')
         + `<div class="groep-keuze">${['', ...groepNamen].map((g) => `<button type="button" data-groep="${esc(g)}" aria-pressed="${g === gekozen}">${esc(g || 'Veelgebruikt')}</button>`).join('')}</div>`
         + (gekozen
-          ? `<div class="tegels">${artikelen().filter((a) => a.groep === gekozen).map(tegel).join('')}</div>`
+          ? `<div class="tegels">${toegelaten().filter((a) => a.groep === gekozen).map(tegel).join('')}</div>`
           : snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '');
       return;
     }
@@ -1211,7 +1221,7 @@
     $('#f-suggesties').innerHTML =
       (gevonden.length ? `<div class="tegels">${gevonden.map(tegel).join('')}</div>` : '<p class="tijdlijn">Niet in de prijslijst.</p>') +
       `<div class="sug-titel">"${esc(tekst)}" toevoegen als</div>
-       <div class="tegels nieuw">${VOLGORDE.map((beh) => `<button type="button" class="tegel" data-nieuw="${beh}"><span>${BEHANDELING[beh]}</span><small>${beh === 'droogkuis' ? 'prijs volgt' : 'prijs zelf invullen'}</small></button>`).join('')}</div>`;
+       <div class="tegels nieuw">${VOLGORDE.filter((beh) => [...soorten].some((x) => BEH_VAN_SOORT[x] === beh)).map((beh) => `<button type="button" class="tegel" data-nieuw="${beh}"><span>${BEHANDELING[beh]}</span><small>${beh === 'droogkuis' ? 'prijs volgt' : 'prijs zelf invullen'}</small></button>`).join('')}</div>`;
   }
   $('#f-stuk').addEventListener('input', toonSuggesties);
   $('#f-stuk').addEventListener('keydown', (e) => {
@@ -1246,6 +1256,7 @@
     if (soorten.has(k.dataset.soort)) soorten.delete(k.dataset.soort);
     else soorten.add(k.dataset.soort);
     toonSoorten();
+    toonSuggesties();
   });
   // Een stuk toevoegen zet ook de soort aan (bv. een droogkuisstuk zet "Droogkuis" aan).
   function soortVoor(beh) {
@@ -1473,7 +1484,8 @@
     f.opmerking.value = b ? b.opmerking : '';
     f.vliegtuig.value = b ? b.vliegtuig || '' : '';
     regels = b ? b.stukken.map((s) => ({ ...s, behandeling: s.behandeling || 'ander' })) : [];
-    soorten = new Set(b ? (b.soorten || [b.soort]) : ['Strijk']);
+    // Bij een nieuwe bon eerst kiezen wat de klant binnenbrengt; daarna verschijnen enkel die stukken.
+    soorten = new Set(b ? (b.soorten || [b.soort]) : []);
     toonSoorten();
     $('#f-print').checked = autoPrint;
     $('#f-print-label').hidden = Boolean(b);
