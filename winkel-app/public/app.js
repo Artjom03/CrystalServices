@@ -1649,14 +1649,16 @@
         const tweede = st.wassen ?? st.prijs ?? null;
         return `<tr><td>${esc(st.naam)}</td><td>${strijk == null ? (tweede == null ? '' : '/') : pr(strijk)}</td><td></td><td>${pr(tweede)}</td><td></td></tr>`;
       }).join('')}
-      <tr class="pl-leeg"><td colspan="5"></td></tr>`;
+`;
+    // Een lege rij tussen de groepen, niet onderaan een tabel.
+    const leeg = '<tr class="pl-leeg"><td colspan="5"></td></tr>';
     // Zoals de papieren lijst V43: voorkant dames- en herenkleding, achterkant de rest.
     const [eerste, ...rest] = prijslijst().groepen || [];
     $('#afdruk').innerHTML = `<section class="pl-blad">
       <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}<span class="pl-datum">${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
       ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
       <table class="pl-tabel">${eerste ? groepHtml(eerste) : ''}</table>
-      <table class="pl-tabel pl-nieuwe-pagina">${rest.map(groepHtml).join('')}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
+      <table class="pl-tabel pl-nieuwe-pagina">${rest.map(groepHtml).join(leeg)}${leeg}<tr class="pl-totaal"><td colspan="3"></td><td>Totaal:</td><td></td></tr></table>
     </section>`;
     $('#afdruk').className = 'a4';
     if (samen) return;
