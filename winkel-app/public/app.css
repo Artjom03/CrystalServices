@@ -473,6 +473,8 @@ a{color:var(--navy);}
 @media print{
   .pl-blad{color:#000;font:10pt/1.2 Calibri,Carlito,Arial,sans-serif;}
   .pl-titel{font-size:12pt;font-weight:700;margin-bottom:1mm;}
+  .pl-titel{display:flex;justify-content:space-between;}
+  .pl-datum{font-weight:400;}
   .pl-sub{font-size:9pt;margin-bottom:2mm;}
   .pl-tabel{width:100%;border-collapse:collapse;}
   .pl-tabel td,.pl-tabel th{border:.25mm solid #000;padding:.45mm 2mm;text-align:center;}
