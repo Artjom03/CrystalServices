@@ -32,7 +32,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           V=$(node -p "require('./package.json').version")
-          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --title "Crystal Winkel $V" --notes "Crystal Winkel $V" --target "$GITHUB_SHA"
+          gh release view "v$V" >/dev/null 2>&1 || gh release create "v$V" --draft --title "Crystal Winkel $V" --notes "Crystal Winkel $V" --target "$GITHUB_SHA"
       - run: npm run release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Pas zichtbaar maken als alle bestanden er staan; anders vindt het programma latest.yml nog niet.
+      - name: Release publiceren
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "v$(node -p "require('./package.json').version")" --draft=false --latest
