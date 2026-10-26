@@ -430,3 +430,12 @@ test('vaste locaties in de instellingen', () => {
   ({ staat } = pasToe(staat, { op: 'instellingen', formaat: 'a4' }, nu));
   assert.deepEqual(staat.instellingen.locaties, ['Rek 1', 'Mand 2'], 'blijven bij andere instellingen');
 });
+
+test('vlek zonder aantal: niet geteld, blijft zo bij wijzigen', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A' }, stukken: [{ naam: 'Servet', aantal: 10, prijs: 1, vlek: 'ja', vlekAantal: '' }, { naam: 'Hemd', aantal: 4, prijs: 2, vlek: 'ja', vlekAantal: 2 }] });
+  assert.equal(bon.stukken[0].vlekOngeteld, true);
+  assert.equal(bon.stukken[0].vlekAantal, undefined);
+  assert.equal(bon.stukken[1].vlekAantal, 2);
+  ({ bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { opmerking: 'x' } }, nu));
+  assert.equal(bon.stukken[0].vlekOngeteld, true);
+});

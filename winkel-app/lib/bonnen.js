@@ -73,9 +73,11 @@ export function schoonStukken(stukken) {
     const vlek = tekst(s?.vlek, 120);
     if (vlek) {
       stuk.vlek = vlek;
-      // Hoeveel van de stukken een vlek hebben (bv. 3 van 10 servetten); niet ingevuld = allemaal.
+      // Hoeveel van de stukken een vlek hebben (bv. 3 van 10 servetten). Optioneel: leeg = niet geteld.
       const n = Math.round(Number(s?.vlekAantal));
-      stuk.vlekAantal = n >= 1 ? Math.min(n, aantal) : aantal;
+      if (n >= 1) stuk.vlekAantal = Math.min(n, aantal);
+      else if (s?.vlekAantal === '' || s?.vlekOngeteld) stuk.vlekOngeteld = true;
+      else stuk.vlekAantal = aantal;
     }
     return [stuk];
   });
