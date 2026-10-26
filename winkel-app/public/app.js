@@ -1697,21 +1697,24 @@
     if (samen) return;
     await afdrukken('a4-dubbel', 'prijslijst');
   }
-  // Dienstencheques: invulblad met de minuten per stuk (60 minuten = 1 dienstencheque), zoals de Excel-lijst.
+  // Dienstencheques: invulblad in de layout van de Excel-lijst van de winkel, met de datum van vandaag.
+  // Minuten per stuk (60 minuten = 1 dienstencheque).
   async function drukDienstencheques() {
-    const min = (v) => (v == null ? '' : String(v).replace('.', ','));
+    const min = (v) => (v == null ? '' : String(v));
+    const leeg = '<tr><td></td><td></td><td></td><td></td><td></td></tr>';
+    const kop = (a, b, c, d = '') => `<tr><td colspan="2" class="dc-l">${a}</td><td class="dc-m">${b}</td><td class="dc-r">${c}</td><td>${d}</td></tr>`;
     const rijen = (window.DIENSTENCHEQUES || []).map((d) => `<tr><td>${esc(d.naam)}</td><td></td><td>${min(d.volwassene)}</td><td>${min(d.kind)}</td><td>${min(d.baby)}</td></tr>`).join('');
-    $('#afdruk').innerHTML = `<section class="pl-blad dc-blad">
-      <div class="pl-titel">${esc(WINKEL.naam)} · Dienstencheques<span class="pl-datum">minuten per stuk · 60 min = 1 dienstencheque</span></div>
-      <table class="dc-kop"><tr><td>Klantnummer:</td><td></td><td>Betaald / niet betaald</td></tr>
-        <tr><td>D.C.:</td><td></td><td>Tot: ____________</td></tr>
-        <tr><td>Rez.:</td><td></td><td>M · D · W · D · V · Z</td></tr>
-        <tr><td>Aantal mand/zak:</td><td></td><td>Aantal kapstok:</td></tr></table>
-      <table class="pl-tabel dc-tabel">
-        <tr class="pl-kop"><th>Kledingstuk</th><th>Aantal</th><th>Volwassene</th><th>Kind t.e.m. 152</th><th>Baby t.e.m. 92</th></tr>
-        ${rijen}
-        <tr><td>Andere</td><td></td><td></td><td></td><td></td></tr>
-        <tr class="pl-totaal"><td>Totaal:</td><td></td><td colspan="3"></td></tr>
+    const datum = new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+    $('#afdruk').innerHTML = `<section class="dc-blad">
+      <div class="dc-titel"><div class="dc-klant">Naam klant:<br>Datum: ${esc(datum)}</div><div class="dc-naam">${esc(WINKEL.naam)}</div><div></div></div>
+      <table class="dc-tabel">
+        <colgroup><col style="width:27%"><col style="width:14%"><col style="width:19%"><col style="width:20%"><col style="width:20%"></colgroup>
+        <tr><td colspan="2" class="dc-l">60 Min=1 dienstencheque</td><td class="dc-m"><b>Aan Wauman</b></td><td class="dc-r"><b>Betaald/niet betaald</b></td><td></td></tr>
+        ${kop('Klantnummer:', '', 'tot:')}${kop('D.C:', '', 'M|D|W|D|V|Z')}${kop('Rez:', '', 'aantal mand/zak:')}${kop('', '', 'aantal kapstok:')}
+        <tr><td>Kleding stuk</td><td class="dc-l">aantal</td><td>Volwassene</td><td>Kind T.E.M 152</td><td>Baby T.E.M 92</td></tr>
+        ${rijen}${leeg}
+        <tr><td>andere</td><td></td><td></td><td></td><td></td></tr>${leeg}${leeg}
+        <tr><td class="dc-r">tot:</td><td class="dc-r"></td><td></td><td></td><td></td></tr>
       </table>
     </section>`;
     $('#afdruk').className = 'a4';
