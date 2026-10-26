@@ -1697,6 +1697,26 @@
     if (samen) return;
     await afdrukken('a4-dubbel', 'prijslijst');
   }
+  // Dienstencheques: invulblad met de minuten per stuk (60 minuten = 1 dienstencheque), zoals de Excel-lijst.
+  async function drukDienstencheques() {
+    const min = (v) => (v == null ? '' : String(v).replace('.', ','));
+    const rijen = (window.DIENSTENCHEQUES || []).map((d) => `<tr><td>${esc(d.naam)}</td><td></td><td>${min(d.volwassene)}</td><td>${min(d.kind)}</td><td>${min(d.baby)}</td></tr>`).join('');
+    $('#afdruk').innerHTML = `<section class="pl-blad dc-blad">
+      <div class="pl-titel">${esc(WINKEL.naam)} · Dienstencheques<span class="pl-datum">minuten per stuk · 60 min = 1 dienstencheque</span></div>
+      <table class="dc-kop"><tr><td>Klantnummer:</td><td></td><td>Betaald / niet betaald</td></tr>
+        <tr><td>D.C.:</td><td></td><td>Tot: ____________</td></tr>
+        <tr><td>Rez.:</td><td></td><td>M · D · W · D · V · Z</td></tr>
+        <tr><td>Aantal mand/zak:</td><td></td><td>Aantal kapstok:</td></tr></table>
+      <table class="pl-tabel dc-tabel">
+        <tr class="pl-kop"><th>Kledingstuk</th><th>Aantal</th><th>Volwassene</th><th>Kind t.e.m. 152</th><th>Baby t.e.m. 92</th></tr>
+        ${rijen}
+        <tr><td>Andere</td><td></td><td></td><td></td><td></td></tr>
+        <tr class="pl-totaal"><td>Totaal:</td><td></td><td colspan="3"></td></tr>
+      </table>
+    </section>`;
+    $('#afdruk').className = 'a4';
+    await afdrukken('a4', 'prijslijst');
+  }
   // Een A4 met briefjes om uit te knippen: de klant tekent dat de winkel niet aansprakelijk is voor schade aan de stoffen.
   async function drukAansprakelijk() {
     const briefje = `<div class="na-briefje">
@@ -1718,6 +1738,7 @@
   $('#pl-strijk').addEventListener('click', () => drukPrijslijst(false));
   $('#pl-actie').addEventListener('click', () => drukPrijslijst(true));
   $('#pl-droog').addEventListener('click', () => drukDroogkuis());
+  $('#pl-dc').addEventListener('click', drukDienstencheques);
   $('#pl-na').addEventListener('click', drukAansprakelijk);
   $('#pl-aanpassen').addEventListener('click', () => { $('#prijslijsten').close(); openPrijslijst(); });
   $('#i-indeling').addEventListener('click', () => { $('#instellingen').close(); openIndeling(); });
