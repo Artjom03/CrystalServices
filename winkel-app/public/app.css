@@ -390,6 +390,9 @@ a{color:var(--navy);}
   .a4-accent{background:#0E1F42;border-color:#0E1F42;color:#fff;}
   .a4-accent h4{color:#9CC7E8;}
   .a4-accent b{font-size:12.5pt;}
+  .a4-vliegtuig{border-color:#1D5A8A;border-width:.5mm;}
+  .a4-vliegtuig b{font-size:14pt;letter-spacing:.04em;}
+  .vr-ongeteld{display:block;font-size:7pt;color:#7a2b2b;}
   .a4-tabel{width:100%;border-collapse:collapse;margin-top:4mm;font-size:9.5pt;}
   .a4-tabel th{background:#0E1F42;color:#fff;font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:1.5mm 3mm;}
   .a4-tabel th:first-child{border-radius:2mm 0 0 2mm;}
