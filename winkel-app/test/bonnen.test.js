@@ -203,10 +203,10 @@ test('klantenbestand: blijft bewaard als de bonnen gewist zijn, en is aan te vul
   ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, toen));
   const sleutel = klantSleutel(bon.klant);
   ({ staat } = pasToe(staat, { op: 'klant', sleutel, klant: { adres: 'Kerkstraat 1, 2000 Antwerpen', btw: 'BE0123456789' } }, toen));
-  // Twee jaar later: de bon is weg, de klant niet.
+  // Twee jaar later: met een btw-nummer blijft de bon bewaard, de klant ook.
   ({ staat } = pasToe(staat, { op: 'instellingen', bewaarMaanden: 1 }, nu));
   const w = voorWinkel(staat, nu);
-  assert.equal(w.bonnen.length, 0);
+  assert.equal(w.bonnen.length, 1);
   assert.equal(w.klantenboek[sleutel].naam, 'René Peeters');
   assert.equal(w.klantenboek[sleutel].adres, 'Kerkstraat 1, 2000 Antwerpen');
   // Oudere gegevens zonder klantenbestand: wordt opgebouwd uit de bonnen.
@@ -251,7 +251,8 @@ test('factuur aanvragen: gegevens bij de klant bewaard, afvinken, en de bon blij
   assert.equal(voorWinkel(staat, nu).bonnen.length, 1);
   ({ staat, bon } = pasToe(staat, { op: 'factuurGemaakt', id: bon.id }, nu));
   assert.ok(bon.factuur.gemaaktOp);
-  assert.equal(voorWinkel(staat, new Date('2026-12-01T09:00:00Z')).bonnen.length, 0);
+  // Met een btw-nummer blijft de bon ook daarna bewaard.
+  assert.equal(voorWinkel(staat, new Date('2026-12-01T09:00:00Z')).bonnen.length, 1);
   // Een nieuwe bon van dezelfde klant krijgt het adres al mee.
   let b2;
   ({ staat, bon: b2 } = nieuw(staat, { klant: { naam: 'Firma X', telefoon: '0470 00 00 01' } }));
