@@ -69,6 +69,9 @@ export function schoonStukken(stukken) {
     if (!naam) return [];
     const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
     const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
+    // Was per kilo (professionele klanten): het gewicht, zodat de kilo's per week op te tellen zijn.
+    const kg = Math.round(Number(String(s?.kg ?? '').replace(',', '.')) * 10) / 10;
+    if (kg > 0 && kg < 10000) stuk.kg = kg;
     // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
     const vlek = tekst(s?.vlek, 120);
     if (vlek) {
@@ -239,6 +242,11 @@ export function vliegtuigKlant(boek, klant) {
   if (k && typeof k.vliegtuig === 'boolean') return k.vliegtuig;
   return VLIEGTUIG_NAAM.test(String(klant?.naam || ''));
 }
+/** Professionele klant: hun bonnen blijven bewaard en er wordt altijd een factuur van gemaakt. */
+export function proKlant(boek, klant) {
+  return Boolean(boek?.[klantSleutel(klant)]?.pro);
+}
+
 export const VLIEGTUIG_NAAM = /flying|\basl\b|\bisl\b/i;
 
 function zetKlant(boek, klant, iso, extra = {}) {
@@ -372,6 +380,11 @@ function handeling(oud, actie, nu) {
         verwittigdOp: '',
         gewijzigdOp: iso,
       };
+      // Professionele klant: altijd een factuur.
+      if (proKlant(staat.klantenboek, bon.klant)) {
+        const k = staat.klantenboek[klantSleutel(bon.klant)];
+        bon.factuur = { gevraagdOp: iso, gemaaktOp: '', naam: k.naam || '', adres: k.adres || '', btw: k.btw || '', email: bon.klant.email || k.email || '' };
+      }
       staat.bonnen.push(bon);
       // Enkel bewaren in Klanten als de winkel dat vraagt; een gekende klant wordt aangevuld.
       if (actie.bewaarKlant || staat.klantenboek[klantSleutel(bon.klant)]) zetKlant(staat.klantenboek, bon.klant, iso);
@@ -476,7 +489,8 @@ function handeling(oud, actie, nu) {
       if (staat.klantenboek[sleutel]) throw new Fout(`${staat.klantenboek[sleutel].naam} staat al in Klanten`);
       zetKlant(staat.klantenboek, { naam, telefoon: k.telefoon, email: k.email }, iso, {
         adres: tekst(k.adres, 160), btw: tekst(k.btw, 30), notitie: tekst(k.notitie, 300),
-        vlekkenrapport: Boolean(k.vlekkenrapport), ...(typeof k.vliegtuig === 'boolean' ? { vliegtuig: k.vliegtuig } : {}),
+        vlekkenrapport: Boolean(k.vlekkenrapport), pro: Boolean(k.pro), kiloprijs: prijsOfLeeg(k.kiloprijs),
+        ...(typeof k.vliegtuig === 'boolean' ? { vliegtuig: k.vliegtuig } : {}),
       });
       return { staat, klant: staat.klantenboek[sleutel] };
     }
@@ -505,6 +519,9 @@ function handeling(oud, actie, nu) {
         notitie: tekst(k.notitie ?? oud.notitie, 300),
         // Klant krijgt een aparte A4-bon met vlekkencontrole (bv. een bedrijf dat dat vraagt).
         vlekkenrapport: Boolean(k.vlekkenrapport ?? oud.vlekkenrapport),
+        // Professionele klant (bonnen bewaren, altijd factuur) en hun prijs voor was per kilo.
+        pro: Boolean(k.pro ?? oud.pro),
+        kiloprijs: k.kiloprijs !== undefined ? prijsOfLeeg(k.kiloprijs) : oud.kiloprijs ?? null,
         // Op elke bon het vliegtuig vermelden (luchtvaartklanten).
         ...(typeof (k.vliegtuig ?? oud.vliegtuig) === 'boolean' ? { vliegtuig: Boolean(k.vliegtuig ?? oud.vliegtuig) } : {}),
         gewijzigdOp: iso,
@@ -588,7 +605,8 @@ function handeling(oud, actie, nu) {
     case 'dagWissen': {
       // Na het dagoverzicht: alle betalingen en opgehaalde bonnen weg. Bonnen die nog opgehaald
       // moeten worden blijven staan, net als een opgehaalde bon waarvoor nog een factuur gemaakt moet worden.
-      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp));
+      // Bonnen van professionele klanten blijven altijd bewaard (voor de facturen en de kilo's per week).
+      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp) || proKlant(staat.klantenboek, b.klant));
       staat.betalingen = [];
       staat.kassa = {};
       return { staat };

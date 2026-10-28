@@ -439,3 +439,17 @@ test('vlek zonder aantal: niet geteld, blijft zo bij wijzigen', () => {
   ({ bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { opmerking: 'x' } }, nu));
   assert.equal(bon.stukken[0].vlekOngeteld, true);
 });
+
+test('professionele klant: kiloprijs, kilo bewaard, altijd factuur, bonnen niet gewist', () => {
+  let { staat } = pasToe(LEEG, { op: 'klantNieuw', klant: { naam: 'Hotel X', telefoon: '0470 55 66 77', pro: true, kiloprijs: '2,50', btw: 'BE01' } }, nu);
+  const k = Object.values(staat.klantenboek)[0];
+  assert.equal(k.pro, true); assert.equal(k.kiloprijs, 2.5);
+  let bon;
+  ({ staat, bon } = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Hotel X', telefoon: '0470 55 66 77' }, stukken: [{ naam: 'Was per kg', aantal: 1, prijs: 31.25, behandeling: 'was', kg: '12,5' }] } }, nu));
+  assert.equal(bon.stukken[0].kg, 12.5);
+  assert.equal(bon.factuur.btw, 'BE01');
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, nu));
+  ({ staat } = pasToe(staat, { op: 'factuurGemaakt', id: bon.id }, nu));
+  ({ staat } = pasToe(staat, { op: 'dagWissen' }, nu));
+  assert.equal(staat.bonnen.length, 1, 'bon van pro-klant blijft');
+});
