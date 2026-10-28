@@ -247,6 +247,12 @@ export function proKlant(boek, klant) {
   return Boolean(boek?.[klantSleutel(klant)]?.pro);
 }
 
+/** Bonnen die lang bewaard blijven: van professionele klanten en van klanten met een btw-nummer. */
+export function blijftBewaard(staat, b) {
+  const k = staat.klantenboek?.[klantSleutel(b.klant)];
+  return Boolean(k?.pro || k?.btw || b.factuur?.btw);
+}
+
 export const VLIEGTUIG_NAAM = /flying|\basl\b|\bisl\b/i;
 
 function zetKlant(boek, klant, iso, extra = {}) {
@@ -315,7 +321,8 @@ export function teBewaren(staat, nu = new Date()) {
   grens.setMonth(grens.getMonth() - instellingenVan(staat).bewaarMaanden);
   const iso = grens.toISOString();
   // Een gevraagde factuur die nog niet gemaakt is, houdt de bon vast.
-  return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso && !(b.factuur && !b.factuur.gemaaktOp)));
+  // Bonnen van professionele klanten of klanten met een btw-nummer worden nooit automatisch gewist.
+  return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso && !(b.factuur && !b.factuur.gemaaktOp) && !blijftBewaard(staat, b)));
 }
 
 /** Elk bonnummer is een willekeurig getal van 6 cijfers, dat nog niet bij een andere bon hoort. */
@@ -605,8 +612,8 @@ function handeling(oud, actie, nu) {
     case 'dagWissen': {
       // Na het dagoverzicht: alle betalingen en opgehaalde bonnen weg. Bonnen die nog opgehaald
       // moeten worden blijven staan, net als een opgehaalde bon waarvoor nog een factuur gemaakt moet worden.
-      // Bonnen van professionele klanten blijven altijd bewaard (voor de facturen en de kilo's per week).
-      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp) || proKlant(staat.klantenboek, b.klant));
+      // Bonnen van professionele klanten en klanten met een btw-nummer blijven bewaard (facturen, kilo's per week).
+      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp) || blijftBewaard(staat, b));
       staat.betalingen = [];
       staat.kassa = {};
       return { staat };

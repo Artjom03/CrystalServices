@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pasToe, LEEG } from '../lib/bonnen.js';
+import { pasToe, LEEG, teBewaren } from '../lib/bonnen.js';
 
 const nu = new Date('2026-10-09T09:00:00Z');
 // De testen bewaren de klant in Klanten, zoals met het vinkje "Klant bewaren".
@@ -452,4 +452,15 @@ test('professionele klant: kiloprijs, kilo bewaard, altijd factuur, bonnen niet 
   ({ staat } = pasToe(staat, { op: 'factuurGemaakt', id: bon.id }, nu));
   ({ staat } = pasToe(staat, { op: 'dagWissen' }, nu));
   assert.equal(staat.bonnen.length, 1, 'bon van pro-klant blijft');
+});
+
+test('klant met btw-nummer: bonnen blijven bewaard', () => {
+  let { staat } = pasToe(LEEG, { op: 'klantNieuw', klant: { naam: 'Firma Y', telefoon: '0470 12 12 12', btw: 'BE0999' } }, nu);
+  let bon;
+  ({ staat, bon } = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Firma Y', telefoon: '0470 12 12 12' } } }, nu));
+  ({ staat } = pasToe(staat, { op: 'status', id: bon.id, status: 'opgehaald' }, nu));
+  ({ staat } = pasToe(staat, { op: 'dagWissen' }, nu));
+  assert.equal(staat.bonnen.length, 1);
+  const later = new Date(nu); later.setFullYear(later.getFullYear() + 3);
+  assert.equal(teBewaren(staat, later).length, 1, 'ook niet na jaren gewist');
 });
