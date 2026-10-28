@@ -2420,12 +2420,15 @@
   }
   const korteDag = (dag) => new Date(dag + 'T12:00:00').toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
   const weekEinde = (maandag) => { const d = new Date(maandag + 'T12:00:00'); d.setDate(d.getDate() + 6); return d.toISOString().slice(0, 10); };
-  /** De bonnen van een klant per week: kilo's en bedrag. */
-  function klantWeken(k) {
+  const maandVan = (iso) => dagVan(iso).slice(0, 7) + '-01';
+  const maandEinde = (eerste) => { const d = new Date(eerste + 'T12:00:00'); d.setMonth(d.getMonth() + 1, 0); return d.toISOString().slice(0, 10); };
+  const maandNaam = (eerste) => new Date(eerste + 'T12:00:00').toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' });
+  /** De bonnen van een klant per week (of per maand): kilo's en bedrag. */
+  function klantWeken(k, perMaand = false) {
     const per = new Map();
     for (const b of staat.bonnen || []) {
       if (klantSleutel(b.klant) !== k.sleutel) continue;
-      const w = weekVan(b.binnenOp);
+      const w = perMaand ? maandVan(b.binnenOp) : weekVan(b.binnenOp);
       const x = per.get(w) || { week: w, bonnen: [], kg: 0, totaal: 0 };
       x.bonnen.push(b);
       x.kg += b.stukken.reduce((n, st) => n + (st.kg || 0), 0);
@@ -2436,14 +2439,17 @@
   }
   const kgTekst = (kg) => (Math.round(kg * 10) / 10).toString().replace('.', ',') + ' kg';
   function toonKiloWeken(k) {
+    const regel = (w, maand) => `<div class="kl-week">
+        <span>${maand ? esc(maandNaam(w.week)) : 'Week van ' + esc(korteDag(w.week))}</span><span>${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · <b>' + kgTekst(w.kg) + '</b>' : ''} · ${eur(w.totaal)}</span>
+        <button type="button" class="knop klein" data-${maand ? 'maand' : 'week'}="${w.week}">🖨 ${maand ? 'Maandoverzicht' : 'Weekoverzicht'}</button></div>`;
+    const maanden = klantWeken(k, true).slice(0, 12);
     const weken = klantWeken(k).slice(0, 12);
-    $('#kl-weken').innerHTML = weken.length ? `<h4>Per week</h4>${weken.map((w) => `<div class="kl-week">
-        <span>Week van ${esc(korteDag(w.week))}</span><span>${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · <b>' + kgTekst(w.kg) + '</b>' : ''} · ${eur(w.totaal)}</span>
-        <button type="button" class="knop klein" data-week="${w.week}">🖨 Weekoverzicht</button></div>`).join('')}` : '';
+    $('#kl-weken').innerHTML = (maanden.length ? `<h4>Per maand</h4>${maanden.map((w) => regel(w, true)).join('')}` : '')
+      + (weken.length ? `<h4>Per week</h4>${weken.map((w) => regel(w, false)).join('')}` : '');
   }
   // Weekoverzicht op A4: alle bonnen van die week, met de kilo's en het totaal, om de factuur te maken.
-  async function drukWeek(k, week) {
-    const w = klantWeken(k).find((x) => x.week === week);
+  async function drukWeek(k, week, perMaand = false) {
+    const w = klantWeken(k, perMaand).find((x) => x.week === week);
     if (!w) return;
     const rijen = w.bonnen.sort((a, b) => a.binnenOp.localeCompare(b.binnenOp)).map((b) => `<tr>
         <td>${esc(b.nr)}</td><td>${esc(korteDag(dagVan(b.binnenOp)))}</td>
@@ -2451,8 +2457,8 @@
         <td class="r">${(() => { const kg = b.stukken.reduce((n, st) => n + (st.kg || 0), 0); return kg ? kgTekst(kg) : ''; })()}</td>
         <td class="r">${eur(b.totaal)}${b.prijsOpen ? ' +' : ''}</td></tr>`).join('');
     $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
-      <div class="a4-titelrij"><div><div class="a4-soort">Weekoverzicht</div><div class="a4-nr">${esc(k.naam)}</div></div></div>
-      <p>Week van ${esc(korteDag(week))} t.e.m. ${esc(korteDag(weekEinde(week)))}${k.btw ? ' · Btw ' + esc(k.btw) : ''}${k.kiloprijs != null ? ' · Kiloprijs ' + eur(k.kiloprijs) + '/kg' : ''}</p>
+      <div class="a4-titelrij"><div><div class="a4-soort">${perMaand ? 'Maandoverzicht' : 'Weekoverzicht'}</div><div class="a4-nr">${esc(k.naam)}</div></div></div>
+      <p>${perMaand ? esc(maandNaam(week)) + ': ' : 'Week van '}${esc(korteDag(week))} t.e.m. ${esc(korteDag(perMaand ? maandEinde(week) : weekEinde(week)))}${k.btw ? ' · Btw ' + esc(k.btw) : ''}${k.kiloprijs != null ? ' · Kiloprijs ' + eur(k.kiloprijs) + '/kg' : ''}</p>
       <table class="a4-tabel"><thead><tr><th>Bon</th><th>Datum</th><th>Stukken</th><th class="r">Kilo</th><th class="r">Bedrag</th></tr></thead>
         <tbody>${rijen}</tbody></table>
       <div class="a4-totaal"><span>Totaal · ${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
@@ -2462,8 +2468,8 @@
     await afdrukken('a4', 'a4');
   }
   $('#kl-weken').addEventListener('click', (e) => {
-    const week = e.target.closest('[data-week]')?.dataset.week;
-    if (week && klantOpen) drukWeek(klantOpen, week);
+    const knop = e.target.closest('[data-week], [data-maand]');
+    if (knop && klantOpen) drukWeek(klantOpen, knop.dataset.week || knop.dataset.maand, Boolean(knop.dataset.maand));
   });
 
   // Een klant zelf toevoegen: een leeg formulier.
