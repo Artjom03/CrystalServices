@@ -2444,24 +2444,45 @@
         <button type="button" class="knop klein" data-${maand ? 'maand' : 'week'}="${w.week}">🖨 ${maand ? 'Maandoverzicht' : 'Weekoverzicht'}</button></div>`;
     const maanden = klantWeken(k, true).slice(0, 12);
     const weken = klantWeken(k).slice(0, 12);
-    $('#kl-weken').innerHTML = (maanden.length ? `<h4>Per maand</h4>${maanden.map((w) => regel(w, true)).join('')}` : '')
+    $('#kl-weken').innerHTML = (maanden.length || weken.length ? '<label class="vink"><input type="checkbox" id="kl-detail"> Gedetailleerd: alle stukken per bon</label>' : '') + (maanden.length ? `<h4>Per maand</h4>${maanden.map((w) => regel(w, true)).join('')}` : '')
       + (weken.length ? `<h4>Per week</h4>${weken.map((w) => regel(w, false)).join('')}` : '');
   }
   // Weekoverzicht op A4: alle bonnen van die week, met de kilo's en het totaal, om de factuur te maken.
+  // Gedetailleerd: per bon alle stukken. Niet gedetailleerd: per bon enkel het aantal stuks.
+  // Bij vliegtuigen ook per dag het vliegtuig, en onderaan een samenvatting per vliegtuig.
   async function drukWeek(k, week, perMaand = false) {
     const w = klantWeken(k, perMaand).find((x) => x.week === week);
     if (!w) return;
-    const rijen = w.bonnen.sort((a, b) => a.binnenOp.localeCompare(b.binnenOp)).map((b) => `<tr>
-        <td>${esc(b.nr)}</td><td>${esc(korteDag(dagVan(b.binnenOp)))}</td>
-        <td>${esc(b.stukken.map((st) => st.aantal + '× ' + kaleNaam(st)).join(', ') || b.soort)}</td>
-        <td class="r">${(() => { const kg = b.stukken.reduce((n, st) => n + (st.kg || 0), 0); return kg ? kgTekst(kg) : ''; })()}</td>
+    const detail = $('#kl-detail').checked;
+    const bonnen = w.bonnen.sort((a, b) => a.binnenOp.localeCompare(b.binnenOp));
+    const metVliegtuig = bonnen.some((b) => b.vliegtuig);
+    const stuks = (b) => b.stukken.reduce((n, st) => n + st.aantal, 0);
+    const kgVan = (b) => b.stukken.reduce((n, st) => n + (st.kg || 0), 0);
+    const metKg = bonnen.some((b) => kgVan(b));
+    const rijen = bonnen.map((b) => `<tr>
+        <td>${esc(korteDag(dagVan(b.binnenOp)))}</td>
+        ${metVliegtuig ? `<td><b>${esc(b.vliegtuig || '—')}</b></td>` : ''}
+        <td>${esc(b.nr)}</td>
+        <td>${detail ? esc(b.stukken.map((st) => st.aantal + '× ' + kaleNaam(st)).join(', ') || b.soort) : stuks(b) + ' stuk' + (stuks(b) === 1 ? '' : 's')}</td>
+        ${metKg ? `<td class="r">${kgVan(b) ? kgTekst(kgVan(b)) : ''}</td>` : ''}
         <td class="r">${eur(b.totaal)}${b.prijsOpen ? ' +' : ''}</td></tr>`).join('');
+    // Samenvatting per vliegtuig: hoeveel keer, hoeveel stuks, welk bedrag.
+    const perToestel = new Map();
+    for (const b of bonnen) {
+      const x = perToestel.get(b.vliegtuig || '—') || { keer: 0, stuks: 0, totaal: 0, dagen: new Set() };
+      x.keer += 1; x.stuks += stuks(b); x.totaal += b.totaal || 0; x.dagen.add(korteDag(dagVan(b.binnenOp)).slice(0, 5));
+      perToestel.set(b.vliegtuig || '—', x);
+    }
+    const samenvatting = metVliegtuig ? `<h3 class="a4-sub">Per vliegtuig</h3>
+      <table class="a4-tabel"><thead><tr><th>Vliegtuig</th><th>Keer</th><th>Dagen</th><th class="r">Stuks</th><th class="r">Bedrag</th></tr></thead>
+      <tbody>${[...perToestel].sort((a, b) => a[0].localeCompare(b[0])).map(([v, x]) => `<tr><td><b>${esc(v)}</b></td><td>${x.keer}</td><td>${esc([...x.dagen].join(', '))}</td><td class="r">${x.stuks}</td><td class="r">${eur(x.totaal)}</td></tr>`).join('')}</tbody></table>` : '';
     $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
-      <div class="a4-titelrij"><div><div class="a4-soort">${perMaand ? 'Maandoverzicht' : 'Weekoverzicht'}</div><div class="a4-nr">${esc(k.naam)}</div></div></div>
+      <div class="a4-titelrij"><div><div class="a4-soort">${perMaand ? 'Maandoverzicht' : 'Weekoverzicht'}${detail ? ' · gedetailleerd' : ''}</div><div class="a4-nr">${esc(k.naam)}</div></div></div>
       <p>${perMaand ? esc(maandNaam(week)) + ': ' : 'Week van '}${esc(korteDag(week))} t.e.m. ${esc(korteDag(perMaand ? maandEinde(week) : weekEinde(week)))}${k.btw ? ' · Btw ' + esc(k.btw) : ''}${k.kiloprijs != null ? ' · Kiloprijs ' + eur(k.kiloprijs) + '/kg' : ''}</p>
-      <table class="a4-tabel"><thead><tr><th>Bon</th><th>Datum</th><th>Stukken</th><th class="r">Kilo</th><th class="r">Bedrag</th></tr></thead>
+      <table class="a4-tabel"><thead><tr><th>Datum</th>${metVliegtuig ? '<th>Vliegtuig</th>' : ''}<th>Bon</th><th>${detail ? 'Stukken' : 'Aantal'}</th>${metKg ? '<th class="r">Kilo</th>' : ''}<th class="r">Bedrag</th></tr></thead>
         <tbody>${rijen}</tbody></table>
-      <div class="a4-totaal"><span>Totaal · ${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
+      ${samenvatting}
+      <div class="a4-totaal"><span>Totaal · ${bonnen.length} bon${bonnen.length === 1 ? '' : 'nen'} · ${bonnen.reduce((n, b) => n + stuks(b), 0)} stuks${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
     </section>`;
     $('#afdruk').className = 'a4';
     await logoGeladen();
