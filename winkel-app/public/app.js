@@ -194,6 +194,13 @@
   const nietGescand = (b) => ticketsVan(b).map((t, i) => ({ ...t, i })).filter((t) => !gescandeTickets.get(b.id)?.has(t.i));
   const ticketNaam = (t) => `ticket ${t.i + 1}${t.locatie ? ' (' + t.locatie + ')' : ''}`;
   const klantSleutel = (k) => telefoonIntl(k.telefoon) || 'naam:' + zoekVorm(k.naam).trim();
+  /** De klant in Klanten (op sleutel, of anders op naam), of niets. */
+  function boekKlant(k) {
+    if (!k || !k.naam) return null;
+    const sleutel = klantSleutel(k);
+    const naam = zoekVorm(k.naam).trim();
+    return Object.values(staat.klantenboek || {}).find((x) => x.sleutel === sleutel || zoekVorm(x.naam).trim() === naam) || null;
+  }
   /** Krijgt deze klant de aparte A4-bon met vlekkencontrole? (op sleutel, of anders op naam) */
   function vlekkenKlant(k) {
     if (!k) return false;
@@ -1415,6 +1422,10 @@
     // "Klant bewaren" enkel voor wie nog niet in Klanten staat.
     $('#f-bewaar-klant').hidden = Boolean(staat.klantenboek?.[klantSleutel(k)]) || !k.naam.trim();
     $('#f-vlekken').hidden = !vlekkenKlant(k);
+    // Was per kilo: enkel voor een klant met een kiloprijs.
+    const bk = boekKlant(k);
+    $('#f-kilo').hidden = !(bk && bk.kiloprijs != null);
+    if (bk && bk.kiloprijs != null) $('#f-kilo-prijs').textContent = eur(bk.kiloprijs) + ' per kg';
     $('#f-vliegtuig-veld').hidden = !vliegtuigKlant(k) && !$('#f').vliegtuig.value;
   };
   $('#f').naam.addEventListener('input', toonVlekUitleg);
@@ -1427,6 +1438,18 @@
     const k = klanten().find((x) => x.sleutel === knop.dataset.klant);
     if (k) vulKlant(k);
     $('#f-stuk').focus();
+  });
+
+  // Was per kilo toevoegen: gewicht × de kiloprijs van de klant.
+  $('#f-kilo-plus').addEventListener('click', () => {
+    const f = $('#f');
+    const bk = boekKlant({ naam: f.naam.value, telefoon: f.telefoon.value });
+    const kg = Math.round(Number($('#f-kg').value.replace(',', '.')) * 10) / 10;
+    if (!bk || bk.kiloprijs == null || !(kg > 0)) { $('#f-kg').focus(); return; }
+    regels.push({ naam: `Was per kg (${kgTekst(kg)})`, aantal: 1, prijs: Math.round(kg * bk.kiloprijs * 100) / 100, behandeling: 'was', kg });
+    soortVoor('was');
+    $('#f-kg').value = '';
+    toonRegels(regels.length - 1);
   });
 
   // Tickets in het formulier: hoeveel zakken, manden of hangers, en per ticket de locatie.
@@ -2377,6 +2400,9 @@
     for (const veld of ['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie']) f[veld].value = k[veld] || '';
     f.vlekkenrapport.checked = Boolean(k.vlekkenrapport);
     f.vliegtuig.checked = vliegtuigKlant(k);
+    f.pro.checked = Boolean(k.pro);
+    f.kiloprijs.value = k.kiloprijs == null ? '' : String(k.kiloprijs).replace('.', ',');
+    toonKiloWeken(k);
     $('#kl-titel').textContent = k.naam;
     $('#kl-bonnen').hidden = false;
     $('#kl-nieuw').hidden = false;
@@ -2385,11 +2411,67 @@
     $('#kl-lijst').hidden = true;
     f.hidden = false;
   });
+  // ---------- Kilo's per week (professionele klanten) ----------
+  /** De maandag (YYYY-MM-DD) van de week waarin een tijdstip valt. */
+  function weekVan(iso) {
+    const d = new Date(dagVan(iso) + 'T12:00:00');
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  }
+  const korteDag = (dag) => new Date(dag + 'T12:00:00').toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+  const weekEinde = (maandag) => { const d = new Date(maandag + 'T12:00:00'); d.setDate(d.getDate() + 6); return d.toISOString().slice(0, 10); };
+  /** De bonnen van een klant per week: kilo's en bedrag. */
+  function klantWeken(k) {
+    const per = new Map();
+    for (const b of staat.bonnen || []) {
+      if (klantSleutel(b.klant) !== k.sleutel) continue;
+      const w = weekVan(b.binnenOp);
+      const x = per.get(w) || { week: w, bonnen: [], kg: 0, totaal: 0 };
+      x.bonnen.push(b);
+      x.kg += b.stukken.reduce((n, st) => n + (st.kg || 0), 0);
+      x.totaal += b.totaal || 0;
+      per.set(w, x);
+    }
+    return [...per.values()].sort((a, b) => b.week.localeCompare(a.week));
+  }
+  const kgTekst = (kg) => (Math.round(kg * 10) / 10).toString().replace('.', ',') + ' kg';
+  function toonKiloWeken(k) {
+    const weken = klantWeken(k).slice(0, 12);
+    $('#kl-weken').innerHTML = weken.length ? `<h4>Per week</h4>${weken.map((w) => `<div class="kl-week">
+        <span>Week van ${esc(korteDag(w.week))}</span><span>${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · <b>' + kgTekst(w.kg) + '</b>' : ''} · ${eur(w.totaal)}</span>
+        <button type="button" class="knop klein" data-week="${w.week}">🖨 Weekoverzicht</button></div>`).join('')}` : '';
+  }
+  // Weekoverzicht op A4: alle bonnen van die week, met de kilo's en het totaal, om de factuur te maken.
+  async function drukWeek(k, week) {
+    const w = klantWeken(k).find((x) => x.week === week);
+    if (!w) return;
+    const rijen = w.bonnen.sort((a, b) => a.binnenOp.localeCompare(b.binnenOp)).map((b) => `<tr>
+        <td>${esc(b.nr)}</td><td>${esc(korteDag(dagVan(b.binnenOp)))}</td>
+        <td>${esc(b.stukken.map((st) => st.aantal + '× ' + kaleNaam(st)).join(', ') || b.soort)}</td>
+        <td class="r">${(() => { const kg = b.stukken.reduce((n, st) => n + (st.kg || 0), 0); return kg ? kgTekst(kg) : ''; })()}</td>
+        <td class="r">${eur(b.totaal)}${b.prijsOpen ? ' +' : ''}</td></tr>`).join('');
+    $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
+      <div class="a4-titelrij"><div><div class="a4-soort">Weekoverzicht</div><div class="a4-nr">${esc(k.naam)}</div></div></div>
+      <p>Week van ${esc(korteDag(week))} t.e.m. ${esc(korteDag(weekEinde(week)))}${k.btw ? ' · Btw ' + esc(k.btw) : ''}${k.kiloprijs != null ? ' · Kiloprijs ' + eur(k.kiloprijs) + '/kg' : ''}</p>
+      <table class="a4-tabel"><thead><tr><th>Bon</th><th>Datum</th><th>Stukken</th><th class="r">Kilo</th><th class="r">Bedrag</th></tr></thead>
+        <tbody>${rijen}</tbody></table>
+      <div class="a4-totaal"><span>Totaal · ${w.bonnen.length} bon${w.bonnen.length === 1 ? '' : 'nen'}${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
+    </section>`;
+    $('#afdruk').className = 'a4';
+    await logoGeladen();
+    await afdrukken('a4', 'a4');
+  }
+  $('#kl-weken').addEventListener('click', (e) => {
+    const week = e.target.closest('[data-week]')?.dataset.week;
+    if (week && klantOpen) drukWeek(klantOpen, week);
+  });
+
   // Een klant zelf toevoegen: een leeg formulier.
   $('#kl-toevoegen').addEventListener('click', () => {
     klantOpen = null;
     const f = $('#kl-form');
     f.reset();
+    $('#kl-weken').innerHTML = '';
     // Wat in het zoekveld staat, is meestal de naam of het gsm-nummer.
     const zoek = $('#kl-zoek').value.trim();
     if (zoek) f[/^[\d\s+/.-]+$/.test(zoek) ? 'telefoon' : 'naam'].value = zoek;
@@ -2418,7 +2500,7 @@
   $('#kl-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target;
-    const klant = { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked, vliegtuig: f.vliegtuig.checked };
+    const klant = { ...Object.fromEntries(['naam', 'telefoon', 'email', 'adres', 'btw', 'notitie'].map((v) => [v, f[v].value])), vlekkenrapport: f.vlekkenrapport.checked, vliegtuig: f.vliegtuig.checked, pro: f.pro.checked, kiloprijs: f.kiloprijs.value.trim() };
     try {
       if (klantOpen) await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant });
       else {
