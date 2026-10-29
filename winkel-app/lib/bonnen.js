@@ -61,6 +61,8 @@ function datum(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
 }
 
+export const EXTERN = ['', 'zelf', 'sturen', 'weg', 'terug'];
+
 /** Houdt enkel de velden over die we kennen, met redelijke grenzen. */
 export function schoonStukken(stukken) {
   if (!Array.isArray(stukken)) return [];
@@ -72,6 +74,11 @@ export function schoonStukken(stukken) {
     // Was per kilo (professionele klanten): het gewicht, zodat de kilo's per week op te tellen zijn.
     const kg = Math.round(Number(String(s?.kg ?? '').replace(',', '.')) * 10) / 10;
     if (kg > 0 && kg < 10000) stuk.kg = kg;
+    // Droogkuis bij de partner: zelf, te versturen, weg (bij de partner) of terug, met wanneer.
+    if (EXTERN.includes(s?.extern) && s.extern) {
+      stuk.extern = s.extern;
+      if (s.externOp) stuk.externOp = tekst(s.externOp, 40);
+    }
     // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
     const vlek = tekst(s?.vlek, 120);
     if (vlek) {
@@ -425,6 +432,21 @@ function handeling(oud, actie, nu) {
       }
       staat.bonnen[i] = b;
       return { staat, bon: b };
+    }
+    case 'extern': {
+      // Droogkuisstukken naar de partner: per stuk (bon-id + volgnummer) een nieuwe stand.
+      if (!EXTERN.includes(actie.status)) throw new Fout('Onbekende stand');
+      const lijst = Array.isArray(actie.stukken) ? actie.stukken.slice(0, 500) : [];
+      for (const { id, index } of lijst) {
+        const i = staat.bonnen.findIndex((b) => b.id === id);
+        if (i < 0 || !staat.bonnen[i].stukken[index]) continue;
+        const stukken = [...staat.bonnen[i].stukken];
+        const st = { ...stukken[index] };
+        if (actie.status) { st.extern = actie.status; st.externOp = iso; } else { delete st.extern; delete st.externOp; }
+        stukken[index] = st;
+        staat.bonnen[i] = { ...staat.bonnen[i], stukken, gewijzigdOp: iso };
+      }
+      return { staat };
     }
     case 'locatie': {
       // Waar de kleren liggen of hangen (rek, plank, mand), los van de rest van de bon.

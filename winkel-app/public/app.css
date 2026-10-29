@@ -298,6 +298,11 @@ a{color:var(--navy);}
 .kl-week{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--lijn,#ddd);font-size:.92rem;}
 .btw-regel{font-size:.8rem;font-weight:400;color:var(--ink-soft,#666);}
 .p-ander{min-height:1.2em;font-weight:600;}
+.pt-blok{margin-bottom:18px;}
+.pt-blok h3{display:flex;align-items:center;gap:8px;}
+.pt-rij{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--lijn,#ddd);}
+.pt-rij small{display:block;color:var(--ink-soft,#666);font-size:.85rem;}
+.pt-knoppen{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}

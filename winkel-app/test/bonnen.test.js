@@ -465,3 +465,14 @@ test('klant met btw-nummer: bonnen blijven bewaard', () => {
   const later = new Date(nu); later.setFullYear(later.getFullYear() + 3);
   assert.equal(teBewaren(staat, later).length, 1, 'ook niet na jaren gewist');
 });
+
+test('droogkuis bij de partner: sturen, weg, terug', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'A' }, stukken: [{ naam: 'Mantel', behandeling: 'droogkuis', prijs: 25 }, { naam: 'Kleed', behandeling: 'droogkuis', prijs: 20 }] });
+  ({ staat } = pasToe(staat, { op: 'extern', status: 'sturen', stukken: [{ id: bon.id, index: 0 }] }, nu));
+  assert.equal(staat.bonnen[0].stukken[0].extern, 'sturen');
+  ({ staat } = pasToe(staat, { op: 'extern', status: 'weg', stukken: [{ id: bon.id, index: 0 }] }, nu));
+  ({ staat, bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { opmerking: 'x' } }, nu));
+  assert.equal(bon.stukken[0].extern, 'weg', 'blijft bij wijzigen');
+  assert.equal(bon.stukken[1].extern, undefined);
+  assert.throws(() => pasToe(staat, { op: 'extern', status: 'raar', stukken: [] }, nu), /Onbekende/);
+});

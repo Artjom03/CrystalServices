@@ -327,7 +327,8 @@
     }
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const locatie = (b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '')
-      + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '');
+      + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '')
+      + (b.stukken.some((st) => st.extern === 'weg') ? ' · <b class="loc">🚚 bij partner</b>' : b.stukken.some((st) => st.extern === 'sturen') ? ' · <b class="loc">📦 te versturen</b>' : '');
     return `<li class="bon" data-id="${esc(b.id)}" tabindex="0">
       <div class="nr">${esc(b.nr)}</div>
       <div class="naam">${esc(b.klant.naam)}${b.klant.telefoon ? ` <span class="tel">${esc(b.klant.telefoon)}</span>` : ''}</div>
@@ -335,6 +336,65 @@
       <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ''}${locatie}</div>
     </li>`;
   }
+
+  // ---------- Droogkuis bij de partner ----------
+  // Per droogkuisstuk: zelf doen, of naar de partner (te versturen → bij de partner → terug).
+  function partnerStukken() {
+    const uit = [];
+    for (const b of staat.bonnen || []) {
+      b.stukken.forEach((st, index) => {
+        if (st.behandeling !== 'droogkuis') return;
+        const stand = st.extern || '';
+        // Nog kiezen of in behandeling: enkel bonnen die nog niet opgehaald zijn.
+        if ((stand === '' || stand === 'sturen' || stand === 'weg') && b.status === 'opgehaald' && stand !== 'weg') return;
+        uit.push({ b, st, index, stand });
+      });
+    }
+    return uit;
+  }
+  const partnerRij = (x, knoppen) => `<div class="pt-rij" data-id="${esc(x.b.id)}" data-index="${x.index}">
+      <span><b>${x.st.aantal}× ${esc(kaleNaam(x.st))}</b><small>Bon ${esc(x.b.nr)} · ${esc(x.b.klant.naam)}${x.st.externOp ? ' · sinds ' + esc(mooiDatum(x.st.externOp)) : ''}</small></span>
+      <span class="pt-knoppen">${knoppen}</span></div>`;
+  function toonPartner() {
+    const alle = partnerStukken();
+    const groep = (stand) => alle.filter((x) => x.stand === stand);
+    const kiezen = groep(''), sturen = groep('sturen'), weg = groep('weg');
+    const grens = new Date(Date.now() - 14 * 86400000).toISOString();
+    const terug = groep('terug').filter((x) => (x.st.externOp || '') >= grens);
+    const blok = (titel, lijst, knoppen, extra = '') => `<section class="pt-blok"><h3>${titel} <span class="teller">${lijst.length}</span></h3>${extra}
+      ${lijst.length ? lijst.map((x) => partnerRij(x, knoppen)).join('') : '<p class="tijdlijn">Niets.</p>'}</section>`;
+    $('#pt-inhoud').innerHTML =
+      blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button><button class="knop klein goud" data-pt="sturen">→ Partner</button>')
+      + blok('📦 Te versturen', sturen, '<button class="knop klein" data-pt="">Toch niet</button><button class="knop klein" data-pt="weg">Verstuurd</button>',
+        sturen.length ? '<div class="d-knoppen"><button class="knop" id="pt-lijst">🖨 Verzendlijst</button><button class="knop hoofd" id="pt-alles-weg">Alles verstuurd</button></div>' : '')
+      + blok('🚚 Bij de partner', weg, '<button class="knop klein hoofd" data-pt="terug">Terug ✓</button>')
+      + blok('✓ Teruggebracht (laatste 14 dagen)', terug, '<button class="knop klein" data-pt="weg">Toch nog weg</button>');
+  }
+  async function zetPartner(status, stukken) {
+    try { await doe({ op: 'extern', status, stukken }); toonPartner(); } catch (err) { if (err.message !== 'pin') alert(err.message); }
+  }
+  $('#partner-knop').addEventListener('click', () => { toonPartner(); $('#partner').showModal(); });
+  $('#pt-inhoud').addEventListener('click', async (e) => {
+    const knop = e.target.closest('[data-pt]');
+    if (knop) {
+      const rij = knop.closest('.pt-rij');
+      return zetPartner(knop.dataset.pt, [{ id: rij.dataset.id, index: Number(rij.dataset.index) }]);
+    }
+    const sturen = partnerStukken().filter((x) => x.stand === 'sturen');
+    if (e.target.closest('#pt-alles-weg')) return zetPartner('weg', sturen.map((x) => ({ id: x.b.id, index: x.index })));
+    if (e.target.closest('#pt-lijst')) {
+      // Verzendlijst om mee te geven aan de partner.
+      $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
+        <div class="a4-titelrij"><div><div class="a4-soort">Verzendlijst droogkuis</div><div class="a4-nr">${esc(korteDag(vandaagIso()))}</div></div></div>
+        <table class="a4-tabel"><thead><tr><th class="a4-n">Aantal</th><th>Stuk</th><th>Bon</th><th>Klant</th><th>Terug ✓</th></tr></thead>
+        <tbody>${sturen.map((x) => `<tr><td class="a4-n">${x.st.aantal}</td><td>${esc(kaleNaam(x.st))}${x.st.vlek ? ' <span class="a4-vlek">⚠ vlek</span>' : ''}</td><td>${esc(x.b.nr)}</td><td>${esc(x.b.klant.naam)}</td><td>☐</td></tr>`).join('')}</tbody></table>
+        <div class="a4-totaal"><span>Totaal</span><b>${sturen.reduce((n, x) => n + x.st.aantal, 0)} stuks</b></div>
+      </section>`;
+      $('#afdruk').className = 'a4';
+      await logoGeladen();
+      await afdrukken('a4', 'a4');
+    }
+  });
 
   const vasteLocaties = () => staat.instellingen?.locaties || [];
   /** Locaties waar nu nog iets ligt of hangt (bonnen die nog niet opgehaald zijn), met hoeveel tickets. */
