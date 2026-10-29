@@ -15,9 +15,16 @@ export const CONTACT = {
 };
 
 // Zoals op de website. Worden de uren weer normaal, pas dan ook de pagina's aan.
+// Sluitingsperiode: tot en met de laatste dag vermeldt de chatbot ze vanzelf.
+const SLUITING_TOT = new Date('2026-11-13T23:59:59+01:00');
+const SLUITING =
+  'Uitzondering: Crystal Services is gesloten van maandag 9 tot en met vrijdag 13 november 2026. ' +
+  'Vanaf maandag 16 november zijn wij weer open. Vermeld dit altijd bij vragen over openingsuren, langskomen of ophalen.';
+
 export const OPENINGSUREN =
   'Wasserij en strijkatelier: open van maandag tot vrijdag, van 8:00 tot 18:00. ' +
-  'Gesloten op zaterdag, zondag en feestdagen.';
+  'Gesloten op zaterdag, zondag en feestdagen.' +
+  (new Date() <= SLUITING_TOT ? ' ' + SLUITING : '');
 
 // Korte uitnodiging om langs te komen, zoals onderaan onze mails.
 export const WELKOM = 'U bent welkom van maandag tot vrijdag, van 8 tot 18 uur.';
