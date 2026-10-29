@@ -296,6 +296,8 @@ a{color:var(--navy);}
 .f-kilo input{width:110px;}
 .kl-weken h4{margin:10px 0 6px;}
 .kl-week{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--lijn,#ddd);font-size:.92rem;}
+.btw-regel{font-size:.8rem;font-weight:400;color:var(--ink-soft,#666);}
+.p-ander{min-height:1.2em;font-weight:600;}
 #afdruk{display:none;}
 .ix-rij{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;gap:6px;margin-bottom:8px;align-items:center;}
 .ix-knop{width:44px;padding:0;}
@@ -396,6 +398,7 @@ a{color:var(--navy);}
   .a4-accent h4{color:#9CC7E8;}
   .a4-accent b{font-size:12.5pt;}
   .a4-totaal b{white-space:nowrap;}
+  .a4-btw{text-align:right;font-size:9pt;margin-top:3mm;color:#333;}
   .a4-sub{margin:5mm 0 2mm;font-size:10pt;color:#1D5A8A;letter-spacing:.12em;text-transform:uppercase;}
   .a4-vliegtuig{border-color:#1D5A8A;border-width:.5mm;}
   .a4-vliegtuig b{font-size:14pt;letter-spacing:.04em;}

@@ -251,7 +251,14 @@
     </div>
     <div class="paneel-inhoud">
       <p class="tijdlijn">Pas een prijs aan, voeg een stuk toe of haal er een weg. Een leeg prijsvak betekent: niet aangeboden. Nieuwe prijzen gelden voor nieuwe bonnen; bestaande bonnen houden hun prijs.</p>
-      <input id="p-zoek" type="search" placeholder="Zoek een stuk in de lijst" aria-label="Zoek in de prijslijst" autocomplete="off">
+      <div class="rij p-btw-rij">
+        <input id="p-zoek" type="search" placeholder="Zoek een stuk in de lijst" aria-label="Zoek in de prijslijst" autocomplete="off">
+        <select id="p-btw" aria-label="Prijzen invullen">
+          <option value="incl">Prijzen incl. btw</option>
+          <option value="excl">Prijzen excl. btw (21 % wordt erbij gerekend)</option>
+        </select>
+      </div>
+      <p id="p-ander" class="tijdlijn p-ander"></p>
       <div id="p-groepen"></div>
       <p id="p-fout" class="fout" role="alert"></p>
     </div>

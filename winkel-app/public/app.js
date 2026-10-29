@@ -1014,7 +1014,8 @@
         <thead><tr><th class="a4-n">Aantal</th><th>Omschrijving</th><th class="r">Per stuk</th><th class="r">Bedrag</th></tr></thead>
         <tbody>${rijen}</tbody>
       </table>
-      <div class="a4-totaal"><span>Totaal${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>`;
+      <div class="a4-btw">Excl. btw ${eur(exclVan(b.totaal))} · Btw ${BTW} % ${eur(b.totaal - exclVan(b.totaal))}</div>
+      <div class="a4-totaal"><span>Totaal incl. btw${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>`;
     }
 
     const betaling = b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>`
@@ -1277,6 +1278,10 @@
     $('#f').klaarTegen.value = plusDagen(Number(k.dataset.dagen));
   }));
 
+  // Btw: alle prijzen in het programma zijn incl. btw; excl. wordt ervan afgeleid (21 %).
+  const BTW = 21;
+  const exclVan = (incl) => Math.round((Number(incl) / (1 + BTW / 100)) * 100) / 100;
+  const inclVan = (excl) => Math.round(Number(excl) * (1 + BTW / 100) * 100) / 100;
   const prijsTekst = (v) => (v == null ? '' : typeof v === 'string' ? v : v.toFixed(2).replace('.', ','));
   function toonRegels(net) {
     $('#f-fout').textContent = '';
@@ -1312,7 +1317,8 @@
   }
   function toonTotaal() {
     const t = regels.reduce((som, r) => som + (Number(r.aantal) || 0) * (Number(r.prijs) || 0), 0);
-    $('#f-totaal').innerHTML = eur(t) + (regels.some((r) => r.prijs == null) ? ' <span class="volgt">+ prijs volgt</span>' : '');
+    $('#f-totaal').innerHTML = eur(t) + (regels.some((r) => r.prijs == null) ? ' <span class="volgt">+ prijs volgt</span>' : '')
+      + (t ? `<div class="btw-regel">${eur(exclVan(t))} excl. btw · ${eur(t - exclVan(t))} btw</div>` : '');
   }
   $('#f-regels').addEventListener('input', (e) => {
     const tr = e.target.closest('tr');
@@ -1816,6 +1822,9 @@
   const hoofdletter = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
   function openPrijslijst() {
+    pExcl = false;
+    $('#p-btw').value = 'incl';
+    $('#p-ander').textContent = '';
     werk = JSON.parse(JSON.stringify(prijslijst()));
     werk.droogkuis = (werk.droogkuis || []).map(droogStuk);
     $('#p-zoek').value = '';
@@ -1823,13 +1832,16 @@
     toonPrijslijst();
     $('#prijslijst').showModal();
   }
+  // Prijzen invullen incl. of excl. btw; bewaard wordt altijd incl. btw.
+  let pExcl = false;
+  const pWaarde = (v) => (v == null || v === '' ? '' : pExcl && !Number.isNaN(Number(String(v).replace(',', '.'))) ? prijsTekst(exclVan(String(v).replace(',', '.'))) : prijsTekst(v));
   function toonPrijslijst() {
     const groepenHtml = werk.groepen.map((g, gi) => {
       const kol = kolommen(g);
       const kop = kol.map((k) => `<span>${k === 'wassen' ? esc(hoofdletter(g.wassenLabel)) : k === 'strijken' ? 'Strijken' : 'Prijs'}</span>`).join('');
       const rijen = g.stukken.map((s, si) => `<div class="p-rij k${kol.length}" data-g="${gi}" data-s="${si}">
           <input data-veld="naam" value="${esc(s.naam)}" aria-label="Naam" placeholder="Naam van het stuk">
-          ${kol.map((k) => `<input data-veld="${k}" class="prijs" inputmode="decimal" value="${esc(prijsTekst(s[k]))}" placeholder="–" aria-label="${k === 'prijs' ? 'Prijs' : hoofdletter(k)}">`).join('')}
+          ${kol.map((k) => `<input data-veld="${k}" class="prijs" inputmode="decimal" value="${esc(pWaarde(s[k]))}" placeholder="–" aria-label="${k === 'prijs' ? 'Prijs' : hoofdletter(k)}">`).join('')}
           <button type="button" class="weg" data-weg aria-label="Weghalen">✕</button>
         </div>`).join('');
       return `<section class="p-groep"><h3>${esc(g.titel)}</h3>
@@ -1840,7 +1852,7 @@
       <div class="p-rij k3 p-kop"><span>Stuk</span>${DROOG_KOL.map(([, l]) => `<span>${l}</span>`).join('')}<span></span></div>
       ${werk.droogkuis.map((d, di) => `<div class="p-rij k3" data-d="${di}">
         <input data-veld="naam" value="${esc(d.naam)}" aria-label="Naam" placeholder="Naam van het stuk">
-        ${DROOG_KOL.map(([k, l]) => `<input data-veld="${k}" class="prijs" inputmode="decimal" value="${esc(prijsTekst(d[k]))}" placeholder="–" aria-label="${l}">`).join('')}
+        ${DROOG_KOL.map(([k, l]) => `<input data-veld="${k}" class="prijs" inputmode="decimal" value="${esc(pWaarde(d[k]))}" placeholder="–" aria-label="${l}">`).join('')}
         <button type="button" class="weg" data-weg aria-label="Weghalen">✕</button></div>`).join('')}
       <button type="button" class="knop klein" data-plus="droog">+ Stuk toevoegen</button></section>`;
     $('#p-groepen').innerHTML = groepenHtml + droog;
@@ -1853,11 +1865,32 @@
     });
   }
   $('#p-zoek').addEventListener('input', filterPrijslijst);
+  $('#p-btw').addEventListener('change', (e) => { pExcl = e.target.value === 'excl'; toonPrijslijst(); });
+  // Onder de lijst: wat de prijs aan de andere kant van de btw is.
+  function toonAnder(veld, incl) {
+    const n = typeof incl === 'number' ? incl : leesPrijs(incl);
+    $('#p-ander').textContent = veld.dataset.veld === 'naam' || typeof n !== 'number' || Number.isNaN(n) ? ''
+      : `${eur(exclVan(n))} excl. btw = ${eur(n)} incl. ${BTW} % btw`;
+  }
+  $('#p-groepen').addEventListener('focusin', (e) => {
+    const rij = e.target.closest('.p-rij');
+    if (!rij || !e.target.dataset.veld) return;
+    const bron = rij.dataset.d !== undefined ? werk.droogkuis[Number(rij.dataset.d)] : werk.groepen[Number(rij.dataset.g)].stukken[Number(rij.dataset.s)];
+    toonAnder(e.target, bron[e.target.dataset.veld]);
+  });
   $('#p-groepen').addEventListener('input', (e) => {
     const rij = e.target.closest('.p-rij');
     if (!rij) return;
-    if (rij.dataset.d !== undefined) werk.droogkuis[Number(rij.dataset.d)][e.target.dataset.veld] = e.target.value;
-    else werk.groepen[Number(rij.dataset.g)].stukken[Number(rij.dataset.s)][e.target.dataset.veld] = e.target.value;
+    const veld = e.target.dataset.veld;
+    let waarde = e.target.value;
+    // Excl. btw ingevuld: het programma rekent zelf de prijs incl. btw uit.
+    if (pExcl && veld !== 'naam') {
+      const n = leesPrijs(waarde);
+      if (typeof n === 'number' && !Number.isNaN(n)) waarde = inclVan(n);
+    }
+    if (rij.dataset.d !== undefined) werk.droogkuis[Number(rij.dataset.d)][veld] = waarde;
+    else werk.groepen[Number(rij.dataset.g)].stukken[Number(rij.dataset.s)][veld] = waarde;
+    toonAnder(e.target, waarde);
   });
   $('#p-groepen').addEventListener('click', (e) => {
     const plus = e.target.closest('[data-plus]');
@@ -2482,7 +2515,8 @@
       <table class="a4-tabel"><thead><tr><th>Datum</th>${metVliegtuig ? '<th>Vliegtuig</th>' : ''}<th>Bon</th><th>${detail ? 'Stukken' : 'Aantal'}</th>${metKg ? '<th class="r">Kilo</th>' : ''}<th class="r">Bedrag</th></tr></thead>
         <tbody>${rijen}</tbody></table>
       ${samenvatting}
-      <div class="a4-totaal"><span>Totaal · ${bonnen.length} bon${bonnen.length === 1 ? '' : 'nen'} · ${bonnen.reduce((n, b) => n + stuks(b), 0)} stuks${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
+      <div class="a4-btw">Excl. btw ${eur(exclVan(w.totaal))} · Btw ${BTW} % ${eur(w.totaal - exclVan(w.totaal))}</div>
+      <div class="a4-totaal"><span>Totaal incl. btw · ${bonnen.length} bon${bonnen.length === 1 ? '' : 'nen'} · ${bonnen.reduce((n, b) => n + stuks(b), 0)} stuks${w.kg ? ' · ' + kgTekst(w.kg) : ''}</span><b>${eur(w.totaal)}</b></div>
     </section>`;
     $('#afdruk').className = 'a4';
     await logoGeladen();
