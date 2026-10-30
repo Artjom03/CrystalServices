@@ -1032,6 +1032,20 @@
       </section>`;
   }
 
+  // Op de grote bon in één oogopslag welke dienst(en): strijk, was, droogkuis.
+  const DIENST_ICOON = { strijk: '♨', was: '≋', droogkuis: '✦', ander: '•' };
+  function dienstBadges(b) {
+    const beh = [...new Set(b.stukken.map((s) => s.behandeling))];
+    const uitSoort = (b.soorten || []).map((x) => ({ Strijk: 'strijk', Was: 'was', Droogkuis: 'droogkuis' })[x]).filter(Boolean);
+    const lijst = VOLGORDE.filter((x) => beh.includes(x) || uitSoort.includes(x));
+    return `<div class="a4-diensten">${lijst.map((x) => `<span class="a4-dienst d-${x}"><i>${DIENST_ICOON[x]}</i>${esc(BEHANDELING[x])}</span>`).join('')}</div>`;
+  }
+  // Kop van een groep in de tabel: de dienst groot, met aantal stuks en subtotaal.
+  const dienstKop = (beh, lijst, kolommen, metBedrag) => {
+    const n = lijst.reduce((t, s) => t + s.aantal, 0);
+    const som = lijst.reduce((t, s) => t + (s.prijs == null ? 0 : s.aantal * s.prijs), 0);
+    return `<tr class="a4-groep a4-groep-${beh}"><td colspan="${kolommen}"><span><i>${DIENST_ICOON[beh] || '•'}</i>${esc(BEHANDELING[beh])}</span><small>${n} stuk${n === 1 ? '' : 's'}${metBedrag && som ? ' · ' + eur(som) : ''}</small></td></tr>`;
+  };
   function bonA4(b, afhaal) {
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const code = scanCode(b.nr);
@@ -1041,6 +1055,7 @@
         <div>
           <div class="a4-soort">${afhaal ? 'Afhaalbon' : 'Afgiftebon'}</div>
           <div class="a4-nr">Bon ${esc(b.nr)}</div>
+          ${dienstBadges(b)}
         </div>
         ${!afhaal && code ? `<div class="a4-code">${streepjescode(code, 0.45)}</div>` : ''}
       </div>
@@ -1067,7 +1082,7 @@
       </table>`;
     } else {
       const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
-        `<tr class="a4-groep"><td colspan="4">${BEHANDELING[beh]}</td></tr>` +
+        dienstKop(beh, lijst, 4, true) +
         lijst.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
       ).join('');
       tabel = `<table class="a4-tabel">
@@ -1118,7 +1133,7 @@
         : '<div class="vr-status"><b>Stukken nog niet geteld</b><span>De vlekkencontrole volgt bij het tellen</span></div>';
     const kolommen = afhaal ? 5 : 3;
     const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
-      `<tr class="a4-groep"><td colspan="${kolommen}">${BEHANDELING[beh]}</td></tr>` +
+      dienstKop(beh, lijst, kolommen, afhaal) +
       lijst.map((s) => `<tr class="${s.vlek ? 'vr-rij-vlek' : ''}">
         <td class="a4-n">${s.aantal}</td>
         <td>${esc(kaleNaam(s))}</td>
@@ -1133,6 +1148,7 @@
         <div>
           <div class="a4-soort">${afhaal ? 'Afhaalbon' : 'Afgiftebon'} · vlekkencontrole</div>
           <div class="a4-nr">Bon ${esc(b.nr)}</div>
+          ${dienstBadges(b)}
         </div>
         ${!afhaal && code ? `<div class="a4-code">${streepjescode(code, 0.45)}</div>` : ''}
       </div>

@@ -416,6 +416,16 @@ a{color:var(--navy);}
   .a4-tabel .r{text-align:right;white-space:nowrap;}
   .a4-tabel .a4-n{width:16mm;text-align:center;font-weight:700;}
   .a4-groep td{padding-top:2.5mm!important;font-size:7.5pt;font-weight:800;color:#1D5A8A;letter-spacing:.14em;text-transform:uppercase;border-bottom:.4mm solid #2B7BB9;}
+  /* Duidelijk welke dienst: grote labels bij het bonnummer en een stevige kop per dienst in de tabel. */
+  .a4-diensten{display:flex;gap:2mm;margin-top:2mm;}
+  .a4-dienst{display:inline-flex;align-items:center;gap:1.5mm;padding:1.2mm 3.5mm;border:.5mm solid #0E1F42;border-radius:2mm;font-size:12pt;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#0E1F42;}
+  .a4-dienst i{font-style:normal;font-size:13pt;}
+  .a4-dienst.d-droogkuis{background:#0E1F42;color:#fff;}
+  .a4-dienst.d-was{background:#E8F1F9;}
+  tr.a4-groep td{padding:3mm 0 1.2mm!important;border-bottom:.6mm solid #0E1F42;}
+  tr.a4-groep td span{font-size:11pt;color:#0E1F42;letter-spacing:.1em;}
+  tr.a4-groep td span i{font-style:normal;margin-right:1.5mm;}
+  tr.a4-groep td small{float:right;font-size:8.5pt;color:#333;letter-spacing:.04em;text-transform:none;font-weight:700;}
   .a4-zacht{color:#565B63;font-style:italic;}
   .a4-tabel tfoot td{border-bottom:0;border-top:.5mm solid #0E1F42;font-weight:700;}
   .a4-totaal{display:flex;justify-content:space-between;align-items:baseline;gap:6mm;width:85mm;margin:3mm 0 0 auto;background:#0E1F42;color:#fff;border-radius:2.5mm;padding:2.5mm 4mm;}
