@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="nl-BE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haard & Ketel – Plaatsing, onderhoud en herstelling van verwarmingsketels</title>
+<meta name="description" content="Erkend technicus voor condensatieketels, mazoutketels en hybride warmtepompen. Plaatsing, wettelijk onderhoud en snelle herstelling in uw regio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1714; --ink-2:#3a332d; --muted:#6f655c;
+    --cream:#f7f1e8; --paper:#fffaf3; --line:#e6dccd;
+    --flame:#e8590c; --flame-2:#f59f00; --flame-soft:#fde8d7;
+    --cool:#1f4e5f; --radius:18px;
+    --shadow:0 20px 50px -24px rgba(60,30,10,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Manrope,system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased}
+  img,svg{display:block;max-width:100%}
+  a{color:inherit}
+  .wrap{width:min(1160px,100% - 32px);margin-inline:auto}
+  h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;line-height:1.1;letter-spacing:-.01em}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--flame)}
+  .eyebrow::before{content:"";width:22px;height:2px;background:currentColor}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:999px;font-weight:700;text-decoration:none;border:2px solid transparent;transition:transform .2s,background .2s,box-shadow .2s;cursor:pointer;font-family:inherit;font-size:1rem}
+  .btn-primary{background:var(--flame);color:#fff;box-shadow:0 10px 24px -10px rgba(232,89,12,.7)}
+  .btn-primary:hover{transform:translateY(-2px);background:#d9480f}
+  .btn-ghost{border-color:var(--ink);color:var(--ink);background:transparent}
+  .btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+  /* Topbar + header */
+  .topbar{background:var(--ink);color:#f3e9dc;font-size:.88rem}
+  .topbar .wrap{display:flex;justify-content:space-between;gap:16px;padding:8px 0;flex-wrap:wrap}
+  .topbar strong{color:var(--flame-2)}
+  header.site{position:sticky;top:0;z-index:50;background:rgba(255,250,243,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  header.site .wrap{display:flex;align-items:center;justify-content:space-between;height:74px;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:Fraunces,serif;font-weight:700;font-size:1.35rem}
+  .logo-mark{width:38px;height:38px;border-radius:12px;background:var(--ink);display:grid;place-items:center}
+  nav.main{display:flex;gap:28px;font-weight:600}
+  nav.main a{text-decoration:none;color:var(--ink-2);position:relative}
+  nav.main a:hover{color:var(--flame)}
+  .menu-btn{display:none;background:none;border:0;cursor:pointer;padding:8px}
+  @media (max-width:880px){
+    nav.main{position:absolute;top:74px;left:0;right:0;flex-direction:column;gap:0;background:var(--paper);border-bottom:1px solid var(--line);display:none}
+    nav.main.open{display:flex}
+    nav.main a{padding:14px 16px;border-top:1px solid var(--line)}
+    .menu-btn{display:block}
+    header .btn{display:none}
+  }
+
+  /* Hero */
+  .hero{position:relative;overflow:hidden;background:radial-gradient(1200px 500px at 85% -10%,var(--flame-soft),transparent 60%),var(--cream)}
+  .hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:84px 0 96px}
+  .hero h1{font-size:clamp(2.4rem,5.4vw,4.3rem);margin:18px 0 20px}
+  .hero h1 em{font-style:italic;color:var(--flame)}
+  .hero p.lead{font-size:1.15rem;color:var(--ink-2);max-width:34em}
+  .hero .cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
+  .hero-facts{display:flex;gap:32px;margin-top:44px;flex-wrap:wrap}
+  .hero-facts div{font-size:.9rem;color:var(--muted)}
+  .hero-facts b{display:block;font-family:Fraunces,serif;font-size:1.9rem;color:var(--ink);font-weight:600}
+  .boiler-art{position:relative;justify-self:center;width:min(380px,100%)}
+  .boiler-card{position:absolute;background:#fff;border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px}
+  .boiler-card .dot{width:10px;height:10px;border-radius:50%;background:#2f9e44;box-shadow:0 0 0 4px #d3f9d8}
+  .bc1{top:12%;left:-14%}
+  .bc2{bottom:14%;right:-10%}
+  .flame{transform-origin:50% 100%;animation:flicker 1.6s ease-in-out infinite}
+  .flame.f2{animation-delay:.3s;animation-duration:1.3s}
+  @keyframes flicker{0%,100%{transform:scaleY(1) scaleX(1)}40%{transform:scaleY(1.12) scaleX(.94)}70%{transform:scaleY(.94) scaleX(1.04)}}
+  @media (prefers-reduced-motion:reduce){.flame{animation:none}}
+  @media (max-width:880px){
+    .hero .wrap{grid-template-columns:1fr;padding:56px 0 64px}
+    .boiler-art{width:min(300px,80%)}
+    .bc1{left:-6%}.bc2{right:-4%}
+  }
+
+  /* Trust strip */
+  .trust{border-block:1px solid var(--line);background:var(--paper)}
+  .trust .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:26px 0}
+  .trust div{display:flex;align-items:center;gap:12px;font-weight:600;font-size:.95rem}
+  .trust svg{flex:none;color:var(--flame)}
+  @media (max-width:880px){.trust .wrap{grid-template-columns:1fr 1fr}}
+  @media (max-width:480px){.trust .wrap{grid-template-columns:1fr}}
+
+  section{padding:96px 0}
+  .sec-head{max-width:640px;margin-bottom:48px}
+  .sec-head h2{font-size:clamp(2rem,4vw,3rem);margin-top:14px}
+  .sec-head p{color:var(--muted);font-size:1.08rem;margin-top:14px}
+
+  /* Services */
+  .services{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .svc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px;transition:transform .25s,box-shadow .25s,border-color .25s}
+  .svc:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:transparent}
+  .svc .ic{width:52px;height:52px;border-radius:14px;background:var(--flame-soft);color:var(--flame);display:grid;place-items:center;margin-bottom:20px}
+  .svc h3{font-size:1.35rem;margin-bottom:10px}
+  .svc p{color:var(--muted);font-size:.97rem}
+  .svc ul{list-style:none;margin-top:16px;font-size:.92rem;display:grid;gap:6px}
+  .svc li::before{content:"→ ";color:var(--flame);font-weight:700}
+  @media (max-width:1000px){.services{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.services{grid-template-columns:1fr}}
+
+  /* Types (dark) */
+  .dark{background:var(--ink);color:#f3e9dc}
+  .dark .sec-head p{color:#bdb1a3}
+  .types{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .type{border:1px solid #3d352e;border-radius:var(--radius);padding:32px;background:linear-gradient(180deg,#241f1b,#1b1714);position:relative;overflow:hidden}
+  .type.featured{border-color:var(--flame);background:linear-gradient(180deg,#2e211a,#1b1714)}
+  .type .tag{position:absolute;top:20px;right:20px;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--flame);color:#fff;padding:5px 10px;border-radius:999px}
+  .type h3{font-size:1.6rem;color:#fff;margin:14px 0 10px}
+  .type p{color:#bdb1a3;font-size:.96rem}
+  .meter{margin-top:22px;display:grid;gap:12px;font-size:.85rem}
+  .meter span{display:flex;justify-content:space-between;color:#d9cdbf}
+  .bar{height:6px;border-radius:6px;background:#3a322b;overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--flame),var(--flame-2));border-radius:6px}
+  @media (max-width:900px){.types{grid-template-columns:1fr}}
+
+  /* Advisor */
+  .advisor{display:grid;grid-template-columns:1fr 1fr;gap:40px;background:#fff;border:1px solid var(--line);border-radius:28px;padding:44px;box-shadow:var(--shadow)}
+  .q{margin-bottom:22px}
+  .q label.t{display:block;font-weight:700;margin-bottom:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips input{position:absolute;opacity:0;pointer-events:none}
+  .chips label{padding:9px 16px;border:1.5px solid var(--line);border-radius:999px;cursor:pointer;font-weight:600;font-size:.92rem;transition:all .15s;background:var(--paper)}
+  .chips input:checked + label{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chips input:focus-visible + label{outline:3px solid var(--flame-2);outline-offset:2px}
+  .result{background:var(--cream);border-radius:20px;padding:32px;display:flex;flex-direction:column;justify-content:center}
+  .result small{font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-size:.75rem}
+  .result h3{font-size:2rem;margin:10px 0 12px;color:var(--flame)}
+  .result p{color:var(--ink-2)}
+  .result .btn{margin-top:24px;align-self:flex-start}
+  @media (max-width:880px){.advisor{grid-template-columns:1fr;padding:24px}}
+
+  /* Steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;counter-reset:s}
+  .step{position:relative;padding-top:56px}
+  .step::before{counter-increment:s;content:"0" counter(s);position:absolute;top:0;left:0;font-family:Fraunces,serif;font-size:2.4rem;font-weight:600;color:var(--flame)}
+  .step::after{content:"";position:absolute;top:22px;left:70px;right:-12px;height:1px;background:var(--line)}
+  .step:last-child::after{display:none}
+  .step h3{font-size:1.25rem;margin-bottom:8px}
+  .step p{color:var(--muted);font-size:.95rem}
+  @media (max-width:880px){.steps{grid-template-columns:1fr 1fr}.step::after{display:none}}
+  @media (max-width:480px){.steps{grid-template-columns:1fr}}
+
+  /* Maintenance banner */
+  .reminder{background:linear-gradient(120deg,var(--flame),#c2410c);color:#fff;border-radius:28px;padding:48px;display:grid;grid-template-columns:1.4fr 1fr;gap:32px;align-items:center}
+  .reminder h2{font-size:clamp(1.8rem,3.4vw,2.6rem)}
+  .reminder p{opacity:.92;margin-top:12px}
+  .reminder .rules{background:rgba(255,255,255,.12);border-radius:18px;padding:22px;display:grid;gap:14px}
+  .reminder .rules div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:12px}
+  .reminder .rules div:last-child{border:0;padding:0}
+  .reminder .btn{background:#fff;color:var(--flame);margin-top:24px}
+  @media (max-width:880px){.reminder{grid-template-columns:1fr;padding:28px}}
+
+  /* Reviews */
+  .reviews{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .rev{background:var(--cream);border-radius:var(--radius);padding:28px}
+  .rev .stars{color:var(--flame-2);letter-spacing:2px}
+  .rev blockquote{font-family:Fraunces,serif;font-size:1.15rem;margin:14px 0 18px;line-height:1.45}
+  .rev cite{font-style:normal;font-weight:700;font-size:.9rem;color:var(--muted)}
+  @media (max-width:880px){.reviews{grid-template-columns:1fr}}
+
+  /* FAQ */
+  .faq{display:grid;grid-template-columns:.8fr 1.2fr;gap:48px}
+  .faq>*{min-width:0}
+  main{overflow-x:clip}
+  details{border-bottom:1px solid var(--line);padding:20px 0}
+  summary{cursor:pointer;font-weight:700;font-size:1.08rem;list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;overflow-wrap:anywhere}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";flex:none;font-size:1.5rem;line-height:1;color:var(--flame);transition:transform .2s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{color:var(--muted);margin-top:12px}
+  @media (max-width:880px){.faq{grid-template-columns:1fr;gap:16px}}
+
+  /* Contact */
+  .contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px}
+  .contact-info{display:grid;gap:18px;align-content:start}
+  .ci{display:flex;gap:14px;align-items:flex-start;background:var(--cream);border-radius:16px;padding:18px}
+  .ci svg{color:var(--flame);flex:none;margin-top:2px}
+  .ci b{display:block}
+  .ci a{text-decoration:none}
+  form.quote{background:#fff;border:1px solid var(--line);border-radius:24px;padding:32px;display:grid;grid-template-columns:1fr 1fr;gap:16px;box-shadow:var(--shadow)}
+  form.quote .full{grid-column:1/-1}
+  form.quote label{font-weight:600;font-size:.9rem;display:grid;gap:6px}
+  form.quote input,form.quote select,form.quote textarea{font:inherit;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+  form.quote input:focus,form.quote select:focus,form.quote textarea:focus{outline:none;border-color:var(--flame);box-shadow:0 0 0 4px var(--flame-soft)}
+  form.quote textarea{min-height:110px;resize:vertical}
+  .form-note{font-size:.85rem;color:var(--muted)}
+  @media (max-width:880px){.contact{grid-template-columns:1fr}form.quote{grid-template-columns:1fr;padding:22px}}
+
+  footer{background:var(--ink);color:#bdb1a3;padding:56px 0 28px;font-size:.93rem}
+  footer .cols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+  footer h4{color:#fff;font-family:Fraunces,serif;font-size:1.1rem;margin-bottom:12px;font-weight:600}
+  footer ul{list-style:none;display:grid;gap:8px}
+  footer a{text-decoration:none}
+  footer a:hover{color:var(--flame-2)}
+  footer .bottom{border-top:1px solid #3a322b;margin-top:40px;padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.85rem}
+  @media (max-width:880px){footer .cols{grid-template-columns:1fr 1fr}}
+
+  .call-fab{position:fixed;right:16px;bottom:16px;z-index:60;display:none}
+  @media (max-width:880px){.call-fab{display:inline-flex}}
+
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <span>🔥 <strong>Storing?</strong> Ook in het weekend bereikbaar voor dringende herstellingen</span>
+    <span>Erkend technicus gas &amp; mazout</span>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <a href="#top" class="logo" aria-label="Haard &amp; Ketel – home">
+      <span class="logo-mark">
+        <svg width="20" height="22" viewBox="0 0 20 22" aria-hidden="true"><path d="M10 0c1 5 7 7 7 13a7 7 0 1 1-14 0c0-3 2-5 3-6 0 2 1 4 3 4-1-4 0-8 1-11z" fill="#f59f00"/><path d="M10 10c.6 2.6 3.5 3.5 3.5 6.5a3.5 3.5 0 1 1-7 0c0-2 1.6-3 2.5-4 .2 1 .6 1.6 1 1.8-.4-1.6-.4-3 0-4.3z" fill="#e8590c"/></svg>
+      </span>
+      Haard &amp; Ketel
+    </a>
+    <nav class="main" id="nav">
+      <a href="#diensten">Diensten</a>
+      <a href="#ketels">Ketels</a>
+      <a href="#keuzehulp">Keuzehulp</a>
+      <a href="#onderhoud">Onderhoud</a>
+      <a href="#faq">Vragen</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="btn btn-primary">Gratis offerte</a>
+    <button class="menu-btn" aria-label="Menu openen" aria-expanded="false" aria-controls="nav" id="menuBtn">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" style="padding:0">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Verwarmingsspecialist in uw buurt</span>
+      <h1>Een warme thuis begint bij een <em>betrouwbare</em> ketel.</h1>
+      <p class="lead">Wij plaatsen, onderhouden en herstellen condensatieketels, mazoutketels en hybride warmtepompen. Vakkundig, proper en met een vaste prijs vooraf.</p>
+      <div class="cta">
+        <a href="#contact" class="btn btn-primary">Vraag een offerte aan
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="tel:+3230000000" class="btn btn-ghost">Bel ons: 03 000 00 00</a>
+      </div>
+      <div class="hero-facts">
+        <div><b>15+ jaar</b>ervaring</div>
+        <div><b>48 u</b>interventie bij storing</div>
+        <div><b>2 jaar</b>garantie op werk</div>
+      </div>
+    </div>
+
+    <div class="boiler-art" aria-hidden="true">
+      <svg viewBox="0 0 300 400">
+        <defs>
+          <linearGradient id="body" x1="0" x2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ece4d8"/>
+          </linearGradient>
+          <linearGradient id="fl" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stop-color="#e8590c"/><stop offset="1" stop-color="#ffd43b"/>
+          </linearGradient>
+          <linearGradient id="fl2" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stop-color="#1c7ed6"/><stop offset="1" stop-color="#a5d8ff"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="150" cy="388" rx="110" ry="10" fill="#000" opacity=".08"/>
+        <rect x="40" y="20" width="220" height="300" rx="26" fill="url(#body)" stroke="#d8ccbb" stroke-width="2"/>
+        <rect x="64" y="48" width="172" height="54" rx="12" fill="#1b1714"/>
+        <text x="84" y="84" font-family="Manrope,sans-serif" font-weight="700" font-size="24" fill="#f59f00">21.5°</text>
+        <circle cx="206" cy="75" r="9" fill="#2f9e44"/>
+        <rect x="64" y="124" width="172" height="150" rx="16" fill="#1b1714"/>
+        <g transform="translate(150 250)">
+          <path class="flame" d="M0-100c10 30 40 44 40 74A40 40 0 0 1-40-26c0-16 10-30 18-36 0 12 6 22 14 24C-12-62-8-84 0-100z" fill="url(#fl)"/>
+          <path class="flame f2" d="M0-48c5 14 18 20 18 34A18 18 0 0 1-18-14c0-8 5-14 9-17 0 6 3 10 6 11C-5-28-3-38 0-48z" fill="url(#fl2)"/>
+        </g>
+        <rect x="64" y="252" width="172" height="10" rx="5" fill="#3a332d"/>
+        <g fill="#c9bba8">
+          <rect x="80" y="320" width="14" height="50" rx="4"/><rect x="118" y="320" width="14" height="50" rx="4"/>
+          <rect x="168" y="320" width="14" height="50" rx="4"/><rect x="206" y="320" width="14" height="50" rx="4"/>
+        </g>
+        <rect x="70" y="360" width="160" height="14" rx="7" fill="#b9a993"/>
+      </svg>
+      <div class="boiler-card bc1"><span class="dot"></span>Onderhoud in orde</div>
+      <div class="boiler-card bc2">⚡ tot 30% zuiniger</div>
+    </div>
+  </div>
+</section>
+
+<div class="trust">
+  <div class="wrap">
+    <div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Erkend gas- en mazouttechnicus</div>
+    <div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Snelle interventie bij storing</div>
+    <div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v10H3z"/><path d="M7 11h4"/></svg>Vaste prijs, geen verrassingen</div>
+    <div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10l8-6 8 6v10z"/><path d="M10 20v-6h4v6"/></svg>Hulp bij premie-aanvragen</div>
+  </div>
+</div>
+
+<section id="diensten">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Wat we doen</span>
+      <h2>Alles voor uw verwarming, van advies tot attest.</h2>
+      <p>Eén vaste vakman die uw installatie kent. Zo vermijdt u dure verrassingen en blijft uw ketel jaren zuinig draaien.</p>
+    </div>
+    <div class="services">
+      <article class="svc reveal">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 7h6M12 11v6M9 14h6"/></svg></div>
+        <h3>Plaatsing</h3>
+        <p>Nieuwe ketel, correct gedimensioneerd voor uw woning.</p>
+        <ul><li>Gratis plaatsbezoek</li><li>Afvoer &amp; aansluiting</li><li>Oude ketel afgevoerd</li></ul>
+      </article>
+      <article class="svc reveal">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg></div>
+        <h3>Onderhoud</h3>
+        <p>Wettelijk verplicht onderhoud met verbrandingsattest.</p>
+        <ul><li>Reiniging &amp; afstelling</li><li>Rookgasanalyse</li><li>Automatische herinnering</li></ul>
+      </article>
+      <article class="svc reveal">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <h3>Herstelling</h3>
+        <p>Geen warm water of verwarming? Wij komen snel langs.</p>
+        <ul><li>Alle gangbare merken</li><li>Wisselstukken op voorraad</li><li>Duidelijke diagnose</li></ul>
+      </article>
+      <article class="svc reveal">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></div>
+        <h3>Vervanging</h3>
+        <p>Van oude ketel naar zuinige condensatie of hybride.</p>
+        <ul><li>Besparingsberekening</li><li>Hulp bij premies</li><li>Plaatsing op één dag</li></ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="ketels" class="dark">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Onze ketels</span>
+      <h2>De juiste ketel voor elke woning.</h2>
+      <p>We werken met kwaliteitsmerken en adviseren eerlijk welk systeem bij uw woning, budget en toekomstplannen past.</p>
+    </div>
+    <div class="types">
+      <article class="type reveal">
+        <span class="eyebrow">Gas</span>
+        <h3>Condensatieketel</h3>
+        <p>De meest gekozen oplossing. Compact, stil en haalt extra warmte uit de rookgassen.</p>
+        <div class="meter">
+          <div><span>Rendement <b>hoog</b></span><div class="bar"><i style="width:82%"></i></div></div>
+          <div><span>Investering <b>laag</b></span><div class="bar"><i style="width:35%"></i></div></div>
+          <div><span>Toekomstbestendig <b>gemiddeld</b></span><div class="bar"><i style="width:55%"></i></div></div>
+        </div>
+      </article>
+      <article class="type featured reveal">
+        <span class="tag">Aanrader</span>
+        <span class="eyebrow">Gas + elektriciteit</span>
+        <h3>Hybride warmtepomp</h3>
+        <p>Een warmtepomp doet het meeste werk, de ketel springt bij op koude dagen. Ideaal als tussenstap.</p>
+        <div class="meter">
+          <div><span>Rendement <b>zeer hoog</b></span><div class="bar"><i style="width:95%"></i></div></div>
+          <div><span>Investering <b>gemiddeld</b></span><div class="bar"><i style="width:62%"></i></div></div>
+          <div><span>Toekomstbestendig <b>hoog</b></span><div class="bar"><i style="width:88%"></i></div></div>
+        </div>
+      </article>
+      <article class="type reveal">
+        <span class="eyebrow">Mazout</span>
+        <h3>Mazoutketel</h3>
+        <p>Geen aardgasaansluiting? Een moderne condenserende mazoutketel verbruikt flink minder dan een oud toestel.</p>
+        <div class="meter">
+          <div><span>Rendement <b>goed</b></span><div class="bar"><i style="width:70%"></i></div></div>
+          <div><span>Investering <b>gemiddeld</b></span><div class="bar"><i style="width:50%"></i></div></div>
+          <div><span>Toekomstbestendig <b>beperkt</b></span><div class="bar"><i style="width:30%"></i></div></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="keuzehulp">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Keuzehulp</span>
+      <h2>Welke ketel past bij u?</h2>
+      <p>Beantwoord drie korte vragen en krijg meteen een eerste advies.</p>
+    </div>
+    <div class="advisor reveal">
+      <form id="advisor" onsubmit="return false">
+        <div class="q">
+          <label class="t">Heeft u een aardgasaansluiting?</label>
+          <div class="chips">
+            <input type="radio" name="gas" id="g1" value="ja" checked><label for="g1">Ja</label>
+            <input type="radio" name="gas" id="g2" value="nee"><label for="g2">Nee</label>
+          </div>
+        </div>
+        <div class="q">
+          <label class="t">Hoe goed is uw woning geïsoleerd?</label>
+          <div class="chips">
+            <input type="radio" name="iso" id="i1" value="goed"><label for="i1">Goed</label>
+            <input type="radio" name="iso" id="i2" value="matig" checked><label for="i2">Matig</label>
+            <input type="radio" name="iso" id="i3" value="slecht"><label for="i3">Slecht</label>
+          </div>
+        </div>
+        <div class="q">
+          <label class="t">Wat vindt u het belangrijkst?</label>
+          <div class="chips">
+            <input type="radio" name="prio" id="p1" value="budget" checked><label for="p1">Laag budget</label>
+            <input type="radio" name="prio" id="p2" value="besparen"><label for="p2">Maximaal besparen</label>
+            <input type="radio" name="prio" id="p3" value="toekomst"><label for="p3">Toekomstbestendig</label>
+          </div>
+        </div>
+      </form>
+      <div class="result" aria-live="polite">
+        <small>Ons eerste advies</small>
+        <h3 id="resTitle">Condensatieketel</h3>
+        <p id="resText">Een betaalbare, zuinige keuze die past bij uw woning.</p>
+        <a href="#contact" class="btn btn-primary" id="resBtn">Bespreek dit met een technicus</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Zo werken we</span>
+      <h2>In vier stappen warm.</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><h3>Contact</h3><p>U belt of vult het formulier in. We plannen een moment dat u past.</p></div>
+      <div class="step reveal"><h3>Plaatsbezoek</h3><p>We bekijken uw woning en installatie, gratis en vrijblijvend.</p></div>
+      <div class="step reveal"><h3>Vaste offerte</h3><p>Een duidelijke prijs, inclusief plaatsing en afvoer van de oude ketel.</p></div>
+      <div class="step reveal"><h3>Plaatsing</h3><p>Meestal op één dag. We laten alles proper achter en leggen alles uit.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="onderhoud" style="padding-top:0">
+  <div class="wrap">
+    <div class="reminder reveal">
+      <div>
+        <h2>Is uw ketel nog in orde?</h2>
+        <p>Regelmatig onderhoud is in Vlaanderen wettelijk verplicht. Het houdt uw ketel veilig en zuinig, en u heeft het attest nodig voor uw verzekering en garantie.</p>
+        <a href="#contact" class="btn" onclick="setService('Onderhoud')">Plan uw onderhoud</a>
+      </div>
+      <div class="rules">
+        <div><span>Gasketel</span><b>om de 2 jaar</b></div>
+        <div><span>Mazoutketel</span><b>elk jaar</b></div>
+        <div><span>Wij sturen u</span><b>een herinnering</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Klanten aan het woord</span>
+      <h2>Warme woorden.</h2>
+      <p class="form-note">Voorbeeldteksten: vervang ze door echte reviews van uw klanten.</p>
+    </div>
+    <div class="reviews">
+      <figure class="rev reveal"><div class="stars">★★★★★</div><blockquote>“Op vrijdagavond geen verwarming meer. Zaterdagochtend stond de technicus al aan de deur.”</blockquote><cite>Voorbeeldklant, herstelling</cite></figure>
+      <figure class="rev reveal"><div class="stars">★★★★★</div><blockquote>“Duidelijke offerte, nieuwe ketel op één dag geplaatst en alles netjes opgekuist.”</blockquote><cite>Voorbeeldklant, plaatsing</cite></figure>
+      <figure class="rev reveal"><div class="stars">★★★★★</div><blockquote>“Ze sturen zelf een herinnering voor het onderhoud. Ik moet er niet meer aan denken.”</blockquote><cite>Voorbeeldklant, onderhoud</cite></figure>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:0">
+  <div class="wrap faq">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Veelgestelde vragen</span>
+      <h2>Goed om te weten.</h2>
+      <p>Staat uw vraag er niet bij? Bel of mail ons gerust.</p>
+    </div>
+    <div class="reveal">
+      <details open><summary>Hoe lang gaat een verwarmingsketel mee?</summary><p>Een goed onderhouden ketel gaat gemiddeld 15 tot 20 jaar mee. Is uw ketel ouder, dan levert vervangen vaak een merkbare besparing op.</p></details>
+      <details><summary>Hoe vaak moet mijn ketel onderhouden worden?</summary><p>In Vlaanderen moet een gasketel minstens om de twee jaar en een mazoutketel elk jaar onderhouden worden door een erkend technicus. U krijgt daarbij een verbrandingsattest.</p></details>
+      <details><summary>Hoe lang duurt de plaatsing van een nieuwe ketel?</summary><p>Een vervanging van gas naar gas gebeurt meestal op één werkdag. Bij een overstap naar een ander systeem bespreken we de planning vooraf.</p></details>
+      <details><summary>Heb ik recht op een premie?</summary><p>Voor sommige installaties, zoals een hybride warmtepomp, bestaan er premies. De voorwaarden veranderen regelmatig; wij helpen u nagaan waar u recht op heeft en met de aanvraag.</p></details>
+      <details><summary>Wat moet ik doen bij een gasgeur?</summary><p>Draai de gaskraan dicht, gebruik geen schakelaars of open vuur, verlucht en verlaat de woning. Bel daarna de noodlijn van uw netbeheerder of 112.</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="contact" style="background:var(--cream)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Contact</span>
+      <h2>Vraag uw gratis offerte aan.</h2>
+      <p>We antwoorden binnen één werkdag.</p>
+    </div>
+    <div class="contact">
+      <div class="contact-info reveal">
+        <div class="ci"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><div><b>Telefoon</b><a href="tel:+3230000000">03 000 00 00</a></div></div>
+        <div class="ci"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><div><b>E-mail</b><a href="mailto:info@voorbeeld.be">info@voorbeeld.be</a></div></div>
+        <div class="ci"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Werkgebied</b>Antwerpen en omstreken</div></div>
+        <div class="ci"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Bereikbaar</b>Ma–vr 8:00–18:00<br>Storingen: ook in het weekend</div></div>
+      </div>
+      <form class="quote reveal" id="quote">
+        <label>Naam<input name="naam" required autocomplete="name"></label>
+        <label>Telefoon<input name="tel" type="tel" required autocomplete="tel"></label>
+        <label class="full">E-mail<input name="email" type="email" autocomplete="email"></label>
+        <label>Dienst
+          <select name="dienst" id="dienst">
+            <option>Offerte nieuwe ketel</option><option>Onderhoud</option><option>Herstelling / storing</option><option>Advies hybride warmtepomp</option>
+          </select>
+        </label>
+        <label>Postcode<input name="postcode" inputmode="numeric" autocomplete="postal-code"></label>
+        <label class="full">Bericht<textarea name="bericht" placeholder="Merk en leeftijd van uw huidige ketel, wat er mis is, ..."></textarea></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Verstuur aanvraag</button></div>
+        <p class="form-note full">Uw gegevens worden enkel gebruikt om uw aanvraag te beantwoorden.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h4>Haard &amp; Ketel</h4>
+        <p>Plaatsing, onderhoud en herstelling van verwarmingsketels. Erkend technicus gas &amp; mazout.</p>
+      </div>
+      <div><h4>Diensten</h4><ul><li><a href="#diensten">Plaatsing</a></li><li><a href="#onderhoud">Onderhoud</a></li><li><a href="#diensten">Herstelling</a></li><li><a href="#ketels">Vervanging</a></li></ul></div>
+      <div><h4>Info</h4><ul><li><a href="#keuzehulp">Keuzehulp</a></li><li><a href="#faq">Vragen</a></li><li><a href="#contact">Offerte</a></li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="tel:+3230000000">03 000 00 00</a></li><li><a href="mailto:info@voorbeeld.be">info@voorbeeld.be</a></li><li>BTW BE 0000.000.000</li></ul></div>
+    </div>
+    <div class="bottom"><span>© <span id="yr"></span> Haard &amp; Ketel</span><span>Warm, veilig en zuinig.</span></div>
+  </div>
+</footer>
+
+<a href="tel:+3230000000" class="btn btn-primary call-fab" aria-label="Bel ons">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+  Bel nu
+</a>
+
+<script>
+  // Contactgegevens: pas ze ook aan in de HTML hierboven.
+  const EMAIL = 'info@voorbeeld.be';
+
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  const menuBtn = document.getElementById('menuBtn'), nav = document.getElementById('nav');
+  menuBtn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+  });
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', false);
+  }));
+
+  // Reveal on scroll
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .12 }) : null;
+  document.querySelectorAll('.reveal').forEach(el => io ? io.observe(el) : el.classList.add('in'));
+
+  // Keuzehulp
+  const advisor = document.getElementById('advisor');
+  function advise() {
+    const f = new FormData(advisor), gas = f.get('gas'), iso = f.get('iso'), prio = f.get('prio');
+    let t, x, svc;
+    if (gas === 'nee' && (iso === 'goed' || prio === 'toekomst')) {
+      t = 'Warmtepomp'; x = 'Zonder aardgas en met een degelijk geïsoleerde woning is een volledige warmtepomp vaak de slimste keuze op lange termijn.'; svc = 'Advies hybride warmtepomp';
+    } else if (gas === 'nee') {
+      t = 'Condenserende mazoutketel'; x = 'Zonder aardgas en met beperkte isolatie biedt een moderne mazoutketel betrouwbare warmte met een lager verbruik dan uw oude toestel.'; svc = 'Offerte nieuwe ketel';
+    } else if (prio === 'budget' && iso !== 'goed') {
+      t = 'Condensatieketel'; x = 'Een betaalbare en zuinige keuze. Snel geplaatst en meteen merkbaar lager verbruik.'; svc = 'Offerte nieuwe ketel';
+    } else {
+      t = 'Hybride warmtepomp'; x = 'De warmtepomp neemt het grootste deel van de verwarming voor zijn rekening, de gasketel springt bij als het hard vriest. Laag verbruik én klaar voor de toekomst.'; svc = 'Advies hybride warmtepomp';
+    }
+    document.getElementById('resTitle').textContent = t;
+    document.getElementById('resText').textContent = x;
+    document.getElementById('resBtn').onclick = () => setService(svc);
+  }
+  advisor.addEventListener('change', advise); advise();
+
+  function setService(v) { document.getElementById('dienst').value = v; }
+
+  // Offerteformulier: opent het mailprogramma met een ingevulde e-mail.
+  document.getElementById('quote').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const body = [...f.entries()].map(([k, v]) => `${k[0].toUpperCase() + k.slice(1)}: ${v}`).join('\n');
+    location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Aanvraag: ' + f.get('dienst'))}&body=${encodeURIComponent(body)}`;
+  });
+</script>
+</body>
+</html>
