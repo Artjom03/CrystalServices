@@ -71,6 +71,9 @@ export function schoonStukken(stukken) {
     if (!naam) return [];
     const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
     const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
+    // Korting op dit stuk, in procent.
+    const korting = Math.round(Number(String(s?.korting ?? '').replace(',', '.')) * 10) / 10;
+    if (korting > 0) stuk.korting = Math.min(100, korting);
     // Was per kilo (professionele klanten): het gewicht, zodat de kilo's per week op te tellen zijn.
     const kg = Math.round(Number(String(s?.kg ?? '').replace(',', '.')) * 10) / 10;
     if (kg > 0 && kg < 10000) stuk.kg = kg;
@@ -94,8 +97,23 @@ export function schoonStukken(stukken) {
 }
 
 /** Totaal van de stukken met een prijs; stukken zonder prijs tellen (nog) niet mee. */
+/** Bedrag van één regel: aantal × prijs, min de korting van die regel (in %). */
+export function regelBedrag(s) {
+  return Math.round(s.aantal * (s.prijs ?? 0) * (1 - (s.korting || 0) / 100) * 100) / 100;
+}
 export function totaal(stukken) {
-  return Math.round(stukken.reduce((som, s) => som + s.aantal * (s.prijs ?? 0), 0) * 100) / 100;
+  return Math.round(stukken.reduce((som, s) => som + regelBedrag(s), 0) * 100) / 100;
+}
+/** Korting op de hele bon: een percentage of een vast bedrag. */
+function schoonKorting(k) {
+  const waarde = Number(String(k?.waarde ?? '').replace(',', '.'));
+  if (!(waarde > 0)) return null;
+  const soort = k?.soort === '€' ? '€' : '%';
+  return { soort, waarde: soort === '%' ? Math.min(100, Math.round(waarde * 10) / 10) : Math.round(waarde * 100) / 100 };
+}
+function bonKortingBedrag(sub, k) {
+  if (!k) return 0;
+  return Math.min(sub, Math.round((k.soort === '%' ? sub * k.waarde / 100 : k.waarde) * 100) / 100);
 }
 
 export function prijsOpen(stukken) {
@@ -141,7 +159,12 @@ function velden(invoer) {
     soorten,
     soort: soorten.join(' + '),
     stukken,
-    totaal: totaal(stukken),
+    ...(() => {
+      const sub = totaal(stukken);
+      const korting = schoonKorting(invoer.korting);
+      const af = bonKortingBedrag(sub, korting);
+      return { korting, subtotaal: sub, kortingBedrag: af, totaal: Math.round((sub - af) * 100) / 100 };
+    })(),
     prijsOpen: prijsOpen(stukken),
     vliegtuig: tekst(invoer.vliegtuig, MAX.vliegtuig),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
