@@ -50,7 +50,7 @@
 
   // Bedrag van een regel, met de korting van dat stuk (in %).
   const regelBedrag = (s) => Math.round(s.aantal * (Number(s.prijs) || 0) * (1 - (Number(s.korting) || 0) / 100) * 100) / 100;
-  const kortingTag = (s) => (s.korting ? ` <span class="korting-tag">−${String(s.korting).replace('.', ',')} %</span>` : '');
+  const kortingTag = (s) => (s.korting ? ` <span class="korting-tag">korting −${String(s.korting).replace('.', ',')} %${s.prijs != null ? ' (zonder korting ' + eur(s.aantal * s.prijs) + ')' : ''}</span>` : '');
   // Subtotaal en korting op de hele bon, voor op papier.
   const bonKortingRegels = (b, cls) => (b.kortingBedrag ? `<div class="${cls}"><span>Subtotaal</span><span>${eur(b.subtotaal)}</span></div>
       <div class="${cls}"><span>Korting${b.korting?.soort === '%' ? ' ' + String(b.korting.waarde).replace('.', ',') + ' %' : ''}</span><span>− ${eur(b.kortingBedrag)}</span></div>` : '');
@@ -1144,7 +1144,7 @@
       dienstKop(beh, lijst, kolommen, afhaal) +
       lijst.map((s) => `<tr class="${s.vlek ? 'vr-rij-vlek' : ''}">
         <td class="a4-n">${s.aantal}</td>
-        <td>${esc(kaleNaam(s))}</td>
+        <td>${esc(kaleNaam(s))}${kortingTag(s)}</td>
         <td class="vr-jn">${s.vlek ? `<b>JA</b>${s.vlekOngeteld && s.aantal > 1 ? '<small class="vr-ongeteld">aantal niet geteld</small>' : ''}` : 'nee'}</td>
         ${afhaal ? `<td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td>` : ''}
       </tr>`).join('')
