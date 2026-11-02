@@ -1222,7 +1222,18 @@
   // dan worden ze samen met de bonnen bewaard en gelden ze voor nieuwe bonnen.
   const STANDAARD_PRIJSLIJST = { versie: 2, groepen: window.PRIJSLIJST || [], droogkuis: DROOGKUIS };
   // Een eigen lijst van vóór de nieuwe prijslijsten (zonder versie) telt niet meer.
-  const prijslijst = () => (staat.prijslijst?.versie >= 2 ? staat.prijslijst : STANDAARD_PRIJSLIJST);
+  // Een eigen lijst krijgt nieuwe standaardgroepen (bv. Sportclubs) er automatisch bij.
+  let eigenBron = null, eigenLijst = null;
+  const prijslijst = () => {
+    const eigen = staat.prijslijst;
+    if (!(eigen?.versie >= 2)) return STANDAARD_PRIJSLIJST;
+    if (eigenBron !== eigen) {
+      const titels = new Set((eigen.groepen || []).map((g) => g.titel));
+      eigenLijst = { ...eigen, groepen: [...(eigen.groepen || []), ...STANDAARD_PRIJSLIJST.groepen.filter((g) => g.titel === 'Sportclubs' && !titels.has(g.titel))] };
+      eigenBron = eigen;
+    }
+    return eigenLijst;
+  };
 
   let artikelBron = null;
   let artikelLijst = [];
