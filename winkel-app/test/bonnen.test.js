@@ -476,3 +476,12 @@ test('droogkuis bij de partner: sturen, weg, terug', () => {
   assert.equal(bon.stukken[1].extern, undefined);
   assert.throws(() => pasToe(staat, { op: 'extern', status: 'raar', stukken: [] }, nu), /Onbekende/);
 });
+
+test('korting per stuk en op de hele bon', () => {
+  let { bon } = nieuw(LEEG, { klant: { naam: 'A' }, stukken: [{ naam: 'Hemd', aantal: 4, prijs: 2.5, korting: 10 }, { naam: 'Broek', aantal: 1, prijs: 5 }], korting: { soort: '%', waarde: '10' } });
+  assert.equal(bon.subtotaal, 14);
+  assert.equal(bon.kortingBedrag, 1.4);
+  assert.equal(bon.totaal, 12.6);
+  ({ bon } = nieuw(LEEG, { klant: { naam: 'B' }, stukken: [{ naam: 'Hemd', aantal: 1, prijs: 3 }], korting: { soort: '€', waarde: '5' } }));
+  assert.equal(bon.totaal, 0, 'nooit onder nul');
+});

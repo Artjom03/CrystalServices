@@ -114,7 +114,11 @@
         <div id="f-suggesties"></div>
         <table class="stukken" id="f-tabel">
           <tbody id="f-regels"></tbody>
-          <tfoot><tr><td>Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td></tr></tfoot>
+          <tfoot>
+            <tr class="f-korting-rij"><td>Korting op de bon</td><td class="bedrag"><input id="f-korting" inputmode="decimal" placeholder="0" aria-label="Korting op de bon">
+              <select id="f-korting-soort" aria-label="Korting in procent of euro"><option value="%">%</option><option value="€">€</option></select></td></tr>
+            <tr><td>Totaal</td><td id="f-totaal" class="bedrag">€ 0,00</td></tr>
+          </tfoot>
         </table>
       </fieldset>
 

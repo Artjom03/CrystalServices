@@ -48,7 +48,13 @@
   // De testbon heeft nummer 00-000: scannen toont dan enkel dat de scanner werkt.
   const TEST_NR = '00-000';
 
-  const bedragOfVolgt = (s) => (s.prijs == null ? '<span class="volgt">prijs volgt</span>' : eur(s.aantal * s.prijs));
+  // Bedrag van een regel, met de korting van dat stuk (in %).
+  const regelBedrag = (s) => Math.round(s.aantal * (Number(s.prijs) || 0) * (1 - (Number(s.korting) || 0) / 100) * 100) / 100;
+  const kortingTag = (s) => (s.korting ? ` <span class="korting-tag">−${String(s.korting).replace('.', ',')} %</span>` : '');
+  // Subtotaal en korting op de hele bon, voor op papier.
+  const bonKortingRegels = (b, cls) => (b.kortingBedrag ? `<div class="${cls}"><span>Subtotaal</span><span>${eur(b.subtotaal)}</span></div>
+      <div class="${cls}"><span>Korting${b.korting?.soort === '%' ? ' ' + String(b.korting.waarde).replace('.', ',') + ' %' : ''}</span><span>− ${eur(b.kortingBedrag)}</span></div>` : '');
+  const bedragOfVolgt = (s) => (s.prijs == null ? '<span class="volgt">prijs volgt</span>' : eur(regelBedrag(s)));
   function groepen(stukken) {
     return VOLGORDE.map((beh) => [beh, stukken.filter((s) => (s.behandeling || 'ander') === beh)]).filter(([, l]) => l.length);
   }
@@ -978,7 +984,7 @@
 
     const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
       `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
-      lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}${s.vlek ? '<div class="pr-vlek">⚠ met vlek</div>' : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
+      lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}${s.korting ? `<div class="pr-stukprijs">korting −${String(s.korting).replace('.', ',')} %</div>` : ''}${s.vlek ? '<div class="pr-vlek">⚠ met vlek</div>' : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
     ).join('');
     return `<section class="pr-bon">
         <header class="pr-kop">
@@ -996,6 +1002,7 @@
           <tr><th>Opgehaald</th><td>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</td></tr>
         </table>
         ${b.stukken.length ? `<table class="pr-stukken"><tbody>${rijen}</tbody></table>` : ''}
+        ${bonKortingRegels(b, 'pr-subtotaal')}
         <div class="pr-totaal"><span>Totaal${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>
         <div class="pr-betaling">${b.betaald ? betaaldTekst(b) : `Te betalen: <b>${eur(b.totaal)}</b>`}</div>
         ${b.factuur ? '<div class="pr-portaal">U krijgt een factuur voor deze bon.</div>' : ''}
@@ -1043,7 +1050,7 @@
   // Kop van een groep in de tabel: de dienst groot, met aantal stuks en subtotaal.
   const dienstKop = (beh, lijst, kolommen, metBedrag) => {
     const n = lijst.reduce((t, s) => t + s.aantal, 0);
-    const som = lijst.reduce((t, s) => t + (s.prijs == null ? 0 : s.aantal * s.prijs), 0);
+    const som = lijst.reduce((t, s) => t + (s.prijs == null ? 0 : regelBedrag(s)), 0);
     return `<tr class="a4-groep a4-groep-${beh}"><td colspan="${kolommen}"><span><i>${DIENST_ICOON[beh] || '•'}</i>${esc(BEHANDELING[beh])}</span><small>${n} stuk${n === 1 ? '' : 's'}${metBedrag && som ? ' · ' + eur(som) : ''}</small></td></tr>`;
   };
   function bonA4(b, afhaal) {
@@ -1083,12 +1090,13 @@
     } else {
       const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
         dienstKop(beh, lijst, 4, true) +
-        lijst.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td></tr>`).join('')
+        lijst.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${kortingTag(s)}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
       ).join('');
       tabel = `<table class="a4-tabel">
         <thead><tr><th class="a4-n">Aantal</th><th>Omschrijving</th><th class="r">Per stuk</th><th class="r">Bedrag</th></tr></thead>
         <tbody>${rijen}</tbody>
       </table>
+      ${bonKortingRegels(b, 'a4-subtotaal')}
       <div class="a4-btw">Excl. btw ${eur(exclVan(b.totaal))} · Btw ${BTW} % ${eur(b.totaal - exclVan(b.totaal))}</div>
       <div class="a4-totaal"><span>Totaal incl. btw${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>`;
     }
@@ -1138,7 +1146,7 @@
         <td class="a4-n">${s.aantal}</td>
         <td>${esc(kaleNaam(s))}</td>
         <td class="vr-jn">${s.vlek ? `<b>JA</b>${s.vlekOngeteld && s.aantal > 1 ? '<small class="vr-ongeteld">aantal niet geteld</small>' : ''}` : 'nee'}</td>
-        ${afhaal ? `<td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(s.aantal * s.prijs)}</td>` : ''}
+        ${afhaal ? `<td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td>` : ''}
       </tr>`).join('')
     ).join('') + teTellen.map(([titel]) => `<tr><td class="a4-n"></td><td colspan="${kolommen - 1}" class="a4-zacht">${esc(mandTekst(titel))}</td></tr>`).join('');
 
@@ -1167,6 +1175,7 @@
         <tfoot><tr><td class="a4-n">${aantal}</td><td>stuk${aantal === 1 ? '' : 's'} in totaal</td><td class="vr-jn">${nVlek ? `<b>${nVlek}</b> met vlek` : ongeteld.length ? '<b>met vlekken</b>' : 'geen'}</td>${afhaal ? `<td></td><td class="r">${eur(b.totaal)}</td>` : ''}</tr></tfoot>
       </table>
       ${b.opmerking ? `<div class="a4-opm vr-opm"><h4>Opmerking</h4>${esc(b.opmerking)}</div>` : ''}
+      ${afhaal ? bonKortingRegels(b, 'a4-subtotaal') : ''}
       ${afhaal ? `<div class="a4-onder"><div class="a4-betaling">${b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>` : `Te betalen: <b>${eur(b.totaal)}</b>`}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}</div></div>` : ''}
     </section>`;
   }
@@ -1369,7 +1378,8 @@
       </div></td>
       <td><input value="${esc(r.naam)}" aria-label="Stuk" data-veld="naam" placeholder="Welk stuk?"></td>
       <td><select data-veld="behandeling" aria-label="Behandeling">${VOLGORDE.map((b) => `<option value="${b}"${r.behandeling === b ? ' selected' : ''}>${BEHANDELING[b]}</option>`).join('')}</select></td>
-      <td class="bedrag"><span class="prijs-veld">€ <input class="prijs" inputmode="decimal" value="${prijsTekst(r.prijs)}" placeholder="volgt" aria-label="Prijs per stuk" data-veld="prijs"></span></td>
+      <td class="bedrag"><span class="prijs-veld">€ <input class="prijs" inputmode="decimal" value="${prijsTekst(r.prijs)}" placeholder="volgt" aria-label="Prijs per stuk" data-veld="prijs"></span>
+        <span class="korting-veld">−<input class="korting" inputmode="decimal" value="${r.korting ? String(r.korting).replace('.', ',') : ''}" placeholder="0" aria-label="Korting in procent" data-veld="korting">%</span></td>
       <td><button type="button" class="weg" aria-label="Verwijderen" data-weg>✕</button></td>
       <td class="vlek-td">${vlekCel(r)}</td>
     </tr>`).join('');
@@ -1391,11 +1401,22 @@
     if (Number(r.vlekAantal) > r.aantal) r.vlekAantal = r.aantal;
     tr.querySelector('.vlek-td').innerHTML = vlekCel(r);
   }
+  // Korting op de hele bon (in % of €), zoals de server ze ook berekent.
+  function formKorting(sub) {
+    const waarde = Number(String($('#f-korting').value).replace(',', '.')) || 0;
+    if (!(waarde > 0)) return 0;
+    const af = $('#f-korting-soort').value === '€' ? waarde : sub * Math.min(100, waarde) / 100;
+    return Math.min(sub, Math.round(af * 100) / 100);
+  }
   function toonTotaal() {
-    const t = regels.reduce((som, r) => som + (Number(r.aantal) || 0) * (Number(r.prijs) || 0), 0);
-    $('#f-totaal').innerHTML = eur(t) + (regels.some((r) => r.prijs == null) ? ' <span class="volgt">+ prijs volgt</span>' : '')
+    const sub = Math.round(regels.reduce((som, r) => som + regelBedrag({ aantal: Number(r.aantal) || 0, prijs: r.prijs, korting: r.korting }), 0) * 100) / 100;
+    const af = formKorting(sub);
+    const t = Math.round((sub - af) * 100) / 100;
+    $('#f-totaal').innerHTML = (af ? `<div class="btw-regel">${eur(sub)} − korting ${eur(af)}</div>` : '') + eur(t) + (regels.some((r) => r.prijs == null) ? ' <span class="volgt">+ prijs volgt</span>' : '')
       + (t ? `<div class="btw-regel">${eur(exclVan(t))} excl. btw · ${eur(t - exclVan(t))} btw</div>` : '');
   }
+  $('#f-korting').addEventListener('input', toonTotaal);
+  $('#f-korting-soort').addEventListener('change', toonTotaal);
   $('#f-regels').addEventListener('input', (e) => {
     const tr = e.target.closest('tr');
     const r = regels[Number(tr.dataset.i)];
@@ -1404,6 +1425,7 @@
     if (veld === 'aantal') { r.aantal = Math.max(1, Math.round(Number(e.target.value) || 1)); toonVlekCel(tr, r); }
     if (veld === 'vlekAantal') r.vlekAantal = e.target.value.trim() === '' ? '' : Math.max(1, Math.min(r.aantal, Math.round(Number(e.target.value) || 1)));
     if (veld === 'prijs') r.prijs = e.target.value.trim() === '' ? null : Number(e.target.value.replace(',', '.')) || 0;
+    if (veld === 'korting') r.korting = Math.min(100, Math.max(0, Number(e.target.value.replace(',', '.')) || 0)) || undefined;
     toonTotaal();
   });
   $('#f-regels').addEventListener('change', (e) => {
@@ -1590,6 +1612,8 @@
     f.betaald.checked = b ? b.betaald : false;
     f.betaalwijze.value = b ? b.betaalwijze : '';
     f.opmerking.value = b ? b.opmerking : '';
+    $('#f-korting').value = b?.korting ? String(b.korting.waarde).replace('.', ',') : '';
+    $('#f-korting-soort').value = b?.korting?.soort || '%';
     f.vliegtuig.value = b ? b.vliegtuig || '' : '';
     regels = b ? b.stukken.map((s) => ({ ...s, behandeling: s.behandeling || 'ander' })) : [];
     // Bij een nieuwe bon eerst kiezen wat de klant binnenbrengt; daarna verschijnen enkel die stukken.
@@ -1630,6 +1654,7 @@
       betaald: f.betaald.checked,
       betaalwijze: f.betaalwijze.value,
       opmerking: f.opmerking.value,
+      korting: { soort: $('#f-korting-soort').value, waarde: $('#f-korting').value },
       vliegtuig: f.vliegtuig.value,
     };
     $('#f-bewaar').disabled = true;
