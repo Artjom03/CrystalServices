@@ -1228,8 +1228,9 @@
     const eigen = staat.prijslijst;
     if (!(eigen?.versie >= 2)) return STANDAARD_PRIJSLIJST;
     if (eigenBron !== eigen) {
-      const titels = new Set((eigen.groepen || []).map((g) => g.titel));
-      eigenLijst = { ...eigen, groepen: [...(eigen.groepen || []), ...STANDAARD_PRIJSLIJST.groepen.filter((g) => g.titel === 'Sportclubs' && !titels.has(g.titel))] };
+      // Afgesproken klantprijzen (Sportclubs, Vaste klanten) komen altijd uit de standaardlijst.
+      const vast = new Set(['Sportclubs', 'Vaste klanten']);
+      eigenLijst = { ...eigen, groepen: [...(eigen.groepen || []).filter((g) => !vast.has(g.titel)), ...STANDAARD_PRIJSLIJST.groepen.filter((g) => vast.has(g.titel))] };
       eigenBron = eigen;
     }
     return eigenLijst;
