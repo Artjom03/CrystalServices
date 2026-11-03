@@ -607,3 +607,7 @@ a{color:var(--navy);}
   .pl-blad2 .pl-geen{color:#000;}
   .pl-voet{margin-top:3mm;font-size:8pt;color:#555;}
 }
+
+/* Ophaaldatum nog niet gekozen */
+fieldset.kies-datum { outline: 3px solid #e0a100; border-radius: 10px; }
+fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d00; }

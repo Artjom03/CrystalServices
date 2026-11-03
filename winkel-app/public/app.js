@@ -1371,8 +1371,14 @@
     const soort = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis' }[beh];
     if (soort && !soorten.has(soort)) { soorten.add(soort); toonSoorten(); }
   }
+  $('#f').klaarTegen.addEventListener('change', () => {
+    $('#f').klaarTegen.closest('fieldset').classList.remove('kies-datum');
+    $('#f-fout').textContent = '';
+  });
   $$('[data-dagen]').forEach((k) => k.addEventListener('click', () => {
     $('#f').klaarTegen.value = plusDagen(Number(k.dataset.dagen));
+    $('#f').klaarTegen.closest('fieldset').classList.remove('kies-datum');
+    $('#f-fout').textContent = '';
   }));
 
   // Btw: alle prijzen in het programma zijn incl. btw; excl. wordt ervan afgeleid (21 %).
@@ -1618,7 +1624,9 @@
     f.telefoon.value = b ? b.klant.telefoon : '';
     f.email.value = b ? b.klant.email : '';
     if (klant) vulKlant(klant);
-    f.klaarTegen.value = b ? b.klaarTegen : plusDagen(2);
+    // Bij een nieuwe bon kiest de winkel zelf de ophaaldatum (geen automatische datum meer).
+    f.klaarTegen.value = b ? b.klaarTegen : '';
+    f.klaarTegen.closest('fieldset').classList.remove('kies-datum');
     fTickets = b ? (ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie || '']) : [''];
     toonFormTickets();
     f.betaald.checked = b ? b.betaald : false;
@@ -1656,6 +1664,16 @@
     if (!soorten.size) { $('#f-fout').textContent = 'Kies wat de klant binnenbrengt.'; return; }
     if (!bewerkId && !f.vliegtuig.value.trim() && vliegtuigKlant({ naam: f.naam.value, telefoon: f.telefoon.value })) {
       $('#f-fout').textContent = 'Vul het vliegtuig in (bv. de registratie OO-ABC).'; f.vliegtuig.focus(); return;
+    }
+    if (!bewerkId && !f.klaarTegen.value) {
+      // Vanzelf door naar de datum: wanneer mag de klant het ophalen?
+      const vak = f.klaarTegen.closest('fieldset');
+      $('#f-fout').textContent = 'Kies wanneer de klant het mag ophalen.';
+      vak.classList.add('kies-datum');
+      vak.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      f.klaarTegen.focus();
+      try { f.klaarTegen.showPicker(); } catch { /* niet elke browser */ }
+      return;
     }
     const bon = {
       klant: { naam: f.naam.value, telefoon: f.telefoon.value, email: f.email.value },
