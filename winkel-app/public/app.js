@@ -953,6 +953,13 @@
     return r ? r.plaats : ANDERE_PLAATS;
   }
 
+  // Op de afhaalbon staat altijd dat er betaald is (de klant betaalt bij het ophalen); bij een factuur: via factuur.
+  function afhaalBetaling(b) {
+    if (b.betaald) return betaaldTekst(b);
+    if (b.factuur || b.betaalwijze === 'factuur') return `Betaling via factuur: <b>${eur(b.totaal)}</b>`;
+    return `<span class="a4-betaald">✓ Betaald: <b>${eur(b.totaal)}</b></span>`;
+  }
+
   function bonKlein(b, afhaal) {
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const uren = esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1));
@@ -1004,7 +1011,7 @@
         ${b.stukken.length ? `<table class="pr-stukken"><tbody>${rijen}</tbody></table>` : ''}
         ${bonKortingRegels(b, 'pr-subtotaal')}
         <div class="pr-totaal"><span>Totaal${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>
-        <div class="pr-betaling">${b.betaald ? betaaldTekst(b) : `Te betalen: <b>${eur(b.totaal)}</b>`}</div>
+        <div class="pr-betaling">${afhaalBetaling(b)}</div>
         ${b.factuur ? '<div class="pr-portaal">U krijgt een factuur voor deze bon.</div>' : ''}
         <footer class="pr-voet"><b>Bedankt voor uw vertrouwen!</b><br>${uren}<br>${WEBSITE}</footer>
       </section>`;
@@ -1102,7 +1109,7 @@
     }
 
     const betaling = b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>`
-      : afhaal ? `Te betalen: <b>${eur(b.totaal)}</b>` : 'U betaalt bij het ophalen.';
+      : afhaal ? afhaalBetaling(b) : 'U betaalt bij het ophalen.';
     const slot = `
       <div class="a4-onder">
         <div class="a4-betaling">${betaling}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}${afhaal ? '' : '<br><small>Breng deze bon mee bij het ophalen. Bedankt en tot binnenkort!</small>'}</div>
@@ -1176,7 +1183,7 @@
       </table>
       ${b.opmerking ? `<div class="a4-opm vr-opm"><h4>Opmerking</h4>${esc(b.opmerking)}</div>` : ''}
       ${afhaal ? bonKortingRegels(b, 'a4-subtotaal') : ''}
-      ${afhaal ? `<div class="a4-onder"><div class="a4-betaling">${b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>` : `Te betalen: <b>${eur(b.totaal)}</b>`}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}</div></div>` : ''}
+      ${afhaal ? `<div class="a4-onder"><div class="a4-betaling">${b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>` : afhaalBetaling(b)}${b.factuur ? '<br><small>U krijgt een factuur voor deze bon.</small>' : ''}</div></div>` : ''}
     </section>`;
   }
 
