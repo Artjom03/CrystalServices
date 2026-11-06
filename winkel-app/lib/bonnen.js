@@ -69,7 +69,10 @@ export function schoonStukken(stukken) {
   return stukken.slice(0, MAX.stukken).flatMap((s) => {
     const naam = tekst(s?.naam, MAX.stukNaam);
     if (!naam) return [];
-    const aantal = Math.min(999, Math.max(1, Math.round(Number(s?.aantal) || 1)));
+    // Bij een prijs per kilo mag het aantal een kommagetal zijn (bv. 2,35 kg).
+    const kilo = PER_KG.test(naam);
+    const ruw = Number(String(s?.aantal ?? '').replace(',', '.')) || 1;
+    const aantal = kilo ? Math.min(999, Math.max(0.01, Math.round(ruw * 100) / 100)) : Math.min(999, Math.max(1, Math.round(ruw)));
     const stuk = { naam, aantal, prijs: prijsOfLeeg(s?.prijs), behandeling: behandelingVan(s) };
     // Korting op dit stuk, in procent.
     const korting = Math.round(Number(String(s?.korting ?? '').replace(',', '.')) * 10) / 10;
@@ -282,6 +285,9 @@ export function blijftBewaard(staat, b) {
   const k = staat.klantenboek?.[klantSleutel(b.klant)];
   return Boolean(k?.pro || k?.btw || b.factuur?.btw);
 }
+
+/** Stukken met een prijs per kilo: het aantal is dan een gewicht (kommagetal mag). */
+export const PER_KG = /\bper\s*kg\b|\(per kg\)|\bkilo\b/i;
 
 export const VLIEGTUIG_NAAM = /flying|\basl\b|\bisl\b/i;
 
