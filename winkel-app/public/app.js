@@ -49,6 +49,8 @@
   const TEST_NR = '00-000';
 
   // Bedrag van een regel, met de korting van dat stuk (in %).
+  // Stukken met een prijs per kilo: aantal = gewicht, kommagetal mag (zelfde regel als lib/bonnen.js).
+  const perKg = (naam) => /\bper\s*kg\b|\(per kg\)|\bkilo\b/i.test(naam || '');
   const regelBedrag = (s) => Math.round(s.aantal * (Number(s.prijs) || 0) * (1 - (Number(s.korting) || 0) / 100) * 100) / 100;
   const kortingTag = (s) => (s.korting ? ` <span class="korting-tag">korting −${String(s.korting).replace('.', ',')} %${s.prijs != null ? ' (zonder korting ' + eur(s.aantal * s.prijs) + ')' : ''}</span>` : '');
   // Subtotaal en korting op de hele bon, voor op papier.
@@ -1398,7 +1400,7 @@
     $('#f-regels').innerHTML = regels.map((r, i) => `<tr data-i="${i}"${i === net ? ' class="net"' : ''}>
       <td><div class="teller">
         <button type="button" data-stap="-1" aria-label="Eén minder">−</button>
-        <input class="aantal" type="number" min="1" inputmode="numeric" value="${r.aantal}" aria-label="Aantal" data-veld="aantal">
+        ${perKg(r.naam) ? `<input class="aantal" type="text" inputmode="decimal" value="${String(r.aantal).replace('.', ',')}" aria-label="Aantal kilo" title="kg" data-veld="aantal">` : `<input class="aantal" type="number" min="1" inputmode="numeric" value="${r.aantal}" aria-label="Aantal" data-veld="aantal">`}
         <button type="button" data-stap="1" aria-label="Eén meer">+</button>
       </div></td>
       <td><input value="${esc(r.naam)}" aria-label="Stuk" data-veld="naam" placeholder="Welk stuk?"></td>
@@ -1447,7 +1449,11 @@
     const r = regels[Number(tr.dataset.i)];
     const veld = e.target.dataset.veld;
     if (veld === 'naam') r.naam = e.target.value;
-    if (veld === 'aantal') { r.aantal = Math.max(1, Math.round(Number(e.target.value) || 1)); toonVlekCel(tr, r); }
+    if (veld === 'aantal') {
+      const n = Number(e.target.value.replace(',', '.')) || 1;
+      r.aantal = perKg(r.naam) ? Math.max(0.01, Math.round(n * 100) / 100) : Math.max(1, Math.round(n));
+      toonVlekCel(tr, r);
+    }
     if (veld === 'vlekAantal') r.vlekAantal = e.target.value.trim() === '' ? '' : Math.max(1, Math.min(r.aantal, Math.round(Number(e.target.value) || 1)));
     if (veld === 'prijs') r.prijs = e.target.value.trim() === '' ? null : Number(e.target.value.replace(',', '.')) || 0;
     if (veld === 'korting') r.korting = Math.min(100, Math.max(0, Number(e.target.value.replace(',', '.')) || 0)) || undefined;
