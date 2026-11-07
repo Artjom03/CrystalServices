@@ -245,6 +245,8 @@
     const intl = telefoonIntl(b.klant.telefoon);
     return zoekVorm([
       b.nr, scanCode(b.nr), b.klant.naam, b.klant.email, b.locatie, b.vliegtuig || '', b.factuur && !b.factuur.gemaaktOp ? 'factuur' : '',
+      // Ook op stuk zoeken (bv. "trouwkleed"), en op de opmerking.
+      ...(b.stukken || []).map((st) => st.naam), b.opmerking || '',
       // Het nummer in elke schrijfwijze: 0470123456, 32470123456
       b.klant.telefoon.replace(/\D/g, ''), intl, intl.startsWith('32') ? '0' + intl.slice(2) : '',
     ].join(' '));
@@ -342,6 +344,15 @@
     </li>`;
   }
 
+  // Bij zoeken op een stuk (bv. "trouwkleed"): tonen welk stuk in de bon gevonden is.
+  function gevondenStukken(b) {
+    const q = $('#zoek').value.trim();
+    if (!q || /^[\d\s+()./-]+$/.test(q)) return '';
+    const woorden = zoekVorm(q).split(/\s+/).filter(Boolean);
+    const raak = (b.stukken || []).filter((st) => woorden.every((w) => zoekVorm(st.naam).includes(w)));
+    return raak.length ? ' · <b class="loc">🔎 ' + raak.map((st) => esc(aantalTekst(st.aantal) + '× ' + kaleNaam(st))).join(', ') + '</b>' : '';
+  }
+
   function kaart(b) {
     const vandaag = vandaagIso();
     let label = '';
@@ -360,7 +371,8 @@
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const locatie = (b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '')
       + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '')
-      + (b.stukken.some((st) => st.extern === 'weg') ? ' · <b class="loc">🚚 bij partner</b>' : b.stukken.some((st) => st.extern === 'sturen') ? ' · <b class="loc">📦 te versturen</b>' : '');
+      + (b.stukken.some((st) => st.extern === 'weg') ? ' · <b class="loc">🚚 bij partner</b>' : b.stukken.some((st) => st.extern === 'sturen') ? ' · <b class="loc">📦 te versturen</b>' : '')
+      + gevondenStukken(b);
     return `<li class="bon" data-id="${esc(b.id)}" tabindex="0">
       <div class="nr">${esc(b.nr)}</div>
       <div class="naam">${esc(b.klant.naam)}${b.klant.telefoon ? ` <span class="tel">${esc(b.klant.telefoon)}</span>` : ''}</div>
@@ -1989,7 +2001,8 @@
     // Een lege rij tussen de groepen, niet onderaan een tabel.
     const leeg = '<tr class="pl-leeg"><td colspan="5"></td></tr>';
     // Zoals de papieren lijst V43: voorkant dames- en herenkleding, achterkant de rest.
-    const [eerste, ...rest] = prijslijst().groepen || [];
+    // Afgesproken klantprijzen (sportclubs, vaste klanten) staan enkel in het programma, niet op de afgedrukte lijst.
+    const [eerste, ...rest] = (prijslijst().groepen || []).filter((g) => !['Sportclubs', 'Vaste klanten'].includes(g.titel));
     $('#afdruk').innerHTML = `<section class="pl-blad">
       <div class="pl-titel">${esc(WINKEL.naam)} · Prijslijst${actie ? ` · <b>${esc(actie.naam)}</b>` : ''}<span class="pl-datum">${esc(new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}</span></div>
       ${actie ? `<div class="pl-sub">Geldig t.e.m. ${esc(new Date(actie.tot + 'T12:00').toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }))}</div>` : ''}
