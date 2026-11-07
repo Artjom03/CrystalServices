@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import updaterPakket from 'electron-updater';
 import { pasToe, voorWinkel, teBewaren, Fout, LEEG, klantSleutel } from './app/lib/bonnen.js';
 import { leesAgenda, komendeAfspraken, agendaAdres } from './app/lib/agenda.js';
+import { geblokkeerdTot, noteerFout, blokTekst } from './app/lib/slot.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
@@ -134,9 +135,18 @@ async function api(request) {
     if (!/^\d{4,8}$/.test(pin)) return json(401, { error: 'Kies een pincode van 4 tot 8 cijfers' });
     instellingen.pin = pin;
     await bewaarInstellingen();
-  } else if (pin !== instellingen.pin) {
-    await new Promise((r) => setTimeout(r, 600));
-    return json(401, { error: 'Verkeerde pincode' });
+  } else {
+    // Te veel foute pincodes: een tijd geblokkeerd (zie lib/slot.js). Bewaard, ook na herstarten.
+    const tot = geblokkeerdTot(instellingen.pogingen);
+    if (tot) return json(429, { error: blokTekst(tot) });
+    if (pin !== instellingen.pin) {
+      instellingen.pogingen = noteerFout(instellingen.pogingen);
+      await bewaarInstellingen();
+      await new Promise((r) => setTimeout(r, 600));
+      const nu = geblokkeerdTot(instellingen.pogingen);
+      return json(nu ? 429 : 401, { error: nu ? blokTekst(nu) : 'Verkeerde pincode' });
+    }
+    if (instellingen.pogingen?.fouten?.length) { instellingen.pogingen = null; await bewaarInstellingen(); }
   }
 
   try {

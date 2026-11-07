@@ -2,7 +2,7 @@ import { pasToe, voorWinkel, Fout } from '../lib/bonnen.js';
 import { lees, wijzig } from '../lib/opslag.js';
 import { maakPin, hashPin } from '../lib/klant.js';
 import { leesAgenda, komendeAfspraken } from '../lib/agenda.js';
-import { juistePin, geblokkeerd, ipVan } from '../lib/pin.js';
+import { controleer } from '../lib/pin.js';
 
 // Wat de winkel mag doen. Aanmeldingen van klanten lopen via api/klant.js.
 const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'extern', 'verwittigd', 'verwijder', 'klantcode', 'instellingen', 'prijslijst', 'klant', 'klantNieuw', 'klantWeg', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'partnerPrijs', 'factuurBetaald', 'klantenImport'];
@@ -29,16 +29,10 @@ async function leesBody(req) {
 }
 
 export default async function handler(req, res) {
-  const ip = ipVan(req);
   try {
-    if (geblokkeerd(ip, false)) {
-      return json(res, 429, { error: 'Te veel foute pogingen. Probeer het over een kwartier opnieuw.' });
-    }
-    if (!juistePin(req.headers['x-pin'] || '')) {
-      geblokkeerd(ip, true);
-      await new Promise((r) => setTimeout(r, 600));
-      return json(res, 401, { error: 'Verkeerde pincode' });
-    }
+    // Pincode, met blokkering na te veel foute pogingen (zie lib/slot.js).
+    const nee = await controleer(req);
+    if (nee) return json(res, nee.status, { error: nee.error });
 
     if (req.method === 'GET') {
       const staat = await lees();
