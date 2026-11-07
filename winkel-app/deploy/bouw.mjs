@@ -17,7 +17,12 @@ mkdirSync(bron, { recursive: true });
 
 // 1. De code ophalen op die commit (enkel winkel-app/public, api en lib).
 const tar = join(bron, 'repo.tar.gz');
-const res = await fetch(`https://codeload.github.com/Artjom03/CrystalServices/tar.gz/${commit}`);
+// Is de repo privé, dan met de sleutel GITHUB_LEZEN (Vercel-instelling, enkel lezen).
+const sleutel = process.env.GITHUB_LEZEN;
+const res = await fetch(sleutel
+  ? `https://api.github.com/repos/Artjom03/CrystalServices/tarball/${commit}`
+  : `https://codeload.github.com/Artjom03/CrystalServices/tar.gz/${commit}`,
+  sleutel ? { headers: { Authorization: `Bearer ${sleutel}`, 'User-Agent': 'crystal-winkel-bouw' } } : {});
 if (!res.ok) throw new Error(`Kon de code niet ophalen (${res.status})`);
 writeFileSync(tar, Buffer.from(await res.arrayBuffer()));
 execFileSync('tar', ['-xzf', tar, '-C', bron, '--strip-components=2', '--wildcards', '*/winkel-app/public/*', '*/winkel-app/api/*', '*/winkel-app/lib/*']);
