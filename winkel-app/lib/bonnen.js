@@ -84,6 +84,8 @@ export function schoonStukken(stukken) {
     if (EXTERN.includes(s?.extern) && s.extern) {
       stuk.extern = s.extern;
       if (s.externOp) stuk.externOp = tekst(s.externOp, 40);
+      // Bij welke partner (bv. Kwikklien of Neven).
+      if (s.partner) stuk.partner = tekst(s.partner, 40);
     }
     // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
     const vlek = tekst(s?.vlek, 120);
@@ -475,7 +477,13 @@ function handeling(oud, actie, nu) {
         if (i < 0 || !staat.bonnen[i].stukken[index]) continue;
         const stukken = [...staat.bonnen[i].stukken];
         const st = { ...stukken[index] };
-        const zet = (x) => { if (actie.status) { x.extern = actie.status; x.externOp = iso; } else { delete x.extern; delete x.externOp; } };
+        const zet = (x) => {
+          if (actie.status) { x.extern = actie.status; x.externOp = iso; } else { delete x.extern; delete x.externOp; }
+          // Welke partner: meegegeven, of de partner die er al stond; wissen als we het zelf doen.
+          if (actie.partner !== undefined) x.partner = tekst(actie.partner, 40);
+          if (!actie.status || actie.status === 'zelf') delete x.partner;
+          if (!x.partner) delete x.partner;
+        };
         const n = Number(aantal);
         if (n > 0 && n < st.aantal) {
           const deel = { ...st, aantal: Math.round(n * 100) / 100 };

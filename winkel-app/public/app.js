@@ -10,6 +10,19 @@
   // In het Windows-programma (Electron) staat alles op de pc: geen klantenportaal, en afdrukken
   // gaat rechtstreeks naar de gekozen printer.
   const DESKTOP = Boolean(window.crystal && window.crystal.desktop);
+  // Onze partners voor wat we niet zelf doen.
+  const PARTNERS = ['Kwikklien', 'Neven'];
+  const OP_WEG = ['sturen', 'weg'];
+  /** Per partner de stukken van deze bon die te versturen zijn of er nu liggen. */
+  function bijPartner(b) {
+    const per = new Map();
+    for (const st of b.stukken || []) {
+      if (!OP_WEG.includes(st.extern)) continue;
+      const naam = st.partner || 'Partner (nog kiezen)';
+      per.set(naam, [...(per.get(naam) || []), st]);
+    }
+    return per;
+  }
 
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -291,9 +304,10 @@
     const bonnen = staat.bonnen || [];
     $('#n-binnen').textContent = bonnen.filter((b) => b.status === 'binnen').length;
     $('#n-klaar').textContent = bonnen.filter((b) => b.status === 'klaar').length;
+    $('#n-partner').textContent = bonnen.filter((b) => bijPartner(b).size).length;
 
     // Bij zoeken: alle statussen tonen.
-    let lijst = q ? bonnen.filter((b) => past(b, q)) : bonnen.filter((b) => b.status === tab);
+    let lijst = q ? bonnen.filter((b) => past(b, q)) : tab === 'partner' ? bonnen.filter((b) => bijPartner(b).size) : bonnen.filter((b) => b.status === tab);
     if (!q && tab === 'opgehaald') lijst = lijst.filter((b) => dagenGeleden(b.opgehaaldOp) <= 60);
     const sleutel = (b) =>
       q ? b.binnenOp
@@ -302,9 +316,18 @@
       : b.opgehaaldOp;
     lijst.sort((a, b) => (tab === 'opgehaald' || q ? -1 : 1) * sleutel(a).localeCompare(sleutel(b)));
 
-    $('#lijst').innerHTML = (q && lijst.length ? zoekKop(lijst) : '') + lijst.map(kaart).join('');
+    if (!q && tab === 'partner') {
+      // Per partner: wat ligt er bij Kwikklien, wat bij Neven.
+      const namen = [...new Set([...PARTNERS, ...lijst.flatMap((b) => [...bijPartner(b).keys()])])];
+      $('#lijst').innerHTML = namen.map((naam) => {
+        const hier = lijst.filter((b) => bijPartner(b).has(naam));
+        if (!hier.length) return '';
+        const st = hier.reduce((n, b) => n + bijPartner(b).get(naam).reduce((m, x) => m + x.aantal, 0), 0);
+        return `<li class="zoek-kop partner-kop">🚚 <b>${esc(naam)}</b> · ${hier.length} bon${hier.length === 1 ? '' : 'nen'}, ${aantalTekst(st)} stuk${st === 1 ? '' : 's'}</li>` + hier.map(kaart).join('');
+      }).join('');
+    } else $('#lijst').innerHTML = (q && lijst.length ? zoekKop(lijst) : '') + lijst.map(kaart).join('');
     $('#leeg').hidden = lijst.length > 0;
-    $('#leeg').textContent = q ? 'Geen bonnen gevonden.' : { binnen: 'Geen bonnen in behandeling.', klaar: 'Niets klaar om op te halen.', opgehaald: 'Nog niets opgehaald de laatste 60 dagen.' }[tab];
+    $('#leeg').textContent = q ? 'Geen bonnen gevonden.' : { partner: 'Niets bij een partner.', binnen: 'Geen bonnen in behandeling.', klaar: 'Niets klaar om op te halen.', opgehaald: 'Nog niets opgehaald de laatste 60 dagen.' }[tab];
     const maanden = staat.instellingen?.bewaarMaanden || 12;
     $('#voetnoot').hidden = Boolean(q) || tab !== 'opgehaald';
     $('#voetnoot').textContent = `Hier staan de laatste 60 dagen; oudere bonnen vind je via zoeken. Opgehaalde bonnen worden na ${maanden} ${maanden === 1 ? 'maand' : 'maanden'} gewist (⚙ Instellingen).`;
@@ -372,7 +395,7 @@
     const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
     const locatie = (b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '')
       + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '')
-      + (b.stukken.some((st) => st.extern === 'weg') ? ' · <b class="loc">🚚 bij partner</b>' : b.stukken.some((st) => st.extern === 'sturen') ? ' · <b class="loc">📦 te versturen</b>' : '')
+      + [...bijPartner(b)].map(([naam, l]) => ` · <b class="loc">${l.some((x) => x.extern === 'weg') ? '🚚' : '📦'} ${aantalTekst(l.reduce((n, x) => n + x.aantal, 0))} bij ${esc(naam)}</b>`).join('')
       + gevondenStukken(b);
     return `<li class="bon" data-id="${esc(b.id)}" tabindex="0">
       <div class="nr">${esc(b.nr)}</div>
@@ -399,7 +422,7 @@
     return uit;
   }
   const partnerRij = (x, knoppen) => `<div class="pt-rij" data-id="${esc(x.b.id)}" data-index="${x.index}">
-      <span><b>${aantalTekst(x.st.aantal)}× ${esc(kaleNaam(x.st))}</b><small>Bon ${esc(x.b.nr)} · ${esc(x.b.klant.naam)}${x.st.externOp ? ' · sinds ' + esc(mooiDatum(x.st.externOp)) : ''}</small></span>
+      <span><b>${aantalTekst(x.st.aantal)}× ${esc(kaleNaam(x.st))}</b><small>${x.st.partner ? '<b>' + esc(x.st.partner) + '</b> · ' : ''}Bon ${esc(x.b.nr)} · ${esc(x.b.klant.naam)}${x.st.externOp ? ' · sinds ' + esc(mooiDatum(x.st.externOp)) : ''}</small></span>
       <span class="pt-knoppen">${knoppen}</span></div>`;
   function toonPartner() {
     const alle = partnerStukken();
@@ -410,14 +433,14 @@
     const blok = (titel, lijst, knoppen, extra = '') => `<section class="pt-blok"><h3>${titel} <span class="teller">${lijst.length}</span></h3>${extra}
       ${lijst.length ? lijst.map((x) => partnerRij(x, knoppen)).join('') : '<p class="tijdlijn">Niets.</p>'}</section>`;
     $('#pt-inhoud').innerHTML = '<p class="tijdlijn">Alles wat we niet zelf doen. Een deel van een bon sturen? Open de bon en kies bij "Waar is alles?" → Partner.</p>' +
-      blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button><button class="knop klein goud" data-pt="sturen">→ Partner</button>')
+      blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button>' + PARTNERS.map((n) => `<button class="knop klein goud" data-pt="sturen" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join(''))
       + blok('📦 Te versturen', sturen, '<button class="knop klein" data-pt="">Toch niet</button><button class="knop klein" data-pt="weg">Verstuurd</button>',
         sturen.length ? '<div class="d-knoppen"><button class="knop" id="pt-lijst">🖨 Verzendlijst</button><button class="knop hoofd" id="pt-alles-weg">Alles verstuurd</button></div>' : '')
       + blok('🚚 Bij de partner', weg, '<button class="knop klein hoofd" data-pt="terug">Terug ✓</button>')
       + blok('✓ Teruggebracht (laatste 14 dagen)', terug, '<button class="knop klein" data-pt="weg">Toch nog weg</button>');
   }
-  async function zetPartner(status, stukken) {
-    try { await doe({ op: 'extern', status, stukken }); toonPartner(); } catch (err) { if (err.message !== 'pin') alert(err.message); }
+  async function zetPartner(status, stukken, partner) {
+    try { await doe({ op: 'extern', status, stukken, ...(partner ? { partner } : {}) }); toonPartner(); } catch (err) { if (err.message !== 'pin') alert(err.message); }
   }
   $('#partner-knop').addEventListener('click', () => { toonPartner(); $('#partner').showModal(); });
 
@@ -546,7 +569,7 @@
     const knop = e.target.closest('[data-pt]');
     if (knop) {
       const rij = knop.closest('.pt-rij');
-      return zetPartner(knop.dataset.pt, [{ id: rij.dataset.id, index: Number(rij.dataset.index) }]);
+      return zetPartner(knop.dataset.pt, [{ id: rij.dataset.id, index: Number(rij.dataset.index) }], knop.dataset.partner);
     }
     const sturen = partnerStukken().filter((x) => x.stand === 'sturen');
     if (e.target.closest('#pt-alles-weg')) return zetPartner('weg', sturen.map((x) => ({ id: x.b.id, index: x.index })));
@@ -689,10 +712,12 @@
         <div class="d-waar">${b.stukken.map((st, i) => {
           const stand = st.extern || '';
           const knop = stand === '' || stand === 'zelf' || stand === 'terug'
-            ? `<button class="knop klein" data-naar-partner="${i}">→ Partner</button>`
+            ? PARTNERS.map((n) => `<button class="knop klein" data-naar-partner="${i}" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join('')
             : stand === 'sturen' ? `<button class="knop klein" data-partner-zet="weg" data-i="${i}">Verstuurd</button><button class="knop klein" data-partner-zet="" data-i="${i}">Toch niet</button>`
             : `<button class="knop klein hoofd" data-partner-zet="terug" data-i="${i}">Terug ✓</button>`;
-          return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b><small>${STAND[stand] || ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${knop}</span></div>`;
+          // Oude stukken zonder partnernaam: nog aanduiden bij wie ze zijn.
+          const kies = OP_WEG.includes(stand) && !st.partner ? PARTNERS.map((n) => `<button class="knop klein goud" data-partner-zet="${stand}" data-partner="${esc(n)}" data-i="${i}">${esc(n)}?</button>`).join('') : '';
+          return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b><small>${STAND[stand] || ''}${st.partner && OP_WEG.includes(stand) ? ' · <b>' + esc(st.partner) + '</b>' : ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${kies}${knop}</span></div>`;
         }).join('')}</div>
       </div>` : '';
 
@@ -873,17 +898,17 @@
       const st = b.stukken[i];
       let aantal = st.aantal;
       if (st.aantal > 1) {
-        const antwoord = prompt(`Hoeveel van de ${aantalTekst(st.aantal)}× ${kaleNaam(st)} gaan naar de partner?`, aantalTekst(st.aantal));
+        const antwoord = prompt(`Hoeveel van de ${aantalTekst(st.aantal)}× ${kaleNaam(st)} gaan naar ${naar.dataset.partner}?`, aantalTekst(st.aantal));
         if (antwoord === null) return;
         aantal = Number(String(antwoord).replace(',', '.'));
         if (!(aantal > 0) || aantal > st.aantal) { alert(`Geef een aantal van 1 tot ${aantalTekst(st.aantal)}.`); return; }
       }
-      doe({ op: 'extern', status: 'sturen', stukken: [{ id, index: i, aantal }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
+      doe({ op: 'extern', status: 'sturen', partner: naar.dataset.partner, stukken: [{ id, index: i, aantal }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
       return;
     }
     const pz = e.target.closest('[data-partner-zet]');
     if (pz) {
-      doe({ op: 'extern', status: pz.dataset.partnerZet, stukken: [{ id, index: Number(pz.dataset.i) }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
+      doe({ op: 'extern', status: pz.dataset.partnerZet, ...(pz.dataset.partner ? { partner: pz.dataset.partner } : {}), stukken: [{ id, index: Number(pz.dataset.i) }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
       return;
     }
     const knop = e.target.closest('[data-actie]');
