@@ -663,3 +663,14 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
 .kl-weg-lang { margin: 6px 0 12px; border: 1px solid #EBD9B4; background: var(--geel-zacht); border-radius: 12px; padding: 8px 12px; }
 .kl-weg-lang summary { cursor: pointer; font-weight: 600; }
 #kl-weg-lijst { margin-top: 8px; max-height: 320px; overflow: auto; }
+
+/* Nieuwe bon: genummerde stappen in werkvolgorde */
+fieldset.stap { background: #fff; border: 1px solid var(--lijn); border-left: 4px solid var(--lijn); border-radius: 14px; padding: 12px 14px 14px; margin: 0 0 12px; transition: border-color .15s, box-shadow .15s; }
+fieldset.stap > legend { float: left; width: 100%; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+fieldset.stap > legend ~ * { clear: both; }
+.stap-nr { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; background: #e8ecf3; color: var(--navy); font-weight: 800; font-size: .95rem; }
+fieldset.stap.actief { border-left-color: #2b78c5; box-shadow: 0 4px 16px rgba(43,120,197,.12); }
+fieldset.stap.actief .stap-nr { background: #2b78c5; color: #fff; }
+fieldset.stap.gedaan { border-left-color: #2f9e6b; }
+fieldset.stap.gedaan .stap-nr { background: #2f9e6b; color: #fff; font-size: 0; }
+fieldset.stap.gedaan .stap-nr::after { content: '✓'; font-size: .95rem; }
