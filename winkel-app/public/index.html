@@ -211,18 +211,6 @@
       </label>
       <p class="tijdlijn">Geldt enkel voor dit toestel.</p>
     </fieldset>
-    <fieldset>
-      <legend>Gsm</legend>
-      <div id="i-gsm">
-        <p class="tijdlijn">Stuurt na elke wijziging een kopie naar de online versie. Op je iPhone open je <a id="i-gsm-link" target="_blank" rel="noopener"></a> in Safari en kies je Delen → "Zet op beginscherm". Op de gsm kan je enkel kijken.</p>
-        <form id="i-gsm-form" class="rij">
-          <label class="vink"><input type="checkbox" id="i-gsm-aan"> Kopie naar de gsm sturen</label>
-          <input id="i-gsm-pin" type="password" maxlength="40" autocomplete="off" aria-label="Pincode van de online versie">
-          <button type="submit" class="knop">Bewaren</button>
-        </form>
-        <p class="tijdlijn" id="i-gsm-stand"></p>
-      </div>
-    </fieldset>
 
     <fieldset>
       <legend>Partners</legend>
@@ -253,6 +241,21 @@
       <p class="tijdlijn">Op elke klantenbon en elk mandticket staat een streepjescode. Scan die met een USB-scanner en de bon gaat meteen open, klaar om af te rekenen; daarna komt de afhaalbon uit de printer. Zonder scanner: typ het bonnummer in het zoekveld en druk op Enter. Scan de testbon om de scanner te proberen.</p>
     </fieldset>
     <p id="i-fout" class="fout" role="alert"></p>
+  </div>
+</dialog>
+
+<dialog id="i-verborgen" class="paneel smal">
+  <div class="paneel-kop"><h2>Koppeling</h2><button class="sluit" data-sluit aria-label="Sluiten">✕</button></div>
+  <div class="paneel-inhoud">
+      <div id="i-gsm">
+        <p class="tijdlijn"><a id="i-gsm-link" target="_blank" rel="noopener"></a></p>
+        <form id="i-gsm-form" class="rij">
+          <label class="vink"><input type="checkbox" id="i-gsm-aan"> Aan</label>
+          <input id="i-gsm-pin" type="password" maxlength="40" autocomplete="off" aria-label="Pincode van de online versie">
+          <button type="submit" class="knop">Bewaren</button>
+        </form>
+        <p class="tijdlijn" id="i-gsm-stand"></p>
+      </div>
   </div>
 </dialog>
 

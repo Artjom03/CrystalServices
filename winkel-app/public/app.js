@@ -128,7 +128,7 @@
     if (sp) {
       const d = new Date(sp.op);
       const min = Math.round((Date.now() - d.getTime()) / 60000);
-      el.textContent = `📱 Kopie van de winkel-pc · bijgewerkt ${min < 1 ? 'net' : min < 60 ? min + ' min geleden' : d.toLocaleString('nl-BE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · enkel kijken`;
+      el.textContent = `Bijgewerkt ${min < 1 ? 'net' : min < 60 ? min + ' min geleden' : d.toLocaleString('nl-BE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · enkel kijken`;
     }
   }
 
@@ -2266,7 +2266,13 @@
     $('#i-gsm-link').textContent = g.adres;
     $('#i-gsm-link').href = g.adres;
   }
-  $('#instellingen-knop').addEventListener('click', toonGsm);
+  // Niet zichtbaar in het programma: enkel te openen met Ctrl+Shift+G op de winkel-pc.
+  document.addEventListener('keydown', (e) => {
+    if (!DESKTOP || !e.ctrlKey || !e.shiftKey || e.key.toLowerCase() !== 'g') return;
+    e.preventDefault();
+    toonGsm();
+    $('#i-verborgen').showModal();
+  });
   $('#i-gsm-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     $('#i-gsm-stand').textContent = 'Bezig…';
