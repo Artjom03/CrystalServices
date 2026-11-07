@@ -378,7 +378,7 @@
       <div class="nr">${esc(b.nr)}</div>
       <div class="naam">${esc(b.klant.naam)}${b.klant.telefoon ? ` <span class="tel">${esc(b.klant.telefoon)}</span>` : ''}</div>
       <div class="rechts">${label}<span>${b.totaal ? eur(b.totaal) : ''}${b.betaald ? ' · betaald' : ''}</span></div>
-      <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ''}${locatie}</div>
+      <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ' · <i>nog te tellen</i>'}${locatie}${b.status !== 'opgehaald' ? ` <button type="button" class="plus-stukken" data-plus-stukken="${esc(b.id)}" title="Stukken toevoegen">＋ stukken</button>` : ''}</div>
     </li>`;
   }
 
@@ -584,6 +584,8 @@
   }
 
   $('#lijst').addEventListener('click', (e) => {
+    const plus = e.target.closest('[data-plus-stukken]');
+    if (plus) { e.stopPropagation(); const b = bonVan(plus.dataset.plusStukken); if (b) openStukken(b); return; }
     const nieuwVoor = e.target.closest('[data-nieuw-voor]');
     if (nieuwVoor) {
       const k = klanten().find((x) => x.sleutel === nieuwVoor.dataset.nieuwVoor);
@@ -676,6 +678,8 @@
           lijst.map((s) => `<tr><td>${aantalTekst(s.aantal)} ×</td><td>${esc(s.naam)}${s.vlek ? '<br>' + vlekTag(s) : ''}</td><td class="bedrag">${bedragOfVolgt(s)}</td></tr>`).join('')).join('')}</tbody>
          <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td></tr></tfoot></table>`
       : '<p class="tijdlijn">Nog geen stukken ingevuld.</p>';
+    // Stukken achteraf toevoegen (bv. de strijkmand pas tellen als ze klaar is).
+    const plusStukken = b.status !== 'opgehaald' ? `<div class="d-knoppen"><button class="knop ${b.stukken.length ? '' : 'hoofd'}" data-actie="stukken">＋ Stukken toevoegen</button></div>` : '';
 
     // Waar is alles? Per regel: in de winkel of bij de partner; een deel of alles naar de partner sturen.
     const STAND = { '': '🏠 in de winkel', zelf: '🏠 in de winkel', sturen: '📦 te versturen', weg: '🚚 bij de partner', terug: '✓ terug van de partner' };
@@ -741,6 +745,7 @@
       <div class="d-blok">
         <h3>${esc(b.soort)}${b.klaarTegen ? ' · klaar tegen ' + esc(mooiDatum(b.klaarTegen)) : ''}</h3>
         ${stukken}
+        ${plusStukken}
         ${b.vliegtuig ? `<p style="margin-top:8px">✈ Vliegtuig: <b>${esc(b.vliegtuig)}</b></p>` : ''}
         ${b.opmerking ? `<p style="margin-top:8px">📝 ${esc(b.opmerking)}</p>` : ''}
         <p class="tijdlijn" style="margin-top:8px">${b.betaald ? 'Betaald' + (b.betaalwijze ? ' (' + esc(b.betaalwijze) + ')' : '') : 'Nog niet betaald'}</p>
@@ -930,6 +935,9 @@
       } else if (actie === 'klant') {
         $('#detail').close();
         zoekKlant(b);
+      } else if (actie === 'stukken') {
+        $('#detail').close();
+        openStukken(b);
       } else if (actie === 'wijzig') {
         $('#detail').close();
         openFormulier(b);
@@ -1937,6 +1945,11 @@
   }
 
   $('#nieuw').addEventListener('click', () => openFormulier(null));
+  // De bon openen op stap 3 (stukken), met de zoekbalk klaar om te typen.
+  function openStukken(b) {
+    openFormulier(b);
+    naarStap(3, '#f-stuk');
+  }
 
   $('#f').addEventListener('submit', async (e) => {
     e.preventDefault();
