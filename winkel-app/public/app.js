@@ -2401,7 +2401,7 @@
   }
   $('#kassa-knop').addEventListener('click', () => openKassa());
   if (!KASSA) {
-    $('#kassa-knop').textContent = 'Facturen';
+    $('#kassa-knop').textContent = '🧾 Facturen';
     $('#kassa h2').textContent = 'Factuuraanvragen';
     $('#kassa').classList.add('zonder-kassa');
     $('#kassa h2').textContent = 'Facturen en dagoverzicht';

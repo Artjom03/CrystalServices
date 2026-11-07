@@ -632,3 +632,26 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
 .f-levering input { width: 100%; }
 .herinnering { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .herinnering button { border: 1px solid #f0b429; background: #fff8e6; color: #7a4b00; border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+
+/* ---------- Layout voor de winkel-pc (breed scherm) ---------- */
+.merk, .knop, .tabs button { white-space: nowrap; }
+.balk .knop.hoofd { padding-left: 20px; padding-right: 20px; }
+.bon .rechts { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+@media (min-width: 1100px) {
+  .balk-binnen, .tabs, main { max-width: 1240px; }
+  .balk-binnen:first-child { margin-bottom: 12px; }
+  .merk { font-size: 1.4rem; }
+  .balk-knoppen { gap: 10px; }
+  /* Bonnen in twee kolommen: meer bonnen tegelijk zien. */
+  .lijst { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lijst > .zoek-kop { grid-column: 1 / -1; }
+  .bon { padding: 12px 14px; }
+  .tabs { justify-content: flex-start; }
+  .tabs button { flex: 0 0 auto; padding: 12px 22px; }
+  /* Bonformulier breder. */
+  #formulier { width: min(900px, calc(100% - 24px)); }
+}
+@media (min-width: 1600px) {
+  .balk-binnen, .tabs, main { max-width: 1500px; }
+  .lijst { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
