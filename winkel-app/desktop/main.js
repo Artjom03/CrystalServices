@@ -53,7 +53,7 @@ async function laadInstellingen() {
 }
 const bewaarInstellingen = () => schrijfJson(INSTELLINGEN(), instellingen);
 
-// ---------- Online kopie voor de gsm (en back-up) ----------
+// ---------- Online kopie voor de gsm ----------
 // Na elke wijziging (ten vroegste na 30 seconden, gebundeld) en bij het opstarten gaat een kopie
 // van alle gegevens naar de online versie. Zonder internet wordt het later opnieuw geprobeerd.
 const spiegelStand = { laatst: '', fout: '' };
@@ -242,7 +242,7 @@ async function kiesPrinter(venster, soort = 'bon') {
   await bewaarInstellingen();
 }
 
-// ---------- Back-ups ----------
+// ---------- Back-ups (bewust niet in het menu; enkel voor noodgevallen) ----------
 
 async function backupOpslaan(venster) {
   const dag = new Date().toISOString().slice(0, 10);
@@ -300,9 +300,6 @@ function maakMenu(venster) {
       submenu: [
         { label: 'Bonprinter kiezen…', click: () => kiesPrinter(venster, 'bon') },
         { label: 'A4-printer kiezen…', click: () => kiesPrinter(venster, 'a4') },
-        { type: 'separator' },
-        { label: 'Back-up opslaan…', click: () => backupOpslaan(venster) },
-        { label: 'Back-up terugzetten…', click: () => backupTerugzetten(venster) },
         { type: 'separator' },
         { label: 'Afsluiten', role: 'quit' },
       ],
