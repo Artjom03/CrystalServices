@@ -268,7 +268,7 @@
   function klanten() {
     const per = new Map();
     for (const k of Object.values(staat.klantenboek || {})) {
-      per.set(k.sleutel, { ...k, bonnen: 0, open: 0 });
+      per.set(k.sleutel, { ...k, bonnen: 0, open: 0, laatst: '' });
     }
     const opDatum = [...(staat.bonnen || [])].sort((a, b) => a.binnenOp.localeCompare(b.binnenOp));
     for (const b of opDatum) {
@@ -278,6 +278,7 @@
       k.telefoon = b.klant.telefoon || k.telefoon;
       k.email = b.klant.email || k.email;
       k.bonnen += 1;
+      k.laatst = b.binnenOp;
       if (b.status !== 'opgehaald') k.open += 1;
       per.set(sleutel, k);
     }
@@ -1606,6 +1607,7 @@
       <td class="vlek-td">${vlekCel(r)}</td>
     </tr>`).join('');
     toonTotaal();
+    toonVasteKnop();
   }
   // Vlek bij een stuk: bij meerdere stukken hoeveel ervan (bv. 3 van 10 servetten).
   function vlekCel(r) {
@@ -1739,6 +1741,33 @@
       `<button type="button" class="klant-knop" data-klant="${esc(k.sleutel)}"><strong>${esc(k.naam)}</strong>
         <span>${esc(k.telefoon || 'geen telefoon')} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'}${k.open ? ` (${k.open} open)` : ''}</span></button>`).join('') : '';
   }
+  // Vaste stukken van een klant (bv. Rebul: handdoeken per kg) vanzelf op een nieuwe, lege bon zetten.
+  function zetVasteStukken() {
+    if (bewerkId || regels.length) return;
+    const f = $('#f');
+    const bk = boekKlant({ naam: f.naam.value, telefoon: f.telefoon.value });
+    if (!bk?.vasteStukken?.length) return;
+    regels = bk.vasteStukken.map((st) => ({ ...st }));
+    for (const st of regels) soortVoor(st.behandeling);
+    toonRegels();
+    toast(`Vaste stukken van ${bk.naam} ingevuld`);
+  }
+  function toonVasteKnop() {
+    const f = $('#f');
+    const bk = boekKlant({ naam: f.naam.value, telefoon: f.telefoon.value });
+    $('#f-vast').hidden = !bk || !regels.some((r) => r.naam.trim());
+  }
+  $('#f-vast').addEventListener('click', async () => {
+    const f = $('#f');
+    const bk = boekKlant({ naam: f.naam.value, telefoon: f.telefoon.value });
+    if (!bk) return;
+    const vast = regels.filter((r) => r.naam.trim()).map(({ naam, aantal, prijs, behandeling }) => ({ naam, aantal, prijs, behandeling }));
+    try {
+      await doe({ op: 'klant', sleutel: bk.sleutel, klant: { vasteStukken: vast } });
+      toast(`Bewaard: ${vast.length} vast${vast.length === 1 ? ' stuk' : 'e stukken'} voor ${bk.naam}`);
+    } catch (err) { alert(err.message); }
+  });
+
   function vulKlant(k) {
     const f = $('#f');
     f.naam.value = k.naam;
@@ -1746,6 +1775,7 @@
     f.email.value = k.email || '';
     $('#f-klanten').hidden = true;
     toonVlekUitleg();
+    zetVasteStukken();
   }
   const toonVlekUitleg = () => {
     const k = { naam: $('#f').naam.value, telefoon: $('#f').telefoon.value };
@@ -1854,6 +1884,7 @@
     $('#f-stuk').value = '';
     toonSuggesties();
     toonRegels();
+    zetVasteStukken();
     toonVlekUitleg();
     $('#formulier').showModal();
     if (!b && !klant) f.naam.focus();
@@ -2762,8 +2793,31 @@
     $('#kl-lijst').innerHTML = lijst.slice(0, 200).map((k) => `<li><button type="button" data-klant="${esc(k.sleutel)}">
       <strong>${esc(k.naam)}</strong><span>${esc(k.telefoon || 'geen telefoon')}${k.bonnen ? ` · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'}${k.open ? ` (${k.open} open)` : ''}` : ''}${k.btw ? ' · ' + esc(k.btw) : ''}</span></button></li>`).join('');
     $('#kl-lijst').hidden = false;
+    toonLangWeg();
   }
   $('#klanten-knop').addEventListener('click', openKlanten);
+  $('#kl-vast').addEventListener('click', async (e) => {
+    if (!e.target.closest('#kl-vast-weg') || !klantOpen) return;
+    try { await doe({ op: 'klant', sleutel: klantOpen.sleutel, klant: { vasteStukken: [] } }); $('#kl-vast').innerHTML = '<span class="tijdlijn">⭐ Vaste stukken gewist.</span>'; } catch (err) { alert(err.message); }
+  });
+  // Klanten die al lang niet meer kwamen: een berichtje sturen (bv. met een actie).
+  const LANG_WEG = 60;
+  function toonLangWeg() {
+    const grens = new Date(Date.now() - LANG_WEG * 86400000).toISOString();
+    const lijst = klanten().filter((k) => !k.open && (k.laatst || k.gewijzigdOp || k.sinds || '') && (k.laatst || k.gewijzigdOp || k.sinds) < grens && !k.pro)
+      .sort((a, b) => (b.laatst || b.gewijzigdOp || '').localeCompare(a.laatst || a.gewijzigdOp || ''));
+    const d = $('#kl-weg-lang');
+    d.hidden = !lijst.length;
+    d.querySelector('summary').textContent = `😴 ${lijst.length} klant${lijst.length === 1 ? '' : 'en'} al ${LANG_WEG}+ dagen niet meer geweest`;
+    $('#kl-weg-lijst').innerHTML = lijst.slice(0, 100).map((k) => {
+      const tel = telefoonIntl(k.telefoon);
+      const tekst = encodeURIComponent(`Dag ${k.naam.split(' ')[0]}, we hebben u al even niet gezien bij ${WINKEL.naam}! Wij strijken, wassen en doen droogkuis voor u: ${WINKEL.adres}, ${WINKEL.uren}. Tot binnenkort!`);
+      const dagen = Math.floor((Date.now() - new Date(k.laatst || k.gewijzigdOp || k.sinds).getTime()) / 86400000);
+      return `<div class="pt-rij"><span><b>${esc(k.naam)}</b><small>${esc(k.telefoon || k.email || 'geen telefoon')} · laatst ${esc(mooiDatum(k.laatst || k.gewijzigdOp || k.sinds))} (${dagen} d)</small></span><span class="pt-knoppen">
+        ${tel ? `<a class="knop klein wa" href="https://wa.me/${tel}?text=${tekst}" target="_blank" rel="noopener">WhatsApp</a><a class="knop klein" href="sms:+${tel}?&body=${tekst}">SMS</a>` : ''}
+        ${k.email ? `<a class="knop klein" href="mailto:${esc(k.email)}?subject=${encodeURIComponent(WINKEL.naam)}&body=${tekst}">E-mail</a>` : ''}</span></div>`;
+    }).join('');
+  }
   $('#kl-zoek').addEventListener('input', () => { $('#kl-form').hidden = true; toonKlanten(); });
   $('#kl-lijst').addEventListener('click', (e) => {
     const knop = e.target.closest('[data-klant]');
@@ -2782,6 +2836,9 @@
     $('#kl-bonnen').hidden = false;
     $('#kl-nieuw').hidden = false;
     $('#kl-weg').hidden = false;
+    $('#kl-vast').innerHTML = k.vasteStukken?.length
+      ? `<b>⭐ Vaste stukken:</b> ${k.vasteStukken.map((st) => esc(aantalTekst(st.aantal) + '× ' + kaleNaam(st))).join(', ')} <button type="button" class="knop klein" id="kl-vast-weg">Wissen</button>`
+      : '<span class="tijdlijn">⭐ Geen vaste stukken. Maak een bon en klik op "Bewaar als vaste stukken".</span>';
     $('#kl-info').textContent = `Klant sinds ${k.sinds ? mooiDatum(k.sinds) : '?'} · ${k.bonnen} bon${k.bonnen === 1 ? '' : 'nen'} in het systeem`;
     $('#kl-lijst').hidden = true;
     f.hidden = false;

@@ -594,6 +594,10 @@ function handeling(oud, actie, nu) {
         // Professionele klant (bonnen bewaren, altijd factuur) en hun prijs voor was per kilo.
         pro: Boolean(k.pro ?? oud.pro),
         kiloprijs: k.kiloprijs !== undefined ? prijsOfLeeg(k.kiloprijs) : oud.kiloprijs ?? null,
+        // Vaste stukken: komen vanzelf op een nieuwe bon voor deze klant (bv. altijd "waszak").
+        ...(k.vasteStukken !== undefined
+          ? { vasteStukken: schoonStukken(k.vasteStukken).slice(0, 20).map(({ naam, aantal, prijs, behandeling }) => ({ naam, aantal, prijs, behandeling })) }
+          : oud.vasteStukken ? { vasteStukken: oud.vasteStukken } : {}),
         // Op elke bon het vliegtuig vermelden (luchtvaartklanten).
         ...(typeof (k.vliegtuig ?? oud.vliegtuig) === 'boolean' ? { vliegtuig: Boolean(k.vliegtuig ?? oud.vliegtuig) } : {}),
         gewijzigdOp: iso,
