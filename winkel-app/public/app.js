@@ -1575,6 +1575,27 @@
   // Snelknoppen: wat de winkel het vaakst gebruikt, aangevuld met de klassiekers.
   const KLASSIEKERS = ['strijk|Hemd (strijken)', 'strijk|Broek (strijken)', 'strijk|T-shirt/topje (strijken)', 'strijk|Bloes (strijken)',
     'strijk|Trui (strijken)', 'strijk|Kleed (strijken)', 'was|Hemd (wassen + strijken)', 'droogkuis|Mantel (droogkuis)', 'droogkuis|Kostuum 2 stuks (droogkuis)', 'droogkuis|Kleed (droogkuis)'];
+  /** Hoe vaak elk stuk gebruikt werd: in het algemeen, en bij de klant van het formulier. */
+  function gebruik() {
+    const f = $('#f');
+    const sleutel = f.naam.value.trim() ? klantSleutel({ naam: f.naam.value, telefoon: f.telefoon.value }) : '';
+    const alles = new Map(), klant = new Map();
+    for (const b of staat.bonnen || []) {
+      const vanKlant = sleutel && klantSleutel(b.klant) === sleutel && b.id !== bewerkId;
+      for (const st of b.stukken) {
+        const k = st.behandeling + '|' + st.naam;
+        alles.set(k, (alles.get(k) || 0) + 1);
+        if (vanKlant) klant.set(k, (klant.get(k) || 0) + 1);
+      }
+    }
+    return { alles, klant };
+  }
+  /** De stukken die deze klant het vaakst brengt (eerst getoond in het formulier). */
+  function vaakBijKlant() {
+    const { klant } = gebruik();
+    const per = new Map(toegelaten().map((a) => [artikelSleutel(a), a]));
+    return [...klant.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => per.get(k)).filter(Boolean).slice(0, 8);
+  }
   function veelgebruikt() {
     const tel = new Map();
     for (const b of (staat.bonnen || []).slice(-300)) {
@@ -1597,9 +1618,12 @@
   };
   function treffers(q) {
     const woorden = zoekVorm(q).split(/\s+/).filter(Boolean);
+    // Eerst wat deze klant vaak brengt, dan wat de winkel vaak gebruikt, dan wat met het woord begint.
+    const { alles, klant } = gebruik();
+    const score = (a) => (klant.get(artikelSleutel(a)) || 0) * 1000 + (alles.get(artikelSleutel(a)) || 0) + (a.zoek.startsWith(woorden[0]) ? 100000 : 0);
     return toegelaten()
       .filter((a) => woorden.every((w) => a.zoek.includes(w)))
-      .sort((a, b) => b.zoek.startsWith(woorden[0]) - a.zoek.startsWith(woorden[0]))
+      .sort((a, b) => score(b) - score(a))
       .slice(0, 12);
   }
 
@@ -1620,7 +1644,12 @@
         + `<div class="groep-keuze">${['', ...groepNamen].map((g) => `<button type="button" data-groep="${esc(g)}" aria-pressed="${g === gekozen}">${esc(g || 'Veelgebruikt')}</button>`).join('')}</div>`
         + (gekozen
           ? `<div class="tegels">${toegelaten().filter((a) => a.groep === gekozen).map(tegel).join('')}</div>`
-          : snel.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${snel.map(tegel).join('')}</div>` : '');
+          : (() => {
+            const vaak = vaakBijKlant();
+            const rest = snel.filter((a) => !vaak.includes(a));
+            return (vaak.length ? `<div class="sug-titel">⭐ Vaak bij ${esc($('#f').naam.value.trim().split(' ')[0])}</div><div class="tegels vaak">${vaak.map(tegel).join('')}</div>` : '')
+              + (rest.length ? `<div class="sug-titel">Veelgebruikt: tik om toe te voegen</div><div class="tegels">${rest.map(tegel).join('')}</div>` : '');
+          })());
       return;
     }
     const gevonden = treffers(tekst);
@@ -1914,6 +1943,7 @@
     $('#f-klanten').hidden = true;
     toonVlekUitleg();
     zetVasteStukken();
+    toonSuggesties();
   }
   const toonVlekUitleg = () => {
     const k = { naam: $('#f').naam.value, telefoon: $('#f').telefoon.value };
