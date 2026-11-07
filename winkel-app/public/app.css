@@ -677,3 +677,11 @@ fieldset.stap.gedaan .stap-nr::after { content: '✓'; font-size: .95rem; }
 .plus-stukken { margin-left: 8px; border: 1px solid var(--lijn); background: #fff; color: var(--navy); border-radius: 999px; padding: 2px 10px; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; }
 .plus-stukken:hover { border-color: var(--navy); }
 .partner-kop { grid-column: 1 / -1; font-size: 1rem; color: var(--navy); margin-top: 8px; }
+
+/* Partnerprijs, snel afhalen */
+.pp-veld { display: block; font-size: .85rem; color: var(--ink-soft); margin: 2px 0; }
+.pp-veld input { width: 70px; padding: 2px 6px; margin: 0 4px; font: inherit; }
+.snel-afhalen { display: flex; gap: 6px; margin-top: 4px; }
+.snel-afhalen button { border: 1px solid var(--lijn); background: #fff; color: var(--navy); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.snel-afhalen button:hover { border-color: var(--navy); background: #eef3fb; }
+kbd { font: inherit; font-size: .72em; opacity: .6; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px; }

@@ -508,3 +508,25 @@ test('klantenpagina: geen partner-info', async () => {
   const zicht = JSON.stringify(voorKlant(staat, telefoonSleutel('0470 11 22 33')));
   assert.ok(!/Kwikklien|extern|partner/.test(zicht));
 });
+
+test('partnerprijs, partners in instellingen, factuur betaald', async () => {
+  const { pasToe, LEEG, voorKlant, telefoonSleutel } = await import('../lib/bonnen.js');
+  let staat = structuredClone(LEEG);
+  const r = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'X', telefoon: '0470 99 88 77' }, soorten: ['Droogkuis'], stukken: [{ naam: 'Mantel', aantal: 2, prijs: 25, behandeling: 'droogkuis' }] } });
+  const id = r.bon.id;
+  staat = pasToe(r.staat, { op: 'extern', status: 'sturen', partner: 'Neven', stukken: [{ id, index: 0 }] }).staat;
+  staat = pasToe(staat, { op: 'partnerPrijs', id, index: 0, prijs: '12,5' }).staat;
+  assert.equal(staat.bonnen[0].stukken[0].partnerPrijs, 12.5);
+  // blijft staan na een wijziging van de bon
+  staat = pasToe(staat, { op: 'wijzig', id, bon: { stukken: staat.bonnen[0].stukken } }).staat;
+  assert.equal(staat.bonnen[0].stukken[0].partnerPrijs, 12.5);
+  assert.ok(!JSON.stringify(voorKlant(staat, telefoonSleutel('0470 99 88 77'))).includes('12.5'));
+  staat = pasToe(staat, { op: 'instellingen', partners: ['Kwikklien', ' Neven ', 'Nieuw'] }).staat;
+  assert.deepEqual(staat.instellingen.partners, ['Kwikklien', 'Neven', 'Nieuw']);
+  staat = pasToe(staat, { op: 'factuurVraag', id }).staat;
+  staat = pasToe(staat, { op: 'factuurGemaakt', id }).staat;
+  staat = pasToe(staat, { op: 'factuurBetaald', id }).staat;
+  assert.ok(staat.bonnen[0].factuur.betaaldOp);
+  staat = pasToe(staat, { op: 'factuurVraag', id, gegevens: { naam: 'X bv' } }).staat;
+  assert.ok(staat.bonnen[0].factuur.betaaldOp, 'betaald blijft na aanpassen gegevens');
+});
