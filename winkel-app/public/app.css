@@ -696,3 +696,8 @@ kbd { font: inherit; font-size: .72em; opacity: .6; border: 1px solid currentCol
   .balk-knoppen::-webkit-scrollbar { display: none; }
   .balk-knoppen > * { flex: 0 0 auto; }
 }
+
+/* Gsm (enkel kijken): ook deze knoppen verbergen */
+.alleen-kijken #partner .pt-knoppen, .alleen-kijken #pt-alles-weg, .alleen-kijken [data-fbetaald], .alleen-kijken [data-gemaakt],
+.alleen-kijken #k-dagwis, .alleen-kijken #kl-vast-weg, .alleen-kijken #kl-weg, .alleen-kijken #kl-form [type=submit],
+.alleen-kijken #kl-toevoegen, .alleen-kijken #instellingen form [type=submit], .alleen-kijken #i-loc-wis { display: none !important; }

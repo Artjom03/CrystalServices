@@ -28,11 +28,13 @@ test('pin: blokkeert na 5 foute pogingen per adres, ook met de juiste pincode', 
   const { controleer } = await import('../lib/pin.js');
   const req = (pin, ip = '1.2.3.4') => ({ headers: { 'x-pin': pin, 'x-forwarded-for': ip }, socket: {} });
   assert.equal(await controleer(req('123456')), null);
-  for (let i = 0; i < 4; i++) assert.equal((await controleer(req('000000'))).status, 401);
-  assert.equal((await controleer(req('000000'))).status, 429);
+  for (let i = 0; i < 5; i++) assert.equal((await controleer(req('000000'))).status, 401);
   const r = await controleer(req('123456'));
   assert.equal(r.status, 429, 'ook de juiste pincode wordt even geweigerd');
   assert.match(r.error, /Geblokkeerd tot/);
   assert.equal(await controleer(req('123456', '5.6.7.8')), null, 'ander adres: geen last');
+  // Veel pogingen tegelijk: elke poging telt, dus een juiste pincode achteraan in de stoot wordt geweigerd.
+  const stoot = await Promise.all([...Array(20)].map(() => controleer(req('000000', '9.9.9.9'))).concat([controleer(req('123456', '9.9.9.9'))]));
+  assert.equal(stoot.at(-1)?.status, 429, 'raden met een stoot aanvragen lukt niet');
   await rm(new URL('../.data/pogingen.json', import.meta.url), { force: true });
 });

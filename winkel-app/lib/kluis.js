@@ -10,13 +10,18 @@ import { mkdir, writeFile, readdir, rm } from 'node:fs/promises';
 export const BEWAAR_DAGEN = 7;
 const LOKAAL = new URL('../.data/kluis/', import.meta.url);
 
+// Sleutel: BACKUP_SLEUTEL (Vercel-instelling) als die bestaat, anders de winkelpincode.
+// Met een eigen BACKUP_SLEUTEL blijven de back-ups leesbaar als de pincode ooit verandert.
+function geheim() {
+  const g = process.env.BACKUP_SLEUTEL || process.env.APP_PIN || '';
+  if (!g) throw new Error('Geen BACKUP_SLEUTEL of APP_PIN');
+  return g;
+}
 function sleutel() {
-  const pin = process.env.APP_PIN || '';
-  if (!pin) throw new Error('Geen APP_PIN');
-  return scryptSync(pin, 'crystal-winkel-kluis', 32);
+  return scryptSync(geheim(), 'crystal-winkel-kluis', 32);
 }
 function map() {
-  return 'kluis/' + createHash('sha256').update('crystal-kluis:' + (process.env.APP_PIN || '')).digest('hex').slice(0, 32) + '/';
+  return 'kluis/' + createHash('sha256').update('crystal-kluis:' + geheim()).digest('hex').slice(0, 32) + '/';
 }
 
 export function versleutel(data) {
@@ -42,7 +47,8 @@ export async function bewaarBackup(gzip, nu = new Date()) {
   const inhoud = versleutel(gzip);
   if (online()) {
     await put(map() + dag + '.bin', inhoud, { access: 'private', addRandomSuffix: false, allowOverwrite: true, contentType: 'application/octet-stream' });
-    const { blobs } = await list({ prefix: map(), limit: 100 });
+    // Alle back-ups (ook in oude mappen, bv. na een nieuwe pincode) ouder dan 7 dagen wissen.
+    const { blobs } = await list({ prefix: 'kluis/', limit: 1000 });
     const oud = blobs.filter((b) => (b.pathname.split('/').pop() || '').slice(0, 10) < grens).map((b) => b.url);
     if (oud.length) await del(oud);
     return { dag, gewist: oud.length };

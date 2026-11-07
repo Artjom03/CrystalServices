@@ -22,8 +22,10 @@ function leesTijd(waarde, params) {
   const [, j, mo, d, u, mi, , z] = m;
   if (u === undefined || /VALUE=DATE(?!-)/i.test(params || '')) return { dag: middag(+j, +mo - 1, +d), tijd: '' };
   if (z) {
+    // UTC-tijd omzetten naar Belgische tijd (ook als de server in UTC draait).
     const t = new Date(Date.UTC(+j, +mo - 1, +d, +u, +mi));
-    return { dag: middag(t.getFullYear(), t.getMonth(), t.getDate()), tijd: `${pad(t.getHours())}:${pad(t.getMinutes())}` };
+    const deel = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Brussels', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(t).map((x) => [x.type, x.value]));
+    return { dag: middag(+deel.year, +deel.month - 1, +deel.day), tijd: `${deel.hour}:${deel.minute}` };
   }
   // Met TZID of zonder: de klok zoals ze er staat (de winkel zit in dezelfde tijdzone als de agenda).
   return { dag: middag(+j, +mo - 1, +d), tijd: `${u}:${mi}` };
@@ -34,10 +36,14 @@ export function leesAgenda(tekst) {
   const regels = String(tekst || '').replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, '').split('\n');
   const lijst = [];
   let ev = null;
+  let diep = 0; // binnen een herinnering (VALARM) e.d. in een afspraak: die gegevens niet gebruiken
   for (const regel of regels) {
-    if (regel === 'BEGIN:VEVENT') { ev = { exdates: [] }; continue; }
+    if (regel === 'BEGIN:VEVENT') { ev = { exdates: [] }; diep = 0; continue; }
     if (regel === 'END:VEVENT') { if (ev?.start) lijst.push(ev); ev = null; continue; }
     if (!ev) continue;
+    if (/^BEGIN:/i.test(regel)) { diep++; continue; }
+    if (/^END:/i.test(regel)) { if (diep) diep--; continue; }
+    if (diep) continue;
     const dp = regel.indexOf(':');
     if (dp < 0) continue;
     const kop = regel.slice(0, dp);
@@ -62,6 +68,16 @@ export function leesAgenda(tekst) {
 
 /** Valt dag d (na of op de start) binnen de herhaling? */
 function past(regel, start, d) {
+  // BYSETPOS (bv. "laatste werkdag van de maand"): enkel de n-de passende dag van die maand.
+  if (regel.BYSETPOS && (regel.FREQ || '').toUpperCase() === 'MONTHLY') {
+    const zonder = { ...regel }; delete zonder.BYSETPOS;
+    const laatste = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const raak = [];
+    for (let i = 1; i <= laatste; i++) { const x = middag(d.getFullYear(), d.getMonth(), i); if (x >= start && past(zonder, start, x)) raak.push(i); }
+    return regel.BYSETPOS.split(',').map(Number).some((n) => raak[n > 0 ? n - 1 : raak.length + n] === d.getDate());
+  }
+  // Delen die we niet kennen: liever niet tonen dan op verkeerde dagen.
+  if (regel.BYWEEKNO || regel.BYYEARDAY || (regel.BYSETPOS && (regel.FREQ || '').toUpperCase() !== 'MONTHLY')) return false;
   const freq = (regel.FREQ || '').toUpperCase();
   const iv = Math.max(1, parseInt(regel.INTERVAL, 10) || 1);
   const byday = (regel.BYDAY || '').split(',').filter(Boolean);
@@ -86,7 +102,8 @@ function past(regel, start, d) {
         return n > 0 ? Math.ceil(d.getDate() / 7) === n : Math.ceil((laatste - d.getDate() + 1) / 7) === -n;
       });
     }
-    const dagen = (regel.BYMONTHDAY || '').split(',').filter(Boolean).map(Number);
+    const laatsteDag = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const dagen = (regel.BYMONTHDAY || '').split(',').filter(Boolean).map(Number).map((n) => (n < 0 ? laatsteDag + 1 + n : n));
     return (dagen.length ? dagen : [start.getDate()]).includes(d.getDate());
   }
   if (freq === 'YEARLY') {
@@ -116,7 +133,7 @@ export function komendeAfspraken(lijst, vanaf = new Date(), dagen = 14) {
   for (const ev of lijst) {
     const start = ev.start.dag;
     if (!ev.regel || ev.vervangt) { voegToe(ev, start); continue; }
-    const eind = ev.regel.UNTIL ? leesTijd(ev.regel.UNTIL.replace(/Z$/, ''), '') : null;
+    const eind = ev.regel.UNTIL ? leesTijd(ev.regel.UNTIL, '') : null;
     const totDag = eind ? isoDag(eind.dag) : null;
     const max = parseInt(ev.regel.COUNT, 10) || Infinity;
     const overslaan = new Set([...ev.exdates, ...(vervangen.get(ev.uid) || [])]);

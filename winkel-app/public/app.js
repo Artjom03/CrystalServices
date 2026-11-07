@@ -423,7 +423,7 @@
     } else if (b.status === 'opgehaald') {
       label = `<span class="label">Opgehaald ${esc(mooiDatum(b.opgehaaldOp))}</span>`;
     }
-    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const aantal = Math.round(b.stukken.reduce((n, s) => n + s.aantal, 0) * 100) / 100;
     const locatie = (b.locatie && b.status !== 'opgehaald' ? ` · <b class="loc">📍 ${esc(b.locatie)}</b>` : '')
       + (b.factuur && !b.factuur.gemaaktOp ? ' · <b class="loc">🧾 factuur</b>' : '')
       + [...bijPartner(b)].map(([naam, l]) => ` · <b class="loc">${l.some((x) => x.extern === 'weg') ? '🚚' : '📦'} ${aantalTekst(l.reduce((n, x) => n + x.aantal, 0))} bij ${esc(naam)}</b>`).join('')
@@ -434,7 +434,7 @@
       <div class="rechts">${label}<span>${b.totaal ? eur(b.totaal) : ''}${b.betaald ? ' · betaald' : ''}</span>${b.status === 'klaar' ? `<span class="snel-afhalen">${b.betaald
         ? `<button type="button" data-snel="${esc(b.id)}" data-betaal="">✓ Afgehaald</button>`
         : `<button type="button" data-snel="${esc(b.id)}" data-betaal="cash">💶 Cash</button><button type="button" data-snel="${esc(b.id)}" data-betaal="kaart">💳 Kaart</button>`}</span>` : ''}</div>
-      <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ' · <i>nog te tellen</i>'}${locatie}${b.status !== 'opgehaald' ? ` <button type="button" class="plus-stukken" data-plus-stukken="${esc(b.id)}" title="Stukken toevoegen">＋ stukken</button>` : ''}</div>
+      <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantalTekst(aantal) + ' stuk' + (aantal > 1 ? 's' : '') : ' · <i>nog te tellen</i>'}${locatie}${b.status !== 'opgehaald' ? ` <button type="button" class="plus-stukken" data-plus-stukken="${esc(b.id)}" title="Stukken toevoegen">＋ stukken</button>` : ''}</div>
     </li>`;
   }
 
@@ -478,7 +478,7 @@
     const maand = vandaagIso().slice(0, 7);
     const per = new Map();
     for (const b of staat.bonnen || []) for (const st of b.stukken) {
-      if (!st.partner || !['weg', 'terug'].includes(st.extern) || !(st.externOp || '').startsWith(maand)) continue;
+      if (!st.partner || !['weg', 'terug'].includes(st.extern) || !(st.vertrokOp || st.externOp || '').startsWith(maand)) continue;
       per.set(st.partner, [...(per.get(st.partner) || []), st]);
     }
     if (!per.size) return '';
@@ -800,7 +800,7 @@
           // Oude stukken zonder partnernaam: nog aanduiden bij wie ze zijn.
           const kies = OP_WEG.includes(stand) && !st.partner ? partners().map((n) => `<button class="knop klein goud" data-partner-zet="${stand}" data-partner="${esc(n)}" data-i="${i}">${esc(n)}?</button>`).join('') : '';
           const prijsVeld = st.partner && ['sturen', 'weg', 'terug'].includes(stand)
-            ? `<label class="pp-veld">${esc(st.partner)} rekent <input inputmode="decimal" data-pp="${i}" value="${st.partnerPrijs == null ? '' : String(st.partnerPrijs).replace('.', ',')}" placeholder="€" aria-label="Prijs per stuk van de partner"> /st.</label>` : '';
+            ? `<label class="pp-veld">${esc(st.partner)} rekent <input inputmode="decimal" data-pp="${i}" ${document.body.classList.contains('alleen-kijken') ? 'readonly ' : ''}value="${st.partnerPrijs == null ? '' : String(st.partnerPrijs).replace('.', ',')}" placeholder="€" aria-label="Prijs per stuk van de partner"> /st.</label>` : '';
           return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b>${prijsVeld}<small>${STAND[stand] || ''}${st.partner && OP_WEG.includes(stand) ? ' · <b>' + esc(st.partner) + '</b>' : ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${kies}${knop}</span></div>`;
         }).join('')}</div>
       </div>` : '';
@@ -1276,7 +1276,7 @@
   }
 
   function bonKlein(b, afhaal) {
-    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const aantal = Math.round(b.stukken.reduce((n, s) => n + s.aantal, 0) * 100) / 100;
     const uren = esc(WINKEL.uren[0].toUpperCase() + WINKEL.uren.slice(1));
     if (!afhaal) {
       // Kort: wat de klant nodig heeft om terug te komen.
@@ -1325,7 +1325,7 @@
         </table>
         ${b.stukken.length ? `<table class="pr-stukken"><tbody>${rijen}</tbody></table>` : ''}
         ${bonKortingRegels(b, 'pr-subtotaal')}
-        <div class="pr-totaal"><span>Totaal${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>
+        <div class="pr-totaal"><span>Totaal${aantal ? ` · ${aantalTekst(aantal)} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>
         <div class="pr-betaling">${afhaalBetaling(b)}</div>
         ${b.factuur ? '<div class="pr-portaal">U krijgt een factuur voor deze bon.</div>' : ''}
         <footer class="pr-voet"><b>Bedankt voor uw vertrouwen!</b><br>${uren}<br>${WEBSITE}</footer>
@@ -1335,7 +1335,7 @@
   /** Het mandticket blijft in de winkel: op de mand plakken en de stukken per plaats indelen. */
   // Met tickets: één per zak, mand of hanger, elk met zijn eigen locatie en code; de indeling staat op het eerste.
   function mandTicket(b, nr = -1) {
-    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const aantal = Math.round(b.stukken.reduce((n, s) => n + s.aantal, 0) * 100) / 100;
     const tickets = ticketsVan(b);
     const code = nr >= 0 ? ticketCode(b, nr) : scanCode(b.nr);
     const locatie = nr >= 0 ? tickets[nr].locatie : b.locatie;
@@ -1343,7 +1343,7 @@
     splitsVlekken(b.stukken).forEach((s) => perPlaats.get(plaatsVan(kaleNaam(s)))?.push(s));
     const plaatsen = [...perPlaats].filter(([, l]) => l.length).map(([plaats, lijst]) => `
         <div class="pr-plaats">
-          <div class="pr-plaats-kop">${esc(plaats)}<span>${lijst.reduce((n, s) => n + s.aantal, 0)} st.</span></div>
+          <div class="pr-plaats-kop">${esc(plaats)}<span>${aantalTekst(Math.round(lijst.reduce((n, s) => n + s.aantal, 0) * 100) / 100)} st.</span></div>
           ${lijst.map((s) => `<div class="pr-plaats-rij"><i></i><b>${aantalTekst(s.aantal)}×</b><span>${esc(kaleNaam(s))}${s.vlek ? '<em class="pr-vlek">⚠ met vlek</em>' : ''}</span><small>${esc((BEHANDELING[s.behandeling] || '').toLowerCase())}</small></div>`).join('')}
         </div>`).join('');
     // Strijk of was zonder getelde stukken: dat moet nog geteld en ingedeeld worden.
@@ -1352,7 +1352,7 @@
         <div class="pr-ticket-kop"><span>${nr >= 0 ? `Ticket ${nr + 1} van ${tickets.length}` : 'Mandticket'}</span><span>${esc(b.soort)}</span></div>
         <div class="pr-ticket-nr">${esc(b.nr)}</div>
         <div class="pr-label-naam">${esc(b.klant.naam)}</div>
-        <div class="pr-ticket-info">${b.klant.telefoon ? esc(b.klant.telefoon) + ' · ' : ''}klaar <b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</b>${aantal ? ` · ${aantal} st.` : ''}${b.betaald ? ' · betaald' : ''}</div>
+        <div class="pr-ticket-info">${b.klant.telefoon ? esc(b.klant.telefoon) + ' · ' : ''}klaar <b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : '?'}</b>${aantal ? ` · ${aantalTekst(aantal)} st.` : ''}${b.betaald ? ' · betaald' : ''}</div>
         ${b.vliegtuig ? `<div class="pr-label-loc">✈ Vliegtuig: ${esc(b.vliegtuig)}</div>` : ''}
         ${locatie ? `<div class="pr-label-loc">Locatie: ${esc(locatie)}</div>` : ''}
         ${b.opmerking && nr <= 0 ? `<div class="pr-ticket-opm">${esc(b.opmerking)}</div>` : ''}
@@ -1376,7 +1376,7 @@
     return `<tr class="a4-groep a4-groep-${beh}"><td colspan="${kolommen}"><span><i>${DIENST_ICOON[beh] || '•'}</i>${esc(BEHANDELING[beh])}</span><small>${n} stuk${n === 1 ? '' : 's'}${metBedrag && som ? ' · ' + eur(som) : ''}</small></td></tr>`;
   };
   function bonA4(b, afhaal) {
-    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const aantal = Math.round(b.stukken.reduce((n, s) => n + s.aantal, 0) * 100) / 100;
     const code = scanCode(b.nr);
     const k = b.klant || {};
     const kop = `${a4Kop()}
@@ -1420,7 +1420,7 @@
       </table>
       ${bonKortingRegels(b, 'a4-subtotaal')}
       <div class="a4-btw">Excl. btw ${eur(exclVan(b.totaal))} · Btw ${BTW} % ${eur(b.totaal - exclVan(b.totaal))}</div>
-      <div class="a4-totaal"><span>Totaal incl. btw${aantal ? ` · ${aantal} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>`;
+      <div class="a4-totaal"><span>Totaal incl. btw${aantal ? ` · ${aantalTekst(aantal)} stuk${aantal > 1 ? 's' : ''}` : ''}</span><b>${eur(b.totaal)}</b></div>`;
     }
 
     const betaling = b.betaald ? `<span class="a4-betaald">✓ ${betaaldTekst(b)}</span>`
@@ -1450,7 +1450,7 @@
    * bovenaan meteen of er vlekken zijn, daarna per stuk vlek ja/nee.
    */
   function vlekkenA4(b, afhaal) {
-    const aantal = b.stukken.reduce((n, s) => n + s.aantal, 0);
+    const aantal = Math.round(b.stukken.reduce((n, s) => n + s.aantal, 0) * 100) / 100;
     const code = scanCode(b.nr);
     const k = { ...(Object.values(staat.klantenboek || {}).find((x) => x.sleutel === klantSleutel(b.klant)) || {}), ...b.klant };
     const nVlek = b.stukken.reduce((n, s) => n + vlekAantalVan(s), 0);
@@ -1853,12 +1853,14 @@
     soortVoor(e.target.value);
   });
   $('#f-regels').addEventListener('click', (e) => {
-    const stap = e.target.closest('[data-stap]');
-    if (stap) {
+    // Enkel de −/+ knoppen van een regel (niet het stappen-vak rond het formulier).
+    const stap = e.target.closest('button[data-stap]');
+    if (stap && stap.closest('tr')) {
       const tr = stap.closest('tr');
       const r = regels[Number(tr.dataset.i)];
-      r.aantal = Math.max(1, (Number(r.aantal) || 1) + Number(stap.dataset.stap));
-      tr.querySelector('.aantal').value = r.aantal;
+      const n = Number(String(r.aantal).replace(',', '.')) || 0;
+      r.aantal = perKg(r.naam) ? Math.max(0.01, Math.round((n + Number(stap.dataset.stap)) * 100) / 100) : Math.max(1, Math.round(n || 1) + Number(stap.dataset.stap));
+      tr.querySelector('.aantal').value = perKg(r.naam) ? aantalTekst(r.aantal) : r.aantal;
       toonVlekCel(tr, r);
       toonTotaal();
       return;
@@ -1981,6 +1983,8 @@
     $('#f-vliegtuig-veld').hidden = !vliegtuigKlant(k) && !$('#f').vliegtuig.value;
   };
   $('#f').naam.addEventListener('input', toonVlekUitleg);
+  // Gekende klant volledig ingetypt (zonder de suggestie aan te klikken): ook dan de vaste stukken.
+  ['naam', 'telefoon'].forEach((v) => $('#f')[v].addEventListener('change', () => { zetVasteStukken(); toonSuggesties(); }));
   $('#f').telefoon.addEventListener('input', toonVlekUitleg);
   $('#f').naam.addEventListener('input', toonKlantSuggesties);
   $('#f').telefoon.addEventListener('input', toonKlantSuggesties);
@@ -2718,7 +2722,7 @@
     $('#kassa h2').textContent = 'Factuuraanvragen';
     $('#kassa').classList.add('zonder-kassa');
     $('#kassa h2').textContent = 'Facturen en dagoverzicht';
-    $('#k-dagwis').hidden = false;
+    $('#k-dagwis').hidden = !DESKTOP;
   }
   $('#k-dagwis-knop').addEventListener('click', async () => {
     const dag = vandaagIso();
@@ -3077,16 +3081,16 @@
   const LANG_WEG = 60;
   function toonLangWeg() {
     const grens = new Date(Date.now() - LANG_WEG * 86400000).toISOString();
-    const lijst = klanten().filter((k) => !k.open && (k.laatst || k.gewijzigdOp || k.sinds || '') && (k.laatst || k.gewijzigdOp || k.sinds) < grens && !k.pro)
-      .sort((a, b) => (b.laatst || b.gewijzigdOp || '').localeCompare(a.laatst || a.gewijzigdOp || ''));
+    const lijst = klanten().filter((k) => !k.open && (k.laatst || k.laatstGeweest || k.sinds || '') && (k.laatst || k.laatstGeweest || k.sinds) < grens && !k.pro)
+      .sort((a, b) => (b.laatst || b.laatstGeweest || b.sinds || '').localeCompare(a.laatst || a.laatstGeweest || a.sinds || ''));
     const d = $('#kl-weg-lang');
     d.hidden = !lijst.length;
     d.querySelector('summary').textContent = `😴 ${lijst.length} klant${lijst.length === 1 ? '' : 'en'} al ${LANG_WEG}+ dagen niet meer geweest`;
     $('#kl-weg-lijst').innerHTML = lijst.slice(0, 100).map((k) => {
       const tel = telefoonIntl(k.telefoon);
       const tekst = encodeURIComponent(`Dag ${k.naam.split(' ')[0]}, we hebben u al even niet gezien bij ${WINKEL.naam}! Wij strijken, wassen en doen droogkuis voor u: ${WINKEL.adres}, ${WINKEL.uren}. Tot binnenkort!`);
-      const dagen = Math.floor((Date.now() - new Date(k.laatst || k.gewijzigdOp || k.sinds).getTime()) / 86400000);
-      return `<div class="pt-rij"><span><b>${esc(k.naam)}</b><small>${esc(k.telefoon || k.email || 'geen telefoon')} · laatst ${esc(mooiDatum(k.laatst || k.gewijzigdOp || k.sinds))} (${dagen} d)</small></span><span class="pt-knoppen">
+      const dagen = Math.floor((Date.now() - new Date(k.laatst || k.laatstGeweest || k.sinds).getTime()) / 86400000);
+      return `<div class="pt-rij"><span><b>${esc(k.naam)}</b><small>${esc(k.telefoon || k.email || 'geen telefoon')} · laatst ${esc(mooiDatum(k.laatst || k.laatstGeweest || k.sinds))} (${dagen} d)</small></span><span class="pt-knoppen">
         ${tel ? `<a class="knop klein wa" href="https://wa.me/${tel}?text=${tekst}" target="_blank" rel="noopener">WhatsApp</a><a class="knop klein" href="sms:+${tel}?&body=${tekst}">SMS</a>` : ''}
         ${k.email ? `<a class="knop klein" href="mailto:${esc(k.email)}?subject=${encodeURIComponent(WINKEL.naam)}&body=${tekst}">E-mail</a>` : ''}</span></div>`;
     }).join('');
