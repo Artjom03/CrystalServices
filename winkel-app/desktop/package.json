@@ -1,7 +1,7 @@
 {
   "name": "crystal-winkel",
   "productName": "Crystal Winkel",
-  "version": "2.27.0",
+  "version": "2.28.0",
   "description": "Bonnen voor strijk, was en droogkuis bij Crystal Services, volledig offline",
   "author": "Crystal Services",
   "private": true,
@@ -41,8 +41,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "Artjom03",
-      "repo": "CrystalServices",
+      "owner": "Bogdan-mg",
+      "repo": "winkel-update",
       "releaseType": "draft"
     }
   },
