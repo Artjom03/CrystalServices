@@ -114,6 +114,7 @@
           <input id="f-stuk" placeholder="Zoek of typ een stuk: hemd, mantel, laken…" aria-label="Stuk zoeken" autocomplete="off" enterkeyhint="done">
         </div>
         <div id="f-suggesties"></div>
+        <button type="button" class="knop klein" id="f-vast" hidden title="Deze stukken komen dan vanzelf op elke nieuwe bon van deze klant">⭐ Bewaar als vaste stukken van deze klant</button>
         <table class="stukken" id="f-tabel">
           <tbody id="f-regels"></tbody>
           <tfoot>
@@ -422,6 +423,7 @@
       <button type="button" class="knop goud" id="kl-toevoegen">+ Klant toevoegen</button>
     </div>
     <p id="kl-aantal" class="tijdlijn"></p>
+    <details id="kl-weg-lang" class="kl-weg-lang" hidden><summary></summary><div id="kl-weg-lijst"></div></details>
     <ul id="kl-lijst" class="kl-lijst"></ul>
     <form id="kl-form" class="k-form" hidden>
       <h3 id="kl-titel"></h3>
@@ -439,6 +441,7 @@
       <label>Kiloprijs was <small>(€ per kg, leeg = geen)</small><input name="kiloprijs" inputmode="decimal" maxlength="10" placeholder="bv. 2,50"></label>
       <div id="kl-weken" class="kl-weken"></div>
       <p id="kl-info" class="tijdlijn"></p>
+      <div id="kl-vast" class="kl-vast"></div>
       <div class="d-knoppen">
         <button class="knop hoofd" type="submit">Opslaan</button>
         <button class="knop" type="button" id="kl-bonnen">Bonnen van deze klant</button>

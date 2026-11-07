@@ -659,3 +659,7 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
 .merk { display: flex; align-items: center; gap: 10px; }
 .merk-logo { width: 52px; height: 52px; border-radius: 12px; background: #fff; padding: 0; flex: 0 0 auto; object-fit: cover; }
 @media (max-width: 600px) { .merk-logo { width: 32px; height: 32px; } }
+.kl-vast { margin: 6px 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.kl-weg-lang { margin: 6px 0 12px; border: 1px solid #EBD9B4; background: var(--geel-zacht); border-radius: 12px; padding: 8px 12px; }
+.kl-weg-lang summary { cursor: pointer; font-weight: 600; }
+#kl-weg-lijst { margin-top: 8px; max-height: 320px; overflow: auto; }
