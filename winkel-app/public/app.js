@@ -1571,6 +1571,51 @@
     toonSoorten();
     toonSuggesties();
   });
+  // ---------- Werkvolgorde in het bonformulier ----------
+  // 1 naam → 2 wat brengt de klant → 3 stukken → 4 klaar tegen → 5 tickets → 6 betaling.
+  // Wat ingevuld is krijgt een groen vinkje; de volgende stap licht blauw op.
+  function toonStappen() {
+    const f = $('#f');
+    const enkelLater = [...soorten].every((x) => x === 'Strijk' || x === 'Was');
+    const gedaan = {
+      1: Boolean(f.naam.value.trim()),
+      2: soorten.size > 0,
+      3: regels.some((r) => r.naam.trim()) || (soorten.size > 0 && enkelLater),
+      4: Boolean(f.klaarTegen.value),
+      5: fTickets.some((t) => String(t || '').trim()),
+      6: f.betaald.checked || Boolean(f.opmerking.value.trim()),
+    };
+    let actief = 0;
+    $$('#f fieldset.stap').forEach((vak) => {
+      const n = Number(vak.dataset.stap);
+      vak.classList.toggle('gedaan', gedaan[n]);
+      const isActief = !gedaan[n] && !actief;
+      if (isActief) actief = n;
+      vak.classList.toggle('actief', isActief);
+    });
+  }
+  const naarStap = (n, veld) => {
+    const vak = $(`#f fieldset.stap[data-stap="${n}"]`);
+    if (!vak) return;
+    vak.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const el = veld ? vak.querySelector(veld) : null;
+    if (el) setTimeout(() => el.focus({ preventScroll: true }), 250);
+  };
+  ['input', 'change', 'click'].forEach((t) => $('#f').addEventListener(t, () => requestAnimationFrame(toonStappen)));
+  // Naam ingevuld + Enter: door naar "wat brengt de klant binnen".
+  $('#f').naam.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !$('#f-klanten').hidden) return;
+    e.preventDefault();
+    if (e.target.value.trim()) naarStap(2, '#f-soort button');
+  });
+  // Eerste soort gekozen: door naar de stukken.
+  $('#f-soort').addEventListener('click', (e) => {
+    if (e.target.closest('[data-soort]') && soorten.size === 1 && !regels.length) naarStap(3, '#f-stuk');
+  });
+  // Datum gekozen: door naar de tickets.
+  $('#f').klaarTegen.addEventListener('change', () => { if ($('#f').klaarTegen.value) naarStap(5, 'input'); });
+  $$('[data-dagen]').forEach((k) => k.addEventListener('click', () => naarStap(5, 'input')));
+
   // Een stuk toevoegen zet ook de soort aan (bv. een droogkuisstuk zet "Droogkuis" aan).
   function soortVoor(beh) {
     const soort = { strijk: 'Strijk', was: 'Was', droogkuis: 'Droogkuis' }[beh];
@@ -1885,6 +1930,7 @@
     toonSuggesties();
     toonRegels();
     zetVasteStukken();
+    toonStappen();
     toonVlekUitleg();
     $('#formulier').showModal();
     if (!b && !klant) f.naam.focus();

@@ -78,8 +78,8 @@
       <button type="button" class="sluit" data-sluit aria-label="Sluiten">✕</button>
     </div>
     <div class="paneel-inhoud">
-      <fieldset>
-        <legend>Klant</legend>
+      <fieldset class="stap" data-stap="1">
+        <legend><span class="stap-nr">1</span>Naam van de klant</legend>
         <label>Naam *<input name="naam" autocomplete="off" required></label>
         <div class="rij">
           <label>Telefoon<input name="telefoon" type="tel" inputmode="tel" autocomplete="off" placeholder="0470 12 34 56"></label>
@@ -89,8 +89,8 @@
         <label class="vink" id="f-bewaar-klant" hidden><input type="checkbox" name="bewaarKlant"> Klant bewaren in Klanten <small>(voor een vaste klant; anders wordt de klant niet bewaard)</small></label>
       </fieldset>
 
-      <fieldset>
-        <legend>Wat brengt de klant binnen? <small>(meerdere mogelijk)</small></legend>
+      <fieldset class="stap" data-stap="2">
+        <legend><span class="stap-nr">2</span>Wat brengt de klant binnen? <small>(meerdere mogelijk)</small></legend>
         <div class="keuzes" id="f-soort">
           <button type="button" data-soort="Strijk">Strijk</button>
           <button type="button" data-soort="Was">Was</button>
@@ -101,8 +101,8 @@
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Stukken <small>(droogkuis altijd invullen; strijk en was mag ook later)</small></legend>
+      <fieldset class="stap" data-stap="3">
+        <legend><span class="stap-nr">3</span>Stukken <small>(droogkuis altijd invullen; strijk en was mag ook later)</small></legend>
         <label id="f-vliegtuig-veld" class="vlek-uitleg" hidden>✈ Vliegtuig <small>(verplicht voor deze klant, bv. registratie OO-ABC)</small><input name="vliegtuig" maxlength="40" placeholder="Vliegtuig" autocomplete="off"></label>
         <div id="f-kilo" class="f-kilo" hidden>
           <b>Was per kilo</b> <span id="f-kilo-prijs"></span>
@@ -125,8 +125,8 @@
         </table>
       </fieldset>
 
-      <fieldset>
-        <legend>Klaar tegen</legend>
+      <fieldset class="stap" data-stap="4">
+        <legend><span class="stap-nr">4</span>Wanneer mag de klant het ophalen?</legend>
         <div class="rij">
           <input name="klaarTegen" type="date" aria-label="Klaar tegen">
           <div class="keuzes klein">
@@ -138,8 +138,8 @@
         <label class="f-levering">🚐 Wij brengen terug naar <small>(ophaaldienst; leeg = klant haalt zelf af)</small><input name="levering" maxlength="160" autocomplete="off" placeholder="Adres of plaats, bv. kantine"></label>
       </fieldset>
 
-      <fieldset>
-        <legend>Tickets en locatie <small>(één ticket per zak, mand of hanger; elk ticket scan je bij het teruggeven)</small></legend>
+      <fieldset class="stap" data-stap="5">
+        <legend><span class="stap-nr">5</span>Tickets en locatie <small>(één ticket per zak, mand of hanger; elk ticket scan je bij het teruggeven)</small></legend>
         <div class="t-aantal" id="f-t-stappen">
           <button type="button" data-t-stap="-1" aria-label="Eén ticket minder">−</button>
           <b id="f-t-aantal">1 ticket</b>
@@ -149,8 +149,8 @@
         <div id="f-loc-snel" class="groep-keuze"></div>
       </fieldset>
 
-      <fieldset>
-        <legend>Betaling en opmerking</legend>
+      <fieldset class="stap" data-stap="6">
+        <legend><span class="stap-nr">6</span>Betaling en opmerking <small>(mag leeg)</small></legend>
         <div class="rij">
           <label class="vink"><input name="betaald" type="checkbox"> Al betaald</label>
           <select name="betaalwijze" aria-label="Betaalwijze">
