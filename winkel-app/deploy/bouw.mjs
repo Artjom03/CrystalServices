@@ -23,7 +23,8 @@ const res = await fetch(sleutel
   ? `https://api.github.com/repos/Artjom03/CrystalServices/tarball/${commit}`
   : `https://codeload.github.com/Artjom03/CrystalServices/tar.gz/${commit}`,
   sleutel ? { headers: { Authorization: `Bearer ${sleutel}`, 'User-Agent': 'crystal-winkel-bouw' } } : {});
-if (!res.ok) throw new Error(`Kon de code niet ophalen (${res.status})`);
+console.log(sleutel ? 'Code ophalen met de sleutel GITHUB_LEZEN' : 'Code ophalen zonder sleutel (enkel zolang de repo openbaar is)');
+if (!res.ok) throw new Error(`Kon de code niet ophalen (${res.status})${sleutel ? ': heeft de sleutel leestoegang tot Artjom03/CrystalServices?' : ''}`);
 writeFileSync(tar, Buffer.from(await res.arrayBuffer()));
 execFileSync('tar', ['-xzf', tar, '-C', bron, '--strip-components=2', '--wildcards', '*/winkel-app/public/*', '*/winkel-app/api/*', '*/winkel-app/lib/*']);
 
