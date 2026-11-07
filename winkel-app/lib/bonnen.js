@@ -820,7 +820,8 @@ export function voorKlant(staat, sleutel, nu = new Date()) {
     .map((b) => ({
       nr: b.nr,
       soort: b.soort,
-      stukken: b.stukken,
+      // Intern blijft intern: de klant ziet niet dat (of bij welke partner) een stuk weg is.
+      stukken: b.stukken.map(({ extern, externOp, partner, ...st }) => st),
       totaal: b.totaal,
       prijsOpen: Boolean(b.prijsOpen),
       status: b.status,

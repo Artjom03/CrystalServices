@@ -498,3 +498,13 @@ test('partner: een deel van een regel naar de partner sturen', async () => {
   assert.deepEqual(st.map((x) => [x.aantal, x.extern || '']), [[3, ''], [2, 'sturen']]);
   assert.equal(staat.bonnen[0].totaal, 14);
 });
+
+test('klantenpagina: geen partner-info', async () => {
+  const { pasToe, LEEG, voorKlant, telefoonSleutel } = await import('../lib/bonnen.js');
+  let staat = structuredClone(LEEG);
+  const r = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Geheim', telefoon: '0470 11 22 33' }, soorten: ['Droogkuis'], stukken: [{ naam: 'Mantel', aantal: 1, prijs: 25, behandeling: 'droogkuis' }] } });
+  staat = pasToe(r.staat, { op: 'extern', status: 'weg', partner: 'Kwikklien', stukken: [{ id: r.bon.id, index: 0 }] }).staat;
+  assert.equal(staat.bonnen[0].stukken[0].partner, 'Kwikklien');
+  const zicht = JSON.stringify(voorKlant(staat, telefoonSleutel('0470 11 22 33')));
+  assert.ok(!/Kwikklien|extern|partner/.test(zicht));
+});
