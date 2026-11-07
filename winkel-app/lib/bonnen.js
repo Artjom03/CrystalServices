@@ -84,6 +84,7 @@ export function schoonStukken(stukken) {
     if (EXTERN.includes(s?.extern) && s.extern) {
       stuk.extern = s.extern;
       if (s.externOp) stuk.externOp = tekst(s.externOp, 40);
+      if (s.vertrokOp) stuk.vertrokOp = tekst(s.vertrokOp, 40);
       // Bij welke partner (bv. Kwikklien of Neven), en wat de partner ons per stuk kost.
       if (s.partner) stuk.partner = tekst(s.partner, 40);
     }
@@ -288,6 +289,7 @@ export function proKlant(boek, klant) {
 
 /** Bonnen die lang bewaard blijven: van professionele klanten en van klanten met een btw-nummer. */
 export function blijftBewaard(staat, b) {
+  if (b.bewaren) return true;
   const k = staat.klantenboek?.[klantSleutel(b.klant)];
   return Boolean(k?.pro || k?.btw || b.factuur?.btw);
 }
@@ -331,6 +333,27 @@ function noteerBetaling(staat, bon, wijze, iso) {
     bedrag: bon.totaal,
     wijze: BETAALWIJZEN_KASSA.includes(wijze) ? wijze : 'onbekend',
     op: iso,
+  });
+}
+
+/**
+ * Na het wijzigen van een bon: de betalingen van die bon kloppen weer met de bon.
+ * Niet meer betaald: de betalingen worden geschrapt. Betaald maar ander totaal: het verschil wordt
+ * bijgeboekt (of terugbetaald), zodat het dagoverzicht nooit dubbel of te weinig telt.
+ */
+function betalingenVolgen(staat, bon, iso) {
+  const actief = staat.betalingen.filter((p) => p.bonId === bon.id && !p.geschraptOp);
+  if (!bon.betaald) {
+    if (actief.length) staat.betalingen = staat.betalingen.map((p) => (p.bonId === bon.id && !p.geschraptOp ? { ...p, geschraptOp: iso } : p));
+    return;
+  }
+  const verschil = Math.round(((bon.totaal || 0) - actief.reduce((n, p) => n + p.bedrag, 0)) * 100) / 100;
+  if (Math.abs(verschil) < 0.01) return;
+  staat.betalingen.push({
+    id: 'p' + Date.parse(iso).toString(36) + Math.random().toString(36).slice(2, 6),
+    bonId: bon.id, nr: bon.nr, naam: bon.klant.naam, bedrag: verschil,
+    wijze: BETAALWIJZEN_KASSA.includes(bon.betaalwijze) ? bon.betaalwijze : (actief[0]?.wijze || 'onbekend'),
+    op: iso, ...(actief.length ? { bijboeking: true } : {}),
   });
 }
 
@@ -429,13 +452,16 @@ function handeling(oud, actie, nu) {
         gewijzigdOp: iso,
       };
       // Professionele klant: altijd een factuur.
+      // Pro-klant of klant met btw-nummer: de bon zelf onthoudt dat hij bewaard moet blijven,
+      // ook als de klant later een ander nummer of een andere naam krijgt.
+      if (blijftBewaard(staat, bon)) bon.bewaren = true;
       if (proKlant(staat.klantenboek, bon.klant)) {
         const k = staat.klantenboek[klantSleutel(bon.klant)];
         bon.factuur = { gevraagdOp: iso, gemaaktOp: '', naam: k.naam || '', adres: k.adres || '', btw: k.btw || '', email: bon.klant.email || k.email || '' };
       }
       staat.bonnen.push(bon);
       // Enkel bewaren in Klanten als de winkel dat vraagt; een gekende klant wordt aangevuld.
-      if (actie.bewaarKlant || staat.klantenboek[klantSleutel(bon.klant)]) zetKlant(staat.klantenboek, bon.klant, iso);
+      if (actie.bewaarKlant || staat.klantenboek[klantSleutel(bon.klant)]) zetKlant(staat.klantenboek, bon.klant, iso, { laatstGeweest: iso });
       if (bon.betaald) noteerBetaling(staat, bon, bon.betaalwijze, iso);
       return { staat, bon };
     }
@@ -446,7 +472,7 @@ function handeling(oud, actie, nu) {
       const wasBetaald = staat.bonnen[i].betaald;
       staat.bonnen[i] = { ...staat.bonnen[i], ...v, gewijzigdOp: iso };
       if (actie.bewaarKlant || staat.klantenboek[klantSleutel(v.klant)]) zetKlant(staat.klantenboek, v.klant, iso);
-      if (!wasBetaald && v.betaald) noteerBetaling(staat, staat.bonnen[i], v.betaalwijze, iso);
+      if (wasBetaald || v.betaald) betalingenVolgen(staat, staat.bonnen[i], iso);
       return { staat, bon: staat.bonnen[i] };
     }
     case 'status': {
@@ -459,9 +485,12 @@ function handeling(oud, actie, nu) {
         b.klaarOp = b.klaarOp || iso;
         b.opgehaaldOp = iso;
         if (actie.betaalwijze !== undefined) {
-          if (!b.betaald) noteerBetaling(staat, b, actie.betaalwijze, iso);
-          b.betaald = true;
-          b.betaalwijze = BETAALWIJZEN.includes(actie.betaalwijze) ? actie.betaalwijze : b.betaalwijze;
+          // Al betaald (bv. bij het binnenbrengen): de betaling en betaalwijze blijven zoals ze waren.
+          if (!b.betaald) {
+            noteerBetaling(staat, b, actie.betaalwijze, iso);
+            b.betaald = true;
+            b.betaalwijze = BETAALWIJZEN.includes(actie.betaalwijze) ? actie.betaalwijze : b.betaalwijze;
+          }
         }
       }
       staat.bonnen[i] = b;
@@ -480,16 +509,25 @@ function handeling(oud, actie, nu) {
         const st = { ...stukken[index] };
         const zet = (x) => {
           if (actie.status) { x.extern = actie.status; x.externOp = iso; } else { delete x.extern; delete x.externOp; }
+          // Wanneer het stuk vertrok (voor de factuur van de partner): blijft staan bij "terug".
+          if (actie.status === 'weg' && !x.vertrokOp) x.vertrokOp = iso;
+          if (!actie.status || actie.status === 'zelf' || actie.status === 'sturen') delete x.vertrokOp;
           // Welke partner: meegegeven, of de partner die er al stond; wissen als we het zelf doen.
           if (actie.partner !== undefined) x.partner = tekst(actie.partner, 40);
           if (!actie.status || actie.status === 'zelf') delete x.partner;
           if (!x.partner) delete x.partner;
         };
-        const n = Number(aantal);
+        // Hele stuks, behalve bij een prijs per kilo.
+        const n = PER_KG.test(st.naam) ? Math.round(Number(aantal) * 100) / 100 : Math.round(Number(aantal));
         if (n > 0 && n < st.aantal) {
-          const deel = { ...st, aantal: Math.round(n * 100) / 100 };
+          const deel = { ...st, aantal: n };
           const rest = { ...st, aantal: Math.round((st.aantal - n) * 100) / 100 };
-          if (st.vlekAantal) { deel.vlekAantal = Math.min(st.vlekAantal, deel.aantal); rest.vlekAantal = Math.min(st.vlekAantal, rest.aantal); }
+          // De vlekken verdelen in plaats van verdubbelen.
+          if (st.vlekAantal) {
+            deel.vlekAantal = Math.min(st.vlekAantal, deel.aantal);
+            rest.vlekAantal = st.vlekAantal - deel.vlekAantal;
+            if (!rest.vlekAantal) { delete rest.vlekAantal; if (rest.vlek && !rest.vlekOngeteld) delete rest.vlek; }
+          }
           zet(deel);
           stukken.splice(index, 1, rest, deel);
         } else {
@@ -616,6 +654,19 @@ function handeling(oud, actie, nu) {
         ...(typeof (k.vliegtuig ?? oud.vliegtuig) === 'boolean' ? { vliegtuig: Boolean(k.vliegtuig ?? oud.vliegtuig) } : {}),
         gewijzigdOp: iso,
       };
+      // Pro of btw: alle bonnen van deze klant blijven bewaard (ook na een nieuw nummer of een nieuwe naam).
+      const nk = staat.klantenboek[sleutel];
+      if (nk.pro || nk.btw) {
+        staat.bonnen = staat.bonnen.map((b) => (klantSleutel(b.klant) === sleutel && !b.bewaren ? { ...b, bewaren: true } : b));
+      }
+      // Ander nummer of andere naam: de klant verhuist naar de nieuwe sleutel, zodat nieuwe bonnen hem herkennen.
+      const nieuweSleutel = klantSleutel({ naam: nk.naam, telefoon: nk.telefoon });
+      if (nieuweSleutel && nieuweSleutel !== sleutel) {
+        if (staat.klantenboek[nieuweSleutel]) throw new Fout(`Er staat al een klant met dat nummer: ${staat.klantenboek[nieuweSleutel].naam}`);
+        staat.klantenboek[nieuweSleutel] = { ...nk, sleutel: nieuweSleutel };
+        delete staat.klantenboek[sleutel];
+        return { staat, klant: staat.klantenboek[nieuweSleutel] };
+      }
       return { staat, klant: staat.klantenboek[sleutel] };
     }
     case 'kassaOpen': {
@@ -696,7 +747,7 @@ function handeling(oud, actie, nu) {
       // Na het dagoverzicht: alle betalingen en opgehaalde bonnen weg. Bonnen die nog opgehaald
       // moeten worden blijven staan, net als een opgehaalde bon waarvoor nog een factuur gemaakt moet worden.
       // Bonnen van professionele klanten en klanten met een btw-nummer blijven bewaard (facturen, kilo's per week).
-      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && !b.factuur.gemaaktOp) || blijftBewaard(staat, b));
+      staat.bonnen = staat.bonnen.filter((b) => b.status !== 'opgehaald' || (b.factuur && (!b.factuur.gemaaktOp || !b.factuur.betaaldOp)) || blijftBewaard(staat, b));
       staat.betalingen = [];
       staat.kassa = {};
       return { staat };
@@ -850,7 +901,7 @@ export function voorKlant(staat, sleutel, nu = new Date()) {
       nr: b.nr,
       soort: b.soort,
       // Intern blijft intern: de klant ziet niet dat (of bij welke partner) een stuk weg is.
-      stukken: b.stukken.map(({ extern, externOp, partner, partnerPrijs, ...st }) => st),
+      stukken: b.stukken.map(({ extern, externOp, vertrokOp, partner, partnerPrijs, ...st }) => st),
       totaal: b.totaal,
       prijsOpen: Boolean(b.prijsOpen),
       status: b.status,

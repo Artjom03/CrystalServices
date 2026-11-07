@@ -52,11 +52,18 @@ export default async function handler(req, res) {
         await traag();
         return json(res, 401, { error: FOUT });
       }
-      if (klant.geblokkeerdTot && klant.geblokkeerdTot > new Date().toISOString()) {
+      // Eerst de poging tellen (veilig samengevoegd), pas daarna de code vergelijken:
+      // zo helpt het niet om veel pogingen tegelijk te sturen.
+      let geblokkeerd = false;
+      await wijzig((huidig) => {
+        const k = huidig.klanten?.[sleutel];
+        if (k?.geblokkeerdTot && k.geblokkeerdTot > new Date().toISOString()) { geblokkeerd = true; return { staat: huidig }; }
+        return pasToe(huidig, { op: 'loginFout', sleutel });
+      });
+      if (geblokkeerd) {
         return json(res, 429, { error: 'Te veel foute codes. Probeer het over een kwartier opnieuw, of bel ons op 0494 40 38 41.' });
       }
       if (!/^\d{6}$/.test(String(pin || '')) || !pinKlopt(String(pin), klant)) {
-        await wijzig((huidig) => pasToe(huidig, { op: 'loginFout', sleutel }));
         await traag();
         return json(res, 401, { error: FOUT });
       }

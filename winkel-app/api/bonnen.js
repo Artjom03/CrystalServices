@@ -5,7 +5,7 @@ import { leesAgenda, komendeAfspraken } from '../lib/agenda.js';
 import { controleer } from '../lib/pin.js';
 
 // Wat de winkel mag doen. Aanmeldingen van klanten lopen via api/klant.js.
-const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'extern', 'verwittigd', 'verwijder', 'klantcode', 'instellingen', 'prijslijst', 'klant', 'klantNieuw', 'klantWeg', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'partnerPrijs', 'factuurBetaald', 'klantenImport'];
+const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'extern', 'verwittigd', 'verwijder', 'klantcode', 'instellingen', 'prijslijst', 'klant', 'klantNieuw', 'klantWeg', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'partnerPrijs', 'factuurBetaald', 'dagWissen', 'klantenImport'];
 
 function json(res, status, data) {
   res.statusCode = status;

@@ -1,7 +1,7 @@
 // Crystal Winkel voor Windows: dezelfde winkel-app, maar volledig offline.
 // De bonnen staan in een bestand op deze pc; afdrukken gaat rechtstreeks naar de gekozen printer.
 import { app, BrowserWindow, Menu, dialog, ipcMain, net, protocol, screen, shell } from 'electron';
-import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, rename, mkdir, open, copyFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -30,19 +30,41 @@ protocol.registerSchemesAsPrivileged([
 
 // ---------- Opslag ----------
 
+/**
+ * Een JSON-bestand lezen. Enkel als het bestand nog niet bestaat, komt de standaard terug.
+ * Is het beschadigd (bv. stroompanne), dan de vorige versie (.bak). Lukt ook dat niet, dan een fout:
+ * nooit stilletjes "leeg" teruggeven, want dan zou de volgende wijziging alles overschrijven.
+ */
 async function leesJson(bestand, standaard) {
+  let tekst;
   try {
-    return JSON.parse(await readFile(bestand, 'utf8'));
-  } catch {
-    return structuredClone(standaard);
+    tekst = await readFile(bestand, 'utf8');
+  } catch (e) {
+    if (e?.code === 'ENOENT') return structuredClone(standaard);
+    throw e;
+  }
+  try {
+    return JSON.parse(tekst);
+  } catch (e) {
+    try { return JSON.parse(await readFile(bestand + '.bak', 'utf8')); } catch { throw e; }
   }
 }
 
-/** Eerst naar een tijdelijk bestand schrijven en dan hernoemen: zo raakt het bestand nooit half beschreven. */
+/**
+ * Veilig schrijven: naar een eigen tijdelijk bestand, dat echt op de schijf zetten (sync),
+ * de vorige versie als .bak bewaren en dan pas hernoemen. Zo raakt het bestand nooit half beschreven.
+ */
 async function schrijfJson(bestand, data) {
   await mkdir(path.dirname(bestand), { recursive: true });
-  const tijdelijk = bestand + '.tmp';
-  await writeFile(tijdelijk, JSON.stringify(data, null, 1));
+  const tijdelijk = `${bestand}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`;
+  const fh = await open(tijdelijk, 'w');
+  try {
+    await fh.writeFile(JSON.stringify(data, null, 1));
+    await fh.sync();
+  } finally {
+    await fh.close();
+  }
+  if (existsSync(bestand)) await copyFile(bestand, bestand + '.bak').catch(() => {});
   await rename(tijdelijk, bestand);
 }
 
@@ -52,17 +74,26 @@ const PRINT_SOORTEN = ['klant', 'ticket', 'afhaal', 'a4', 'prijslijst', 'dag'];
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
 }
-const bewaarInstellingen = () => schrijfJson(INSTELLINGEN(), instellingen);
+// Ook de instellingen één voor één bewaren (bv. snel na elkaar zoomen), anders kan het bestand stuk gaan.
+let instellingenRij = Promise.resolve();
+const bewaarInstellingen = () => {
+  const klus = instellingenRij.then(() => schrijfJson(INSTELLINGEN(), instellingen));
+  instellingenRij = klus.catch(() => {});
+  return klus;
+};
 
 // ---------- Online kopie voor de gsm ----------
 // Na elke wijziging (ten vroegste na 30 seconden, gebundeld) en bij het opstarten gaat een kopie
 // van alle gegevens naar de online versie. Zonder internet wordt het later opnieuw geprobeerd.
 const spiegelStand = { laatst: '', fout: '' };
 let spiegelKlok = null;
+let spiegelWacht = 0; // na een fout (verkeerde pincode, geblokkeerd): niet opnieuw proberen voor dit tijdstip
 function planSpiegel(ms = 30000) {
   if (!instellingen.gsm?.aan || !instellingen.gsm?.pin) return;
-  clearTimeout(spiegelKlok);
-  spiegelKlok = setTimeout(stuurSpiegel, ms);
+  // Al gepland: niet uitstellen (anders gaat er in een drukke winkel uren niets door).
+  if (spiegelKlok) return;
+  const wacht = Math.max(ms, spiegelWacht - Date.now());
+  spiegelKlok = setTimeout(() => { spiegelKlok = null; stuurSpiegel(); }, wacht);
 }
 async function stuurSpiegel() {
   const g = instellingen.gsm || {};
@@ -73,12 +104,26 @@ async function stuurSpiegel() {
     const r = await net.fetch(String(g.adres || '').replace(/\/+$/, '') + '/api/spiegel', {
       method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'x-pin': g.pin }, body,
     });
-    if (!r.ok) throw new Error(r.status === 401 ? 'Verkeerde online pincode' : `Fout ${r.status}`);
+    if (r.status === 401) {
+      // Verkeerde online pincode: niet blijven proberen (dat zou de winkel online blokkeren).
+      // Pas opnieuw na een nieuwe pincode via de verborgen koppeling.
+      spiegelStand.fout = 'Verkeerde online pincode';
+      spiegelWacht = Infinity;
+      return { ...spiegelStand };
+    }
+    if (r.status === 429) {
+      spiegelStand.fout = 'Online tijdelijk geblokkeerd; later opnieuw';
+      spiegelWacht = Date.now() + 60 * 60 * 1000;
+      planSpiegel(60 * 60 * 1000);
+      return { ...spiegelStand };
+    }
+    if (!r.ok) throw new Error(`Fout ${r.status}`);
     spiegelStand.laatst = new Date().toISOString();
     spiegelStand.fout = '';
+    spiegelWacht = 0;
   } catch (e) {
     spiegelStand.fout = String(e?.message || e).slice(0, 200);
-    planSpiegel(5 * 60 * 1000); // later opnieuw proberen
+    planSpiegel(5 * 60 * 1000); // later opnieuw proberen (geen internet...)
   }
   return { ...spiegelStand };
 }
@@ -103,7 +148,9 @@ function wijzig(fn) {
  */
 async function laadKlanten() {
   if (instellingen.klantenGeladen) return;
-  const lijst = JSON.parse(await readFile(path.join(HIER, 'klanten.json'), 'utf8'));
+  const bestand = path.join(HIER, 'klanten.json');
+  if (!existsSync(bestand)) return; // de klantenlijst zit niet (meer) in het programma
+  const lijst = JSON.parse(await readFile(bestand, 'utf8'));
   await wijzig((staat) => {
     let { staat: nieuw } = pasToe(staat, { op: 'klantenImport', klanten: lijst });
     for (const k of lijst.filter((x) => x.vlekkenrapport)) {
@@ -461,6 +508,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('gsm-info', () => ({ aan: Boolean(instellingen.gsm?.aan), heeftPin: Boolean(instellingen.gsm?.pin), adres: instellingen.gsm?.adres || '', ...spiegelStand }));
     ipcMain.handle('zet-gsm', async (e, w = {}) => {
       instellingen.gsm = { ...instellingen.gsm, aan: Boolean(w.aan), ...(w.pin ? { pin: String(w.pin).slice(0, 40) } : {}) };
+      spiegelWacht = 0;
       await bewaarInstellingen();
       return instellingen.gsm.aan ? stuurSpiegel() : { ...spiegelStand };
     });

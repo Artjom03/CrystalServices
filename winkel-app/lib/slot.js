@@ -11,15 +11,17 @@ export const REGELS = [
 export const ALLEN = { fouten: 50, binnen: 60 * MIN, blok: 60 * MIN };
 
 /** Is dit record nu geblokkeerd? Geeft het tijdstip (ms) tot wanneer, of 0. */
+const LANGSTE = 24 * 60 * MIN;
 export function geblokkeerdTot(rec, nu = Date.now()) {
-  return rec?.tot && rec.tot > nu ? rec.tot : 0;
+  // Een blokkering verder dan de langste regel (bv. na een verkeerde klok) telt niet.
+  return rec?.tot && rec.tot > nu && rec.tot <= nu + LANGSTE ? rec.tot : 0;
 }
 
 /** Een foute poging noteren; geeft het nieuwe record terug (met eventueel een blokkering). */
 export function noteerFout(rec, nu = Date.now(), regels = REGELS) {
   const lang = Math.max(...regels.map((r) => r.binnen));
-  const fouten = [...(rec?.fouten || []).filter((t) => nu - t < lang), nu];
-  let tot = rec?.tot && rec.tot > nu ? rec.tot : 0;
+  const fouten = [...(rec?.fouten || []).filter((t) => t <= nu && nu - t < lang), nu];
+  let tot = geblokkeerdTot(rec, nu);
   for (const r of regels) {
     if (fouten.filter((t) => nu - t < r.binnen).length >= r.fouten) tot = Math.max(tot, nu + r.blok);
   }
