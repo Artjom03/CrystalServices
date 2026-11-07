@@ -51,15 +51,15 @@ App voor de winkel van Crystal Services: bonnen voor strijk, was, droogkuis, sch
 
 ### Een nieuwe versie online zetten
 
-Het Vercel-project is niet aan deze GitHub-repo gekoppeld: de Vercel-GitHub-koppeling van bogdan-mg kan Artjom03/CrystalServices niet lezen. Daarom is het zo opgezet:
+Het Vercel-project is niet aan deze GitHub-repo gekoppeld (de Vercel-GitHub-koppeling van bogdan-mg kan Artjom03/CrystalServices niet lezen). Daarom bestaat een deployment enkel uit de map `deploy/` (`package.json` + `bouw.mjs`). Bij het bouwen haalt `bouw.mjs` `public/`, `api/` en `lib/` van GitHub op de commit uit `package.json` en zet alles klaar volgens de Build Output API (statische site + één functie per `api/*.js`, in fra1).
 
-- `api/` en `lib/` worden rechtstreeks naar Vercel geüpload.
-- Het buildcommando haalt `public/` uit deze repo op een vaste commit:
-  `curl -fsSL https://codeload.github.com/Artjom03/CrystalServices/tar.gz/<commit> | tar -xz --strip-components=2 --wildcards '*/winkel-app/public/*'`
-
-Voor een update: commit naar `main`, en deploy daarna opnieuw met de nieuwe commit in dat buildcommando en de nieuwe `api/` en `lib/`.
+Voor een update: commit naar `main`, zet die commit in `deploy/package.json` en upload `deploy/` opnieuw als productie-deployment van `crystal-winkel`.
 
 Eenvoudiger wordt het als bogdan-mg in Vercel de GitHub-koppeling ook toegang geeft tot Artjom03/CrystalServices. Dan kan het project gekoppeld worden met root directory `winkel-app`, en gaat elke push vanzelf online.
+
+### Gsm en back-up
+
+In het Windows-programma, bij ⚙ Instellingen → Gsm en back-up, vul je de online pincode (`APP_PIN`) in en zet je "Kopie naar de gsm sturen" aan. Na elke wijziging gaat dan een kopie naar `/api/spiegel`. Vanaf de eerste kopie is de online versie enkel om te kijken; klantcodes voor het klantenportaal blijven wel werken.
 
 ## Lokaal testen
 
