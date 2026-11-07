@@ -485,3 +485,16 @@ test('korting per stuk en op de hele bon', () => {
   ({ bon } = nieuw(LEEG, { klant: { naam: 'B' }, stukken: [{ naam: 'Hemd', aantal: 1, prijs: 3 }], korting: { soort: '€', waarde: '5' } }));
   assert.equal(bon.totaal, 0, 'nooit onder nul');
 });
+
+test('partner: een deel van een regel naar de partner sturen', async () => {
+  const { pasToe, LEEG } = await import('../lib/bonnen.js');
+  let staat = structuredClone(LEEG);
+  const r = pasToe(staat, { op: 'nieuw', bon: { klant: { naam: 'Test' }, soorten: ['Strijk'], stukken: [{ naam: 'Hemd', aantal: 5, prijs: 2.8, behandeling: 'strijk' }] } });
+  staat = r.staat;
+  const id = r.bon.id;
+  staat = pasToe(staat, { op: 'extern', status: 'sturen', stukken: [{ id, index: 0, aantal: 2 }] }).staat;
+  const st = staat.bonnen[0].stukken;
+  assert.equal(st.length, 2);
+  assert.deepEqual(st.map((x) => [x.aantal, x.extern || '']), [[3, ''], [2, 'sturen']]);
+  assert.equal(staat.bonnen[0].totaal, 14);
+});

@@ -381,14 +381,15 @@
     </li>`;
   }
 
-  // ---------- Droogkuis bij de partner ----------
+  // ---------- Bij de partner (droogkuis, en alles wat we niet zelf kunnen) ----------
   // Per droogkuisstuk: zelf doen, of naar de partner (te versturen → bij de partner → terug).
   function partnerStukken() {
     const uit = [];
     for (const b of staat.bonnen || []) {
       b.stukken.forEach((st, index) => {
-        if (st.behandeling !== 'droogkuis') return;
         const stand = st.extern || '';
+        // Droogkuis: altijd kiezen (zelf of partner). Strijk, was, …: enkel als het naar de partner gaat.
+        if (st.behandeling !== 'droogkuis' && !['sturen', 'weg', 'terug'].includes(stand)) return;
         // Nog kiezen of in behandeling: enkel bonnen die nog niet opgehaald zijn.
         if ((stand === '' || stand === 'sturen' || stand === 'weg') && b.status === 'opgehaald' && stand !== 'weg') return;
         uit.push({ b, st, index, stand });
@@ -407,7 +408,7 @@
     const terug = groep('terug').filter((x) => (x.st.externOp || '') >= grens);
     const blok = (titel, lijst, knoppen, extra = '') => `<section class="pt-blok"><h3>${titel} <span class="teller">${lijst.length}</span></h3>${extra}
       ${lijst.length ? lijst.map((x) => partnerRij(x, knoppen)).join('') : '<p class="tijdlijn">Niets.</p>'}</section>`;
-    $('#pt-inhoud').innerHTML =
+    $('#pt-inhoud').innerHTML = '<p class="tijdlijn">Alles wat we niet zelf doen. Een deel van een bon sturen? Open de bon en kies bij "Waar is alles?" → Partner.</p>' +
       blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button><button class="knop klein goud" data-pt="sturen">→ Partner</button>')
       + blok('📦 Te versturen', sturen, '<button class="knop klein" data-pt="">Toch niet</button><button class="knop klein" data-pt="weg">Verstuurd</button>',
         sturen.length ? '<div class="d-knoppen"><button class="knop" id="pt-lijst">🖨 Verzendlijst</button><button class="knop hoofd" id="pt-alles-weg">Alles verstuurd</button></div>' : '')
@@ -675,6 +676,21 @@
          <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td></tr></tfoot></table>`
       : '<p class="tijdlijn">Nog geen stukken ingevuld.</p>';
 
+    // Waar is alles? Per regel: in de winkel of bij de partner; een deel of alles naar de partner sturen.
+    const STAND = { '': '🏠 in de winkel', zelf: '🏠 in de winkel', sturen: '📦 te versturen', weg: '🚚 bij de partner', terug: '✓ terug van de partner' };
+    const waar = b.stukken.length && b.status !== 'opgehaald' ? `
+      <div class="d-blok">
+        <h3>Waar is alles?</h3>
+        <div class="d-waar">${b.stukken.map((st, i) => {
+          const stand = st.extern || '';
+          const knop = stand === '' || stand === 'zelf' || stand === 'terug'
+            ? `<button class="knop klein" data-naar-partner="${i}">→ Partner</button>`
+            : stand === 'sturen' ? `<button class="knop klein" data-partner-zet="weg" data-i="${i}">Verstuurd</button><button class="knop klein" data-partner-zet="" data-i="${i}">Toch niet</button>`
+            : `<button class="knop klein hoofd" data-partner-zet="terug" data-i="${i}">Terug ✓</button>`;
+          return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b><small>${STAND[stand] || ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${knop}</span></div>`;
+        }).join('')}</div>
+      </div>` : '';
+
     // Ophalen kan ook rechtstreeks vanuit "in behandeling", bijvoorbeeld na het scannen van de bon.
     const ophalen = (stijl, extra = '') => `
       <div class="d-blok" id="d-ophalen">
@@ -728,6 +744,7 @@
         ${b.opmerking ? `<p style="margin-top:8px">📝 ${esc(b.opmerking)}</p>` : ''}
         <p class="tijdlijn" style="margin-top:8px">${b.betaald ? 'Betaald' + (b.betaalwijze ? ' (' + esc(b.betaalwijze) + ')' : '') : 'Nog niet betaald'}</p>
       </div>
+      ${waar}
       ${status}
       ${DESKTOP ? '' : `<div class="d-blok">
         <h3>Klantenportaal</h3>
@@ -841,6 +858,26 @@
     if (e.target.closest('[data-verwittig]')) {
       // De link opent WhatsApp/SMS/mail; wij noteren dat de klant verwittigd is.
       doe({ op: 'verwittigd', id }).then(() => openDetail(id)).catch((err) => alert(err.message));
+      return;
+    }
+    // Naar de partner: alles of een deel van een regel.
+    const naar = e.target.closest('[data-naar-partner]');
+    if (naar) {
+      const i = Number(naar.dataset.naarPartner);
+      const st = b.stukken[i];
+      let aantal = st.aantal;
+      if (st.aantal > 1) {
+        const antwoord = prompt(`Hoeveel van de ${aantalTekst(st.aantal)}× ${kaleNaam(st)} gaan naar de partner?`, aantalTekst(st.aantal));
+        if (antwoord === null) return;
+        aantal = Number(String(antwoord).replace(',', '.'));
+        if (!(aantal > 0) || aantal > st.aantal) { alert(`Geef een aantal van 1 tot ${aantalTekst(st.aantal)}.`); return; }
+      }
+      doe({ op: 'extern', status: 'sturen', stukken: [{ id, index: i, aantal }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
+      return;
+    }
+    const pz = e.target.closest('[data-partner-zet]');
+    if (pz) {
+      doe({ op: 'extern', status: pz.dataset.partnerZet, stukken: [{ id, index: Number(pz.dataset.i) }] }).then(() => openDetail(id)).catch((err) => alert(err.message));
       return;
     }
     const knop = e.target.closest('[data-actie]');
