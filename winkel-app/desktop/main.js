@@ -2,6 +2,7 @@
 // De bonnen staan in een bestand op deze pc; afdrukken gaat rechtstreeks naar de gekozen printer.
 import { app, BrowserWindow, Menu, dialog, ipcMain, net, protocol, screen, shell } from 'electron';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,12 +46,41 @@ async function schrijfJson(bestand, data) {
 }
 
 // printers: per soort bonnetje een eigen printer ('' = automatisch, 'venster' = telkens vragen).
-const instellingen = { pin: '', printer: '', printerA4: '', printers: {}, zoom: 1, agenda: '' };
+const instellingen = { pin: '', printer: '', printerA4: '', printers: {}, zoom: 1, agenda: '', gsm: { aan: false, pin: '', adres: 'https://crystal-services-winkel.vercel.app' } };
 const PRINT_SOORTEN = ['klant', 'ticket', 'afhaal', 'a4', 'prijslijst', 'dag'];
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
 }
 const bewaarInstellingen = () => schrijfJson(INSTELLINGEN(), instellingen);
+
+// ---------- Online kopie voor de gsm (en back-up) ----------
+// Na elke wijziging (ten vroegste na 30 seconden, gebundeld) en bij het opstarten gaat een kopie
+// van alle gegevens naar de online versie. Zonder internet wordt het later opnieuw geprobeerd.
+const spiegelStand = { laatst: '', fout: '' };
+let spiegelKlok = null;
+function planSpiegel(ms = 30000) {
+  if (!instellingen.gsm?.aan || !instellingen.gsm?.pin) return;
+  clearTimeout(spiegelKlok);
+  spiegelKlok = setTimeout(stuurSpiegel, ms);
+}
+async function stuurSpiegel() {
+  const g = instellingen.gsm || {};
+  if (!g.aan || !g.pin) return { fout: 'Gsm-kopie staat uit' };
+  try {
+    const staat = await leesJson(DATA(), LEEG);
+    const body = gzipSync(Buffer.from(JSON.stringify({ staat, agenda: instellingen.agenda || '', versie: app.getVersion() })));
+    const r = await net.fetch(String(g.adres || '').replace(/\/+$/, '') + '/api/spiegel', {
+      method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'x-pin': g.pin }, body,
+    });
+    if (!r.ok) throw new Error(r.status === 401 ? 'Verkeerde online pincode' : `Fout ${r.status}`);
+    spiegelStand.laatst = new Date().toISOString();
+    spiegelStand.fout = '';
+  } catch (e) {
+    spiegelStand.fout = String(e?.message || e).slice(0, 200);
+    planSpiegel(5 * 60 * 1000); // later opnieuw proberen
+  }
+  return { ...spiegelStand };
+}
 
 // Wijzigingen één voor één afhandelen, zodat er nooit twee tegelijk schrijven.
 let rij = Promise.resolve();
@@ -59,6 +89,7 @@ function wijzig(fn) {
     const staat = await leesJson(DATA(), LEEG);
     const resultaat = fn(staat);
     await schrijfJson(DATA(), resultaat.staat);
+    planSpiegel();
     return resultaat;
   });
   rij = klus.catch(() => {});
@@ -419,6 +450,13 @@ if (!app.requestSingleInstanceLock()) {
       return true;
     });
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
+    // Gsm-kopie: aan/uit, de online pincode, en hoe het laatst ging.
+    ipcMain.handle('gsm-info', () => ({ aan: Boolean(instellingen.gsm?.aan), heeftPin: Boolean(instellingen.gsm?.pin), adres: instellingen.gsm?.adres || '', ...spiegelStand }));
+    ipcMain.handle('zet-gsm', async (e, w = {}) => {
+      instellingen.gsm = { ...instellingen.gsm, aan: Boolean(w.aan), ...(w.pin ? { pin: String(w.pin).slice(0, 40) } : {}) };
+      await bewaarInstellingen();
+      return instellingen.gsm.aan ? stuurSpiegel() : { ...spiegelStand };
+    });
     // Ophaalagenda: het geheime iCal-adres van Google Agenda staat enkel op deze pc (niet bij de bonnen).
     ipcMain.handle('agenda-adres', () => instellingen.agenda || '');
     ipcMain.handle('zet-agenda-adres', async (e, adres) => {
@@ -452,6 +490,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     maakVenster();
     zoekUpdate();
+    planSpiegel(15000);
   });
 
   app.on('window-all-closed', () => app.quit());

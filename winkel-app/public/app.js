@@ -113,7 +113,23 @@
       klantenboek: data.klantenboek || {},
       betalingen: data.betalingen || [],
       kassa: data.kassa || {},
+      spiegel: data.spiegel || null,
     };
+    toonSpiegel();
+  }
+
+  // Online kopie van de winkel-pc (gsm): enkel kijken, met wanneer bijgewerkt.
+  function toonSpiegel() {
+    const sp = !DESKTOP && staat.spiegel;
+    document.body.classList.toggle('alleen-kijken', Boolean(sp));
+    const el = $('#spiegel-balk');
+    if (!el) return;
+    el.hidden = !sp;
+    if (sp) {
+      const d = new Date(sp.op);
+      const min = Math.round((Date.now() - d.getTime()) / 60000);
+      el.textContent = `📱 Kopie van de winkel-pc · bijgewerkt ${min < 1 ? 'net' : min < 60 ? min + ' min geleden' : d.toLocaleString('nl-BE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · enkel kijken`;
+    }
   }
 
   async function laad(stil) {
@@ -503,9 +519,18 @@
   let agLijst = [];
   async function toonAgenda() {
     const doel = $('#ag-inhoud');
-    if (!DESKTOP || !window.crystal.agenda) { doel.innerHTML = '<p class="ag-leeg">De ophaalagenda werkt in het Windows-programma.</p>'; $('#ag-instellen').hidden = true; return; }
+    let r;
     doel.innerHTML = '<p class="ag-leeg">Agenda ophalen…</p>';
-    const r = await window.crystal.agenda(Number($('#ag-dagen').value));
+    if (DESKTOP && window.crystal.agenda) r = await window.crystal.agenda(Number($('#ag-dagen').value));
+    else {
+      // Op de gsm: de server haalt de agenda op met het adres van de winkel-pc.
+      $('#ag-instellen').hidden = true;
+      try {
+        const res = await fetch('/api/bonnen?agenda=' + Number($('#ag-dagen').value), { headers: { 'x-pin': pin }, cache: 'no-store' });
+        r = await res.json();
+      } catch { r = { fout: 'Kon de agenda niet ophalen. Is er internet?' }; }
+      if (r.geenAdres) { doel.innerHTML = '<p class="ag-leeg">Koppel de agenda eerst op de winkel-pc (Ophalen → ⚙ Agenda koppelen).</p>'; return; }
+    }
     if (r.geenAdres) { doel.innerHTML = '<p class="ag-leeg">Nog geen agenda gekoppeld.</p>'; toonAgAdres(); return; }
     if (r.fout) { doel.innerHTML = `<p class="fout">${esc(r.fout)}</p>`; return; }
     agLijst = r.afspraken || [];
@@ -2230,6 +2255,25 @@
   }
   $('#instellingen-knop').addEventListener('click', () => { $('#i-partners').value = partners().join(', '); });
   $('#instellingen-knop').addEventListener('click', openInstellingen);
+  // Gsm-kopie (enkel in het Windows-programma).
+  async function toonGsm() {
+    const vak = $('#i-gsm');
+    if (!DESKTOP || !window.crystal.gsmInfo) { vak.hidden = true; return; }
+    const g = await window.crystal.gsmInfo();
+    $('#i-gsm-aan').checked = g.aan;
+    $('#i-gsm-pin').placeholder = g.heeftPin ? '•••••• (bewaard)' : 'Pincode van de online versie';
+    $('#i-gsm-stand').textContent = !g.aan ? 'Staat uit.' : g.fout ? '⚠ ' + g.fout : g.laatst ? `✓ Laatst doorgestuurd: ${new Date(g.laatst).toLocaleString('nl-BE')}` : 'Wordt zo meteen doorgestuurd…';
+    $('#i-gsm-link').textContent = g.adres;
+    $('#i-gsm-link').href = g.adres;
+  }
+  $('#instellingen-knop').addEventListener('click', toonGsm);
+  $('#i-gsm-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('#i-gsm-stand').textContent = 'Bezig…';
+    await window.crystal.zetGsm({ aan: $('#i-gsm-aan').checked, pin: $('#i-gsm-pin').value.trim() });
+    $('#i-gsm-pin').value = '';
+    toonGsm();
+  });
   $('#i-partners-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const lijst = $('#i-partners').value.split(',').map((x) => x.trim()).filter(Boolean);

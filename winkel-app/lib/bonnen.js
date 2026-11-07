@@ -835,6 +835,8 @@ export function voorWinkel(staat, nu = new Date()) {
     klanten,
     instellingen: instellingenVan(staat),
     prijslijst: staat.prijslijst || null,
+    // Online kopie van de winkel-pc: wanneer bijgewerkt (het agenda-adres blijft op de server).
+    spiegel: staat.spiegel ? { op: staat.spiegel.op, agenda: Boolean(staat.spiegel.agenda) } : null,
     klantenboek: klantenboekVan(staat),
     betalingen: staat.betalingen || [],
     kassa: staat.kassa || {},

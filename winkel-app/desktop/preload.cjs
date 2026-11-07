@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('crystal', {
   printer: () => ipcRenderer.invoke('printer'),
   kiesPrinter: (soort) => ipcRenderer.invoke('kies-printer', soort),
   agenda: (dagen) => ipcRenderer.invoke('agenda', dagen),
+  gsmInfo: () => ipcRenderer.invoke('gsm-info'),
+  zetGsm: (w) => ipcRenderer.invoke('zet-gsm', w),
   agendaAdres: () => ipcRenderer.invoke('agenda-adres'),
   zetAgendaAdres: (adres) => ipcRenderer.invoke('zet-agenda-adres', adres),
 });
