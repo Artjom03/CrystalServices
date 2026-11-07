@@ -2,7 +2,7 @@
 // (gzip), zodat de gsm ze kan bekijken en er altijd een back-up online staat.
 // Vanaf dan is de online versie "alleen kijken": wijzigen gebeurt op de winkel-pc.
 import { gunzipSync } from 'node:zlib';
-import { juistePin, geblokkeerd, ipVan } from '../lib/pin.js';
+import { controleer } from '../lib/pin.js';
 import { wijzig } from '../lib/opslag.js';
 import { bewaarBackup } from '../lib/kluis.js';
 
@@ -27,14 +27,10 @@ async function leesRuw(req) {
 }
 
 export default async function handler(req, res) {
-  const ip = ipVan(req);
   try {
-    if (geblokkeerd(ip, false)) return json(res, 429, { error: 'Te veel foute pogingen' });
-    if (!juistePin(req.headers['x-pin'] || '')) {
-      geblokkeerd(ip, true);
-      await new Promise((r) => setTimeout(r, 600));
-      return json(res, 401, { error: 'Verkeerde pincode' });
-    }
+    // Pincode, met blokkering na te veel foute pogingen (zie lib/slot.js).
+    const nee = await controleer(req);
+    if (nee) return json(res, nee.status, { error: nee.error });
     if (req.method !== 'POST') return json(res, 405, { error: 'Niet toegestaan' });
     const ruw = await leesRuw(req);
     let data;
