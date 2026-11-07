@@ -467,14 +467,26 @@ function handeling(oud, actie, nu) {
     case 'extern': {
       // Droogkuisstukken naar de partner: per stuk (bon-id + volgnummer) een nieuwe stand.
       if (!EXTERN.includes(actie.status)) throw new Fout('Onbekende stand');
-      const lijst = Array.isArray(actie.stukken) ? actie.stukken.slice(0, 500) : [];
-      for (const { id, index } of lijst) {
+      // Met "aantal" kleiner dan het aantal van de regel gaat maar een deel: de regel wordt dan gesplitst
+      // (bv. 5 hemden: 2 naar de partner, 3 blijven in de winkel). Hoogste index eerst, zodat de volgnummers kloppen.
+      const lijst = (Array.isArray(actie.stukken) ? actie.stukken.slice(0, 500) : []).sort((a, b) => (b.index || 0) - (a.index || 0));
+      for (const { id, index, aantal } of lijst) {
         const i = staat.bonnen.findIndex((b) => b.id === id);
         if (i < 0 || !staat.bonnen[i].stukken[index]) continue;
         const stukken = [...staat.bonnen[i].stukken];
         const st = { ...stukken[index] };
-        if (actie.status) { st.extern = actie.status; st.externOp = iso; } else { delete st.extern; delete st.externOp; }
-        stukken[index] = st;
+        const zet = (x) => { if (actie.status) { x.extern = actie.status; x.externOp = iso; } else { delete x.extern; delete x.externOp; } };
+        const n = Number(aantal);
+        if (n > 0 && n < st.aantal) {
+          const deel = { ...st, aantal: Math.round(n * 100) / 100 };
+          const rest = { ...st, aantal: Math.round((st.aantal - n) * 100) / 100 };
+          if (st.vlekAantal) { deel.vlekAantal = Math.min(st.vlekAantal, deel.aantal); rest.vlekAantal = Math.min(st.vlekAantal, rest.aantal); }
+          zet(deel);
+          stukken.splice(index, 1, rest, deel);
+        } else {
+          zet(st);
+          stukken[index] = st;
+        }
         staat.bonnen[i] = { ...staat.bonnen[i], stukken, gewijzigdOp: iso };
       }
       return { staat };
