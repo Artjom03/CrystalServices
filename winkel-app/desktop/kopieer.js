@@ -12,4 +12,5 @@ await cp(new URL('../public/', import.meta.url), new URL('./public/', doel), {
 await mkdir(new URL('./lib/', doel), { recursive: true });
 // Enkel de regels: opslag en klantcodes horen bij de online versie.
 await cp(new URL('../lib/bonnen.js', import.meta.url), new URL('./lib/bonnen.js', doel));
+await cp(new URL('../lib/agenda.js', import.meta.url), new URL('./lib/agenda.js', doel));
 console.log('App en regels gekopieerd naar desktop/app/');

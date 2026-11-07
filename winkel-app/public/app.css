@@ -611,3 +611,18 @@ a{color:var(--navy);}
 /* Ophaaldatum nog niet gekozen */
 fieldset.kies-datum { outline: 3px solid #e0a100; border-radius: 10px; }
 fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d00; }
+
+/* Ophaalagenda */
+.ag-balk { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.ag-dag { margin: 14px 0 6px; font-size: 1rem; }
+.ag-dag.vandaag { color: #1d4ed8; }
+.ag-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid #e3e6ee; border-radius: 10px; margin-bottom: 6px; background: #fff; }
+.ag-tijd { font-weight: 700; }
+.ag-plaats { color: #475569; }
+.ag-plaats a { color: inherit; }
+.ag-notitie { white-space: pre-line; color: #334155; font-size: .92em; margin-top: 4px; }
+.ag-item .knop { white-space: nowrap; }
+.ag-adres { margin-top: 16px; padding: 14px; border: 1px dashed #c7cdd9; border-radius: 10px; }
+.ag-adres input { width: 100%; }
+.ag-leeg { color: #64748b; }
+.ag-balk select { width: auto; flex: 0 0 auto; } .ag-balk .knop { flex: 0 0 auto; }
