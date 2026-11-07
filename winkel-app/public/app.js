@@ -360,9 +360,8 @@
     } else $('#lijst').innerHTML = (q && lijst.length ? zoekKop(lijst) : '') + lijst.map(kaart).join('');
     $('#leeg').hidden = lijst.length > 0;
     $('#leeg').textContent = q ? 'Geen bonnen gevonden.' : { partner: 'Niets bij een partner.', binnen: 'Geen bonnen in behandeling.', klaar: 'Niets klaar om op te halen.', opgehaald: 'Nog niets opgehaald de laatste 60 dagen.' }[tab];
-    const maanden = staat.instellingen?.bewaarMaanden || 12;
     $('#voetnoot').hidden = Boolean(q) || tab !== 'opgehaald';
-    $('#voetnoot').textContent = `Hier staan de laatste 60 dagen; oudere bonnen vind je via zoeken. Opgehaalde bonnen worden na ${maanden} ${maanden === 1 ? 'maand' : 'maanden'} gewist (⚙ Instellingen).`;
+    $('#voetnoot').textContent = 'Hier staan de laatste 60 dagen; oudere bonnen vind je via zoeken. Opgehaalde bonnen van gewone klanten worden gewist met "Dagoverzicht afdrukken en wissen" (🧾 Facturen).';
     toonLocaties();
     controleerKassa();
     toonHerinnering();
