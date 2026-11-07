@@ -247,7 +247,49 @@
   footer .bottom{border-top:1px solid var(--line-dark);margin-top:48px;padding-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.85rem}
   @media (max-width:880px){footer .cols{grid-template-columns:1fr 1fr}}
 
+
+  /* Afspraak */
+  .bk-note{border:1px solid var(--line);background:var(--paper);padding:18px 22px;font-size:.95rem;color:var(--ink-2)}
+  .bk-steps{display:grid;grid-template-columns:1.25fr .75fr;border:1px solid var(--ink)}
+  .bk-steps>*{min-width:0}
+  .bk-pick{padding:32px;display:grid;gap:28px;align-content:start}
+  .bk-pick h3,.bk-form h3{font-size:1.05rem;margin-bottom:12px;letter-spacing:-.01em}
+  .bk-pick h3 span,.bk-form h3 span{font-family:"IBM Plex Mono",monospace;font-weight:400;color:var(--copper);margin-right:8px;font-size:.85rem}
+  .days{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+  .day{flex:none;width:80px;padding:10px 6px;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);cursor:pointer;font:inherit;text-align:center;line-height:1.25;color:var(--ink)}
+  .day small{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .day b{display:block;font-size:1.35rem;margin:2px 0}
+  .day em{display:block;font-style:normal;font-size:.72rem;color:var(--copper)}
+  .day:hover{border-color:var(--ink)}
+  .day[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .day[aria-pressed="true"] small,.day[aria-pressed="true"] em{color:#d6d8da}
+  .part{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .part button{text-align:left;padding:16px 18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--white);font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+  .part button small{display:block;font-weight:400;font-size:.85rem;opacity:.8;margin-top:2px}
+  .part button:hover{border-color:var(--ink)}
+  .part button[aria-pressed="true"]{background:var(--copper);border-color:var(--copper);color:#fff}
+  .part button:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+  .empty{color:var(--muted);font-size:.95rem}
+  .bk-tips{list-style:none;border-top:1px solid var(--line);padding-top:20px;display:grid;gap:14px;font-size:.93rem;color:var(--muted)}
+  .bk-tips b{display:block;color:var(--ink);font-weight:600}
+  .bk-form{background:var(--paper);border-left:1px solid var(--ink);padding:32px;display:grid;gap:14px;align-content:start}
+  .bk-form label{display:grid;gap:6px;font-weight:500;font-size:.9rem}
+  .bk-form input,.bk-form select,.bk-form textarea{font:inherit;font-size:1rem;padding:11px 13px;border:1px solid #c4c4be;border-radius:var(--radius);background:var(--white);color:var(--ink)}
+  .bk-form input:focus,.bk-form select:focus,.bk-form textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #e2e2dd}
+  .bk-form textarea{min-height:80px;resize:vertical}
+  .bk-sum{font-size:.95rem;border-top:1px solid var(--line);padding-top:14px}
+  .bk-sum b{display:block;font-size:1.1rem}
+  .bk-msg{font-size:.92rem;padding:12px 14px;border-left:3px solid var(--copper);background:var(--copper-tint)}
+  .bk-msg.err{border-color:#b42318;background:#fbeae8}
+  .bk-done{border:1px solid var(--ink);padding:36px;display:grid;gap:12px;background:var(--white)}
+  .bk-done h3{font-size:1.6rem}
+  .bk-done p{color:var(--ink-2);max-width:40em}
+  .hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+  @media (max-width:880px){.bk-steps{grid-template-columns:1fr}.bk-form{border-left:0;border-top:1px solid var(--ink)}.bk-pick,.bk-form{padding:22px}}
+  @media (max-width:480px){.part{grid-template-columns:1fr}}
+
   main{overflow-x:clip}
+  [hidden]{display:none!important}
 
   /* Toegankelijkheid */
   .skip{position:absolute;left:16px;top:-60px;background:var(--ink);color:#fff;padding:10px 16px;z-index:100;text-decoration:none;font-weight:600}
@@ -338,11 +380,12 @@
       <a href="#onderhoud">Onderhoud</a>
       <a href="#storing">Storing</a>
       <a href="#over">Over ons</a>
+      <a href="#afspraak">Afspraak</a>
       <a href="#contact">Contact</a>
     </nav>
     <div class="head-right">
       <a class="head-phone" href="tel:+3230000000"><span>Bel ons</span><b>03 000 00 00</b></a>
-      <a href="#contact" class="btn btn-primary">Offerte aanvragen</a>
+      <a href="#afspraak" class="btn btn-primary">Afspraak maken</a>
     </div>
     <button class="menu-btn" aria-label="Menu openen" aria-expanded="false" aria-controls="nav" id="menuBtn">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
@@ -360,7 +403,7 @@
       <p class="lead">Wij plaatsen, onderhouden en herstellen condensatieketels, mazoutketels en hybride warmtepompen. Eerlijk advies, een vaste prijs vooraf en werk dat netjes wordt afgewerkt.</p>
       <div class="cta">
         <a href="#contact" class="btn btn-primary">Gratis offerte aanvragen</a>
-        <a href="#onderhoud" class="btn btn-line">Onderhoud plannen</a>
+        <a href="#afspraak" class="btn btn-line">Afspraak inplannen</a>
       </div>
     </div>
 
@@ -583,7 +626,7 @@
       <p class="label">05 — Onderhoud</p>
       <h2>Is uw ketel nog in orde?</h2>
       <p>In Vlaanderen is periodiek onderhoud door een erkend technicus verplicht. Het houdt uw ketel veilig en zuinig, en u heeft het attest nodig voor uw verzekering en de fabrieksgarantie.</p>
-      <a href="#contact" class="btn btn-copper" onclick="setService('Onderhoud')">Onderhoud inplannen</a>
+      <a href="#afspraak" class="btn btn-copper">Onderhoud inplannen</a>
     </div>
     <div class="rules">
       <div><span>Gasketel</span><b>om de <em>2 jaar</em></b></div>
@@ -679,6 +722,65 @@
   </div>
 </section>
 
+<section id="afspraak">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="label"><b>●</b> — Afspraak</p>
+        <h2>Plan zelf uw afspraak in.</h2>
+      </div>
+      <p>Kies een dag en of u ons liever in de voormiddag of de namiddag ziet komen. De dag voordien bellen we u met een preciezer uur.</p>
+    </div>
+
+    <p class="bk-note" id="bkNote">De agenda wordt geladen…</p>
+
+    <div class="bk-steps" id="bkSteps" hidden>
+      <div class="bk-pick">
+        <div>
+          <h3><span>1</span>Kies een dag</h3>
+          <div class="days" id="bkDays"></div>
+        </div>
+        <div>
+          <h3><span>2</span>Voormiddag of namiddag?</h3>
+          <div id="bkParts"><p class="empty">Kies eerst een dag.</p></div>
+        </div>
+        <ul class="bk-tips">
+          <li><b>Een preciezer uur</b>De dag voordien bellen we u met een tijdsvenster van ongeveer een uur.</li>
+          <li><b>Duur</b>Een onderhoud duurt meestal 45 minuten tot een uur.</li>
+          <li><b>Dringend?</b>Bij een storing zonder verwarming belt u best meteen: 03 000 00 00.</li>
+        </ul>
+      </div>
+      <form class="bk-form" id="bkForm" novalidate>
+        <h3><span>3</span>Uw gegevens</h3>
+        <label for="bkType">Waarvoor?
+          <select id="bkType" name="type"><option>Onderhoud</option><option>Plaatsbezoek nieuwe ketel</option><option>Herstelling / storing</option><option>Advies hybride warmtepomp</option></select>
+        </label>
+        <label for="bkName">Naam<input id="bkName" name="naam" required autocomplete="name"></label>
+        <label for="bkTel">Telefoon<input id="bkTel" name="tel" type="tel" required autocomplete="tel"></label>
+        <label for="bkAddr">Adres<input id="bkAddr" name="adres" required autocomplete="street-address" placeholder="Straat, nummer, gemeente"></label>
+        <label for="bkOpm">Opmerking<textarea id="bkOpm" name="opmerking" placeholder="Merk van de ketel, foutcode, …"></textarea></label>
+        <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+        <div class="bk-sum" id="bkSum"><span class="empty">Nog geen moment gekozen.</span></div>
+        <button class="btn btn-primary" type="submit" id="bkSubmit" disabled>Afspraak bevestigen</button>
+        <p class="form-note" style="margin:0">Door te bevestigen gaat u akkoord met onze <a href="/privacy.html">privacyverklaring</a>.</p>
+        <p class="bk-msg" id="bkMsg" role="status" hidden></p>
+      </form>
+    </div>
+
+    <div class="bk-done" id="bkDone" hidden tabindex="-1">
+      <p class="label"><b>✓</b> Afspraak bevestigd</p>
+      <h3 id="bkDoneWhen"></h3>
+      <p>Bedankt. De dag voordien bellen we u met een preciezer uur. Kan u toch niet? Bel ons op 03 000 00 00.</p>
+      <div><button class="btn btn-line" type="button" id="bkAgain">Nog een afspraak maken</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- Verborgen formulier zodat Netlify het herkent: elke nieuwe afspraak komt ook als e-mail binnen. -->
+<form name="afspraak" data-netlify="true" netlify-honeypot="website" hidden>
+  <input name="moment"><input name="type"><input name="naam"><input name="tel"><input name="adres"><textarea name="opmerking"></textarea><input name="website">
+</form>
+
 <section id="contact">
   <div class="wrap contact">
     <div class="intro">
@@ -698,7 +800,9 @@
         </ul>
       </div>
     </div>
-    <form class="rv quote" id="quote">
+    <form class="rv quote" id="quote" name="offerte" method="POST" data-netlify="true" netlify-honeypot="website">
+      <input type="hidden" name="form-name" value="offerte">
+      <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
       <label>Naam<input name="naam" required autocomplete="name"></label>
       <label>Telefoon<input name="tel" type="tel" required autocomplete="tel"></label>
       <label class="full">E-mail<input name="email" type="email" autocomplete="email"></label>
@@ -710,8 +814,8 @@
       <label>Postcode<input name="postcode" inputmode="numeric" autocomplete="postal-code"></label>
       <label class="full">Bericht<textarea name="bericht" placeholder="Bijvoorbeeld: merk en leeftijd van uw huidige ketel, wat er mis is…"></textarea></label>
       <div class="full"><button class="btn btn-primary" type="submit">Aanvraag versturen</button></div>
-      <p class="form-ok" id="formOk" role="status">Uw e-mailprogramma opent met uw aanvraag. Verstuur die e-mail om de aanvraag af te ronden. Lukt het niet? Bel ons gerust op 03 000 00 00.</p>
-      <p class="note full" style="margin:0">Uw gegevens worden enkel gebruikt om uw aanvraag te beantwoorden.</p>
+      <p class="form-ok" id="formOk" role="status"></p>
+      <p class="note full" style="margin:0">Uw gegevens worden enkel gebruikt om uw aanvraag te beantwoorden. Meer in onze <a href="/privacy.html">privacyverklaring</a>.</p>
     </form>
   </div>
 </section>
@@ -727,7 +831,7 @@
       </div>
       <div><h4>Diensten</h4><ul><li><a href="#diensten">Plaatsing</a></li><li><a href="#onderhoud">Onderhoud</a></li><li><a href="#diensten">Herstelling</a></li><li><a href="#ketels">Vervanging</a></li></ul></div>
       <div><h4>Info</h4><ul><li><a href="#keuzehulp">Keuzehulp</a></li><li><a href="#storing">Storing</a></li><li><a href="#over">Over ons</a></li><li><a href="#faq">Vragen</a></li><li><a href="#contact">Offerte</a></li></ul></div>
-      <div><h4>Contact</h4><ul><li><a href="tel:+3230000000">03 000 00 00</a></li><li><a href="mailto:info@voorbeeld.be">info@voorbeeld.be</a></li><li>BTW BE 0000.000.000</li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="tel:+3230000000">03 000 00 00</a></li><li><a href="mailto:info@voorbeeld.be">info@voorbeeld.be</a></li><li>BTW BE 0000.000.000</li><li><a href="/privacy.html">Privacyverklaring</a></li></ul></div>
     </div>
     <div class="bottom"><span>© <span id="yr"></span> Haard &amp; Ketel</span><span>Antwerpen en omstreken</span></div>
   </div>
@@ -801,14 +905,124 @@
 
   function setService(v) { document.getElementById('dienst').value = v; }
 
-  // Offerteformulier: opent het mailprogramma met een ingevulde e-mail.
-  document.getElementById('quote').addEventListener('submit', e => {
+  // Offerteformulier: verstuurd via Netlify Forms (komt als e-mail binnen).
+  const encode = obj => new URLSearchParams(obj).toString();
+  document.getElementById('quote').addEventListener('submit', async e => {
     e.preventDefault();
-    const f = new FormData(e.target);
-    const body = [...f.entries()].map(([k, v]) => `${k[0].toUpperCase() + k.slice(1)}: ${v}`).join('\n');
-    document.getElementById('formOk').classList.add('show');
-    location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Aanvraag: ' + f.get('dienst'))}&body=${encodeURIComponent(body)}`;
+    const form = e.target, ok = document.getElementById('formOk'), btn = form.querySelector('[type=submit]');
+    if (!form.reportValidity()) return;
+    btn.disabled = true; ok.classList.remove('show');
+    try {
+      const res = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: encode(new FormData(form)) });
+      if (!res.ok) throw new Error();
+      form.reset();
+      ok.textContent = 'Bedankt, uw aanvraag is verstuurd. We antwoorden binnen één werkdag.';
+    } catch (err) {
+      ok.textContent = 'Versturen lukte niet. Bel ons gerust op 03 000 00 00 of mail naar ' + EMAIL + '.';
+    }
+    ok.classList.add('show'); btn.disabled = false;
   });
+
+  // ================= Afspraken (dagdelen) =================
+  (function () {
+    const $ = id => document.getElementById(id);
+    const PARTS = { VM: { label: 'Voormiddag', range: '8:00 – 12:00' }, NM: { label: 'Namiddag', range: '13:00 – 17:00' } };
+    const dt = s => new Date(s + 'T12:00:00');
+    const fmt = (s, o) => dt(s).toLocaleDateString('nl-BE', o || { weekday: 'long', day: 'numeric', month: 'long' });
+    const when = id => { const d = id.slice(0, 10), p = PARTS[id.slice(11, 13)]; return fmt(d) + ', ' + p.label.toLowerCase() + ' (' + p.range + ')'; };
+    let slots = [], pickDay = null, pickSlot = null, busy = false;
+
+    function msg(text, err) { const m = $('bkMsg'); m.textContent = text; m.classList.toggle('err', !!err); m.hidden = !text; }
+
+    async function load() {
+      const note = $('bkNote');
+      try {
+        const res = await fetch('/api/afspraak', { cache: 'no-store' });
+        if (!res.ok) throw new Error();
+        slots = (await res.json()).slots || [];
+        render();
+      } catch (e) {
+        note.hidden = false; $('bkSteps').hidden = true;
+        note.textContent = 'De online agenda is even niet bereikbaar. Bel ons op 03 000 00 00, dan plannen we samen een afspraak.';
+      }
+    }
+
+    function render() {
+      const byDay = {};
+      slots.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+      const days = Object.keys(byDay).sort();
+      if (!$('bkDone').hidden) { $('bkSteps').hidden = true; $('bkNote').hidden = true; return; }
+      if (!days.length) {
+        $('bkNote').hidden = false; $('bkSteps').hidden = true;
+        $('bkNote').textContent = 'Er zijn op dit moment geen vrije momenten online. Bel ons op 03 000 00 00, dan zoeken we samen een moment.';
+        return;
+      }
+      $('bkNote').hidden = true; $('bkSteps').hidden = false;
+      if (!byDay[pickDay]) pickDay = days[0];
+      if (pickSlot && !slots.some(s => s.id === pickSlot)) pickSlot = null;
+
+      const dayBox = $('bkDays'); dayBox.textContent = '';
+      days.forEach(d => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'day'; b.setAttribute('aria-pressed', d === pickDay);
+        b.innerHTML = '<small></small><b></b><small></small><em></em>';
+        b.children[0].textContent = fmt(d, { weekday: 'short' });
+        b.children[1].textContent = dt(d).getDate();
+        b.children[2].textContent = fmt(d, { month: 'short' });
+        const ps = byDay[d].map(s => s.part);
+        b.children[3].textContent = ps.length === 2 ? 'VM + NM' : ps[0] === 'VM' ? 'voormiddag' : 'namiddag';
+        b.setAttribute('aria-label', fmt(d) + ', vrij: ' + ps.map(p => PARTS[p].label.toLowerCase()).join(' en '));
+        b.onclick = () => { pickDay = d; pickSlot = null; render(); };
+        dayBox.appendChild(b);
+      });
+
+      const box = $('bkParts'); box.textContent = '';
+      const wrap = document.createElement('div'); wrap.className = 'part';
+      ['VM', 'NM'].forEach(p => {
+        const s = byDay[pickDay].find(x => x.part === p);
+        const b = document.createElement('button');
+        b.type = 'button'; b.disabled = !s;
+        b.innerHTML = '<span></span><small></small>';
+        b.children[0].textContent = PARTS[p].label;
+        b.children[1].textContent = s ? PARTS[p].range : 'niet beschikbaar';
+        b.setAttribute('aria-pressed', !!s && s.id === pickSlot);
+        if (s) b.onclick = () => { pickSlot = s.id; render(); };
+        wrap.appendChild(b);
+      });
+      box.appendChild(wrap);
+
+      const sum = $('bkSum');
+      if (pickSlot) { sum.innerHTML = '<span class="label">Gekozen moment</span><b></b>'; sum.querySelector('b').textContent = when(pickSlot); }
+      else sum.innerHTML = '<span class="empty">Nog geen moment gekozen.</span>';
+      $('bkSubmit').disabled = !pickSlot || busy;
+    }
+
+    $('bkForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      if (!pickSlot || busy) return;
+      if (!form.reportValidity()) return;
+      const f = Object.fromEntries(new FormData(form));
+      busy = true; render(); msg('Bezig met inplannen…');
+      try {
+        const res = await fetch('/api/afspraak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...f, slot: pickSlot }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) { msg(j.error || 'Inplannen lukte niet. Bel ons op 03 000 00 00.', true); if (res.status === 409) await load(); return; }
+        // Melding als e-mail naar de zaak (Netlify Forms). Mislukt dit, dan staat de afspraak toch al vast.
+        fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ 'form-name': 'afspraak', moment: when(pickSlot), type: f.type, naam: f.naam, tel: f.tel, adres: f.adres, opmerking: f.opmerking || '' }).toString() }).catch(() => {});
+        $('bkDoneWhen').textContent = when(pickSlot);
+        form.reset(); pickSlot = null; msg('');
+        $('bkSteps').hidden = true; $('bkDone').hidden = false; $('bkDone').focus();
+        load();
+      } catch (err) {
+        msg('Inplannen lukte niet. Controleer uw internetverbinding of bel ons op 03 000 00 00.', true);
+      } finally { busy = false; render(); }
+    });
+    $('bkAgain').onclick = () => { $('bkDone').hidden = true; render(); };
+
+    load();
+  })();
 </script>
 </body>
 </html>

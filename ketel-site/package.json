@@ -1,0 +1,11 @@
+{
+  "name": "haard-en-ketel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.8"
+  }
+}
