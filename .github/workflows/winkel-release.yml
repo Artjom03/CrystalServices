@@ -27,6 +27,7 @@ jobs:
       # Zonder sleutel voor de updates-repo niets bouwen: anders zou het programma op een lege plek zoeken.
       - name: Sleutel nakijken
         shell: bash
+        working-directory: .
         env:
           UPDATES_TOKEN: ${{ secrets.UPDATES_TOKEN }}
         run: |
