@@ -171,6 +171,8 @@ function velden(invoer) {
     prijsOpen: prijsOpen(stukken),
     vliegtuig: tekst(invoer.vliegtuig, MAX.vliegtuig),
     opmerking: tekst(invoer.opmerking, MAX.opmerking),
+    // Ophaaldienst: wij halen op bij de klant en brengen terug naar dit adres (leeg = klant komt zelf).
+    levering: tekst(invoer.levering, 160),
     locatie: tickets ? ticketLocaties(tickets) : tekst(invoer.locatie, MAX.locatie),
     klaarTegen: datum(invoer.klaarTegen),
     betaald: Boolean(invoer.betaald),
