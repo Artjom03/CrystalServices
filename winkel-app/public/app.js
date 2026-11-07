@@ -442,13 +442,41 @@
     });
     doel.innerHTML = html;
   }
+  // Ophaaldienst: bonnen die wij terugbrengen, per stap (opgehaald → klaar → teruggeleverd).
+  function toonLeveringen() {
+    const lev = (staat.bonnen || []).filter((b) => b.levering);
+    const rij = (b) => `<div class="ag-item">
+        <div class="ag-tijd">${esc(b.nr)}</div>
+        <div><b>${esc(b.klant.naam)}</b> <small>${esc(b.soort || '')}</small>
+          <div class="ag-plaats">🚐 ${esc(b.levering)}</div>
+          <div class="ag-notitie">${b.status === 'opgehaald' ? 'Teruggeleverd ' + esc(mooiDatum(b.opgehaaldOp)) : 'Opgehaald ' + esc(mooiDatum(b.binnenOp)) + (b.klaarTegen ? ' · terug ' + esc(mooiDatum(b.klaarTegen)) : '')}</div>
+        </div>
+        <span>${b.status === 'binnen' ? `<button type="button" class="knop" data-lev-status="klaar" data-id="${b.id}">Klaar</button>`
+          : b.status === 'klaar' ? `<button type="button" class="knop hoofd" data-lev-status="opgehaald" data-id="${b.id}">Teruggeleverd</button>` : '✓'}</span>
+      </div>`;
+    const week = new Date(Date.now() - 14 * 86400000).toISOString();
+    const groep = (titel, lijst, leeg) => `<h3 class="ag-dag">${titel} <small>(${lijst.length})</small></h3>${lijst.length ? lijst.map(rij).join('') : `<p class="ag-leeg">${leeg}</p>`}`;
+    const opTijd = (a, b) => (a.klaarTegen || '9').localeCompare(b.klaarTegen || '9');
+    $('#ag-leveringen').innerHTML = '<h2 class="ag-kop">Ophaaldienst</h2>'
+      + groep('🧺 Opgehaald, nog bezig', lev.filter((b) => b.status === 'binnen').sort(opTijd), 'Niets in behandeling.')
+      + groep('📦 Klaar, nog terugbrengen', lev.filter((b) => b.status === 'klaar').sort(opTijd), 'Niets om terug te brengen.')
+      + groep('✓ Teruggeleverd (laatste 2 weken)', lev.filter((b) => b.status === 'opgehaald' && (b.opgehaaldOp || '') >= week).sort((a, b) => b.opgehaaldOp.localeCompare(a.opgehaaldOp)), 'Nog niets teruggeleverd.');
+  }
+  $('#ag-leveringen').addEventListener('click', async (e) => {
+    const k = e.target.closest('[data-lev-status]');
+    if (!k) return;
+    k.disabled = true;
+    try { await doe({ op: 'status', id: k.dataset.id, status: k.dataset.levStatus }); } catch (err) { alert(err.message); }
+    toonLeveringen();
+  });
+
   async function toonAgAdres() {
     const f = $('#ag-adres-form');
     f.hidden = false;
     f.adres.value = (await window.crystal.agendaAdres()) || '';
     $('#ag-adres-fout').textContent = '';
   }
-  $('#agenda-knop').addEventListener('click', () => { $('#ag-adres-form').hidden = true; $('#agenda').showModal(); toonAgenda(); });
+  $('#agenda-knop').addEventListener('click', () => { $('#ag-adres-form').hidden = true; toonLeveringen(); $('#agenda').showModal(); toonAgenda(); });
   $('#ag-vernieuw').addEventListener('click', toonAgenda);
   $('#ag-dagen').addEventListener('change', toonAgenda);
   $('#ag-instellen').addEventListener('click', () => { const f = $('#ag-adres-form'); if (f.hidden) toonAgAdres(); else f.hidden = true; });
@@ -474,6 +502,7 @@
     if (terug) f.klaarTegen.value = terug;
     const opm = [agVeld(a.notitie, 'opgehaald') && 'Opgehaald: ' + agVeld(a.notitie, 'opgehaald'), agVeld(a.notitie, 'waar') && 'Terugbrengen naar: ' + agVeld(a.notitie, 'waar'), a.plaats && !agVeld(a.notitie, 'waar') && 'Adres: ' + a.plaats].filter(Boolean).join('\n');
     if (opm) f.opmerking.value = opm;
+    f.levering.value = agVeld(a.notitie, 'waar') || a.plaats || (k && k.adres) || '';
   });
   $('#pt-inhoud').addEventListener('click', async (e) => {
     const knop = e.target.closest('[data-pt]');
@@ -1738,6 +1767,7 @@
     f.betaald.checked = b ? b.betaald : false;
     f.betaalwijze.value = b ? b.betaalwijze : '';
     f.opmerking.value = b ? b.opmerking : '';
+    f.levering.value = b ? b.levering || '' : '';
     $('#f-korting').value = b?.korting ? String(b.korting.waarde).replace('.', ',') : '';
     $('#f-korting-soort').value = b?.korting?.soort || '%';
     f.vliegtuig.value = b ? b.vliegtuig || '' : '';
@@ -1792,6 +1822,7 @@
       opmerking: f.opmerking.value,
       korting: { soort: $('#f-korting-soort').value, waarde: $('#f-korting').value },
       vliegtuig: f.vliegtuig.value,
+      levering: f.levering.value,
     };
     $('#f-bewaar').disabled = true;
     try {

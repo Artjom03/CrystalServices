@@ -626,3 +626,7 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
 .ag-adres input { width: 100%; }
 .ag-leeg { color: #64748b; }
 .ag-balk select { width: auto; flex: 0 0 auto; } .ag-balk .knop { flex: 0 0 auto; }
+.ag-kop { font-size: 1.15rem; margin: 18px 0 4px; border-top: 1px solid #e3e6ee; padding-top: 12px; }
+#ag-leveringen .ag-kop { border-top: 0; padding-top: 0; margin-top: 4px; }
+.f-levering { margin-top: 10px; display: block; }
+.f-levering input { width: 100%; }

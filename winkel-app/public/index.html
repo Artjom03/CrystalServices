@@ -133,6 +133,7 @@
             <button type="button" data-dagen="7">+1 week</button>
           </div>
         </div>
+        <label class="f-levering">🚐 Wij brengen terug naar <small>(ophaaldienst; leeg = klant haalt zelf af)</small><input name="levering" maxlength="160" autocomplete="off" placeholder="Adres of plaats, bv. kantine"></label>
       </fieldset>
 
       <fieldset>
@@ -391,6 +392,8 @@
       <select id="ag-dagen" aria-label="Hoe ver vooruit"><option value="7">7 dagen</option><option value="14" selected>14 dagen</option><option value="31">1 maand</option></select>
       <button type="button" class="knop" id="ag-instellen">⚙ Agenda koppelen</button>
     </div>
+    <div id="ag-leveringen"></div>
+    <h2 class="ag-kop">Agenda</h2>
     <div id="ag-inhoud"></div>
     <form id="ag-adres-form" class="ag-adres" hidden>
       <h3>Google Agenda koppelen</h3>
