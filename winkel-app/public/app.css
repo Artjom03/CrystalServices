@@ -655,3 +655,7 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
   .balk-binnen, .tabs, main { max-width: 1500px; }
   .lijst { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+/* Logo in de balk */
+.merk { display: flex; align-items: center; gap: 10px; }
+.merk-logo { width: 52px; height: 52px; border-radius: 12px; background: #fff; padding: 0; flex: 0 0 auto; object-fit: cover; }
+@media (max-width: 600px) { .merk-logo { width: 32px; height: 32px; } }
