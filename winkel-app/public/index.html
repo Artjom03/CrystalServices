@@ -56,6 +56,7 @@
   <main>
     <p id="melding" class="melding" role="status" hidden></p>
     <div id="herinnering" class="herinnering" hidden></div>
+    <p id="spiegel-balk" class="spiegel-balk" hidden></p>
     <ul id="lijst" class="lijst"></ul>
     <p id="leeg" class="leeg" hidden></p>
     <p id="voetnoot" class="voetnoot" hidden></p>
@@ -210,6 +211,19 @@
       </label>
       <p class="tijdlijn">Geldt enkel voor dit toestel.</p>
     </fieldset>
+    <fieldset>
+      <legend>Gsm en back-up</legend>
+      <div id="i-gsm">
+        <p class="tijdlijn">Stuurt na elke wijziging een kopie naar de online versie. Op je iPhone open je <a id="i-gsm-link" target="_blank" rel="noopener"></a> in Safari en kies je Delen → "Zet op beginscherm". Op de gsm kan je enkel kijken. De kopie is meteen ook een back-up.</p>
+        <form id="i-gsm-form" class="rij">
+          <label class="vink"><input type="checkbox" id="i-gsm-aan"> Kopie naar de gsm sturen</label>
+          <input id="i-gsm-pin" type="password" maxlength="40" autocomplete="off" aria-label="Pincode van de online versie">
+          <button type="submit" class="knop">Bewaren</button>
+        </form>
+        <p class="tijdlijn" id="i-gsm-stand"></p>
+      </div>
+    </fieldset>
+
     <fieldset>
       <legend>Partners</legend>
       <p class="tijdlijn">Waar we naartoe sturen wat we niet zelf doen. Scheid de namen met een komma.</p>

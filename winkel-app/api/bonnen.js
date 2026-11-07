@@ -1,30 +1,11 @@
-import { timingSafeEqual } from 'node:crypto';
 import { pasToe, voorWinkel, Fout } from '../lib/bonnen.js';
 import { lees, wijzig } from '../lib/opslag.js';
 import { maakPin, hashPin } from '../lib/klant.js';
+import { leesAgenda, komendeAfspraken } from '../lib/agenda.js';
+import { juistePin, geblokkeerd, ipVan } from '../lib/pin.js';
 
 // Wat de winkel mag doen. Aanmeldingen van klanten lopen via api/klant.js.
 const TOEGESTAAN = ['nieuw', 'wijzig', 'status', 'locatie', 'extern', 'verwittigd', 'verwijder', 'klantcode', 'instellingen', 'prijslijst', 'klant', 'klantNieuw', 'klantWeg', 'kassaOpen', 'kassaBeweging', 'kassaSluit', 'kassaHeropen', 'kassaBewegingWijzig', 'betalingWijzig', 'factuurVraag', 'factuurGemaakt', 'partnerPrijs', 'factuurBetaald', 'klantenImport'];
-
-// Alles achter de pincode: de bonnen bevatten namen en telefoonnummers.
-const pogingen = new Map();
-
-function juistePin(pin) {
-  const echt = process.env.APP_PIN || '';
-  if (!echt) return false;
-  const a = Buffer.from(String(pin));
-  const b = Buffer.from(echt);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-/** Max. 10 foute pincodes per kwartier per IP, tegen raden. */
-function geblokkeerd(ip, fout) {
-  const nu = Date.now();
-  const recent = (pogingen.get(ip) || []).filter((t) => nu - t < 15 * 60 * 1000);
-  if (fout) recent.push(nu);
-  pogingen.set(ip, recent);
-  return recent.length >= 10;
-}
 
 function json(res, status, data) {
   res.statusCode = status;
@@ -48,7 +29,7 @@ async function leesBody(req) {
 }
 
 export default async function handler(req, res) {
-  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+  const ip = ipVan(req);
   try {
     if (geblokkeerd(ip, false)) {
       return json(res, 429, { error: 'Te veel foute pogingen. Probeer het over een kwartier opnieuw.' });
@@ -60,7 +41,22 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      return json(res, 200, voorWinkel(await lees()));
+      const staat = await lees();
+      // Ophaalagenda (Google Agenda) voor de gsm: de server haalt ze op met het adres van de winkel-pc.
+      const dagen = new URL(req.url, 'http://x').searchParams.get('agenda');
+      if (dagen) {
+        const adres = staat.spiegel?.agenda;
+        if (!adres) return json(res, 200, { geenAdres: true });
+        try {
+          const r = await fetch(adres, { cache: 'no-store' });
+          const tekst = r.ok ? await r.text() : '';
+          if (!tekst.includes('BEGIN:VCALENDAR')) return json(res, 200, { fout: 'Kon de agenda niet lezen.' });
+          return json(res, 200, { afspraken: komendeAfspraken(leesAgenda(tekst), new Date(), Math.min(60, Math.max(1, Number(dagen) || 14))) });
+        } catch {
+          return json(res, 200, { fout: 'Kon de agenda niet ophalen.' });
+        }
+      }
+      return json(res, 200, voorWinkel(staat));
     }
     if (req.method === 'POST') {
       const invoer = await leesBody(req);
@@ -72,7 +68,11 @@ export default async function handler(req, res) {
         pin = maakPin();
         actie = { op: 'klantcode', telefoon: invoer.telefoon, naam: invoer.naam, ...hashPin(pin) };
       }
-      const { staat, bon } = await wijzig((huidig) => pasToe(huidig, actie));
+      const { staat, bon } = await wijzig((huidig) => {
+        // Komt alles van de winkel-pc (online kopie), dan is online enkel kijken; klantcodes mogen wel.
+        if (huidig.spiegel && actie.op !== 'klantcode') throw new Fout('Op de gsm kan je enkel kijken. Wijzigen doe je op de winkel-pc.', 403);
+        return pasToe(huidig, actie);
+      });
       return json(res, 200, { ...voorWinkel(staat), bon, ...(pin ? { pin } : {}) });
     }
     return json(res, 405, { error: 'Niet toegestaan' });

@@ -686,3 +686,13 @@ fieldset.stap.gedaan .stap-nr::after { content: '✓'; font-size: .95rem; }
 .snel-afhalen button:hover { border-color: var(--navy); background: #eef3fb; }
 kbd { font: inherit; font-size: .72em; opacity: .6; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
 .tegels.vaak .tegel { border-color: #e7c66b; background: #fffaf0; }
+
+/* Gsm: kopie van de winkel-pc, enkel kijken */
+.spiegel-balk { background: #eef3fb; border: 1px solid #c9d8f0; color: var(--navy); border-radius: 12px; padding: 8px 14px; margin: 0 0 12px; font-weight: 600; }
+.alleen-kijken #nieuw, .alleen-kijken .snel-afhalen, .alleen-kijken .plus-stukken, .alleen-kijken #detail .d-knoppen, .alleen-kijken #detail .pt-knoppen, .alleen-kijken #ag-inhoud [data-ag-bon], .alleen-kijken #ag-leveringen [data-lev-status] { display: none !important; }
+/* Gsm: knoppen bovenaan zijwaarts te vegen in plaats van buiten het scherm */
+@media (max-width: 600px) {
+  .balk-knoppen { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+  .balk-knoppen::-webkit-scrollbar { display: none; }
+  .balk-knoppen > * { flex: 0 0 auto; }
+}
