@@ -50,6 +50,13 @@ jobs:
           ls -l "${BESTANDEN[@]}"
           publiceer() { # $1 = repo, $2 = token
             export GH_TOKEN="$2"
+            # Een lege repo kan geen release krijgen: eerst een README zetten.
+            if [ "$(gh api "repos/$1" --jq .size)" = "0" ] && ! gh api "repos/$1/contents/README.md" >/dev/null 2>&1; then
+              gh api -X PUT "repos/$1/contents/README.md" -f message="Crystal Winkel updates" \
+                -f content="$(printf '# Crystal Winkel\n\nInstallatiebestanden en updates van het programma Crystal Winkel.\n' | base64 -w0)" >/dev/null
+            fi
+            # Halve releases van een vorige poging opruimen.
+            gh api "repos/$1/releases" --jq ".[] | select(.draft and .name == \"Crystal Winkel $V\") | .id" | while read -r id; do gh api -X DELETE "repos/$1/releases/$id"; done
             gh release view "v$V" --repo "$1" >/dev/null 2>&1 || gh release create "v$V" --repo "$1" --draft --title "Crystal Winkel $V" --notes "Crystal Winkel $V"
             gh release upload "v$V" "${BESTANDEN[@]}" --repo "$1" --clobber
             # Pas zichtbaar maken als alle bestanden er staan; anders vindt het programma latest.yml nog niet.
