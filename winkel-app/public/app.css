@@ -685,3 +685,4 @@ fieldset.stap.gedaan .stap-nr::after { content: '✓'; font-size: .95rem; }
 .snel-afhalen button { border: 1px solid var(--lijn); background: #fff; color: var(--navy); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
 .snel-afhalen button:hover { border-color: var(--navy); background: #eef3fb; }
 kbd { font: inherit; font-size: .72em; opacity: .6; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.tegels.vaak .tegel { border-color: #e7c66b; background: #fffaf0; }
