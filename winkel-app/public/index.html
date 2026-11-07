@@ -37,6 +37,7 @@
         <button id="klanten-knop" class="knop balk-knop">Klanten</button>
         <button id="prijslijsten-knop" class="knop balk-knop">Prijslijsten</button>
         <button id="partner-knop" class="knop balk-knop">Partner</button>
+        <button id="agenda-knop" class="knop balk-knop">Ophalen</button>
         <button id="instellingen-knop" class="knop icoon" aria-label="Instellingen" title="Instellingen">⚙</button>
         <button id="nieuw" class="knop hoofd">+ Nieuwe bon</button>
       </div>
@@ -376,6 +377,33 @@
     <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
   </div>
   <div class="paneel-inhoud" id="pt-inhoud"></div>
+</dialog>
+
+<!-- Ophaalagenda (uit Google Agenda) -->
+<dialog id="agenda" class="paneel breed">
+  <div class="paneel-kop">
+    <h2>Ophalen &amp; terugbrengen</h2>
+    <button class="sluit" data-sluit aria-label="Sluiten">✕</button>
+  </div>
+  <div class="paneel-inhoud">
+    <div class="ag-balk">
+      <button type="button" class="knop" id="ag-vernieuw">↻ Vernieuwen</button>
+      <select id="ag-dagen" aria-label="Hoe ver vooruit"><option value="7">7 dagen</option><option value="14" selected>14 dagen</option><option value="31">1 maand</option></select>
+      <button type="button" class="knop" id="ag-instellen">⚙ Agenda koppelen</button>
+    </div>
+    <div id="ag-inhoud"></div>
+    <form id="ag-adres-form" class="ag-adres" hidden>
+      <h3>Google Agenda koppelen</h3>
+      <ol>
+        <li>Maak in Google Agenda (op de computer) een agenda "Ophalen" en zet daar de ophalingen in. Een herhaling (bv. elke maandag) mag.</li>
+        <li>Ga naar <b>Instellingen</b> van die agenda → <b>Agenda integreren</b> → kopieer het <b>geheime adres in iCal-indeling</b>.</li>
+        <li>Plak het hieronder en klik op Bewaren.</li>
+      </ol>
+      <label>Geheim iCal-adres<input name="adres" type="url" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" autocomplete="off"></label>
+      <p class="fout" id="ag-adres-fout"></p>
+      <button class="knop hoofd" type="submit">Bewaren</button>
+    </form>
+  </div>
 </dialog>
 
 <!-- Klantenbestand -->

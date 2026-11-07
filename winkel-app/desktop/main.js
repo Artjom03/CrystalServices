@@ -1,12 +1,13 @@
 // Crystal Winkel voor Windows: dezelfde winkel-app, maar volledig offline.
 // De bonnen staan in een bestand op deze pc; afdrukken gaat rechtstreeks naar de gekozen printer.
-import { app, BrowserWindow, Menu, dialog, ipcMain, protocol, screen, shell } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, net, protocol, screen, shell } from 'electron';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import updaterPakket from 'electron-updater';
 import { pasToe, voorWinkel, teBewaren, Fout, LEEG, klantSleutel } from './app/lib/bonnen.js';
+import { leesAgenda, komendeAfspraken, agendaAdres } from './app/lib/agenda.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
@@ -44,7 +45,7 @@ async function schrijfJson(bestand, data) {
 }
 
 // printers: per soort bonnetje een eigen printer ('' = automatisch, 'venster' = telkens vragen).
-const instellingen = { pin: '', printer: '', printerA4: '', printers: {}, zoom: 1 };
+const instellingen = { pin: '', printer: '', printerA4: '', printers: {}, zoom: 1, agenda: '' };
 const PRINT_SOORTEN = ['klant', 'ticket', 'afhaal', 'a4', 'prijslijst', 'dag'];
 async function laadInstellingen() {
   Object.assign(instellingen, await leesJson(INSTELLINGEN(), {}));
@@ -418,6 +419,27 @@ if (!app.requestSingleInstanceLock()) {
       return true;
     });
     ipcMain.handle('eerste-keer', () => !instellingen.pin);
+    // Ophaalagenda: het geheime iCal-adres van Google Agenda staat enkel op deze pc (niet bij de bonnen).
+    ipcMain.handle('agenda-adres', () => instellingen.agenda || '');
+    ipcMain.handle('zet-agenda-adres', async (e, adres) => {
+      const a = agendaAdres(adres);
+      if (a === null) return { fout: 'Dat is geen geldig agenda-adres. Plak het "geheime adres in iCal-indeling" uit Google Agenda.' };
+      instellingen.agenda = a;
+      await bewaarInstellingen();
+      return { ok: true };
+    });
+    ipcMain.handle('agenda', async (e, dagen = 14) => {
+      if (!instellingen.agenda) return { geenAdres: true };
+      try {
+        const r = await net.fetch(instellingen.agenda, { cache: 'no-store' });
+        if (!r.ok) return { fout: `De agenda gaf een fout (${r.status}). Kijk het adres na.` };
+        const tekst = await r.text();
+        if (!tekst.includes('BEGIN:VCALENDAR')) return { fout: 'Dat adres geeft geen agenda terug. Plak het "geheime adres in iCal-indeling".' };
+        return { afspraken: komendeAfspraken(leesAgenda(tekst), new Date(), Math.min(60, Math.max(1, Number(dagen) || 14))) };
+      } catch {
+        return { fout: 'Kon de agenda niet ophalen. Is er internet?' };
+      }
+    });
     const printerInfo = async (wc) => {
       const g = await gekozenPrinters(wc);
       const tekst = (eigen, naam) => (eigen === 'venster' ? '' : naam ? naam + (eigen && eigen !== 'auto' ? '' : ' (automatisch)') : '');

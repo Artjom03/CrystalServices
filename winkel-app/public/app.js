@@ -382,6 +382,99 @@
     try { await doe({ op: 'extern', status, stukken }); toonPartner(); } catch (err) { if (err.message !== 'pin') alert(err.message); }
   }
   $('#partner-knop').addEventListener('click', () => { toonPartner(); $('#partner').showModal(); });
+
+  // ---------- Ophaalagenda (Google Agenda) ----------
+  // De afspraken komen uit een Google Agenda (aanpassen op de gsm of de computer, ook vanuit een mail in Gmail).
+  // In de beschrijving van een afspraak mag staan: "Opgehaald: …", "Terug: 14/11", "Waar: …".
+  const agVeld = (notitie, sleutel) => (String(notitie || '').match(new RegExp('^\\s*' + sleutel + '\\s*[:=]\\s*(.+)$', 'im')) || [])[1]?.trim() || '';
+  function terugDatum(t) {
+    const m = String(t || '').match(/(\d{4})-(\d{2})-(\d{2})|(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?/);
+    if (!m) return '';
+    if (m[1]) return `${m[1]}-${m[2]}-${m[3]}`;
+    const nu = new Date();
+    let j = m[6] ? Number(m[6].length === 2 ? '20' + m[6] : m[6]) : nu.getFullYear();
+    const d = new Date(j, Number(m[5]) - 1, Number(m[4]));
+    if (!m[6] && d < new Date(nu.getFullYear(), nu.getMonth(), nu.getDate() - 30)) d.setFullYear(j + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  // Welke klant hoort bij de afspraak? Een klant uit Klanten wiens naam in de titel staat.
+  function agKlant(titel) {
+    const t = String(titel || '').toLowerCase();
+    let beste = null;
+    for (const k of Object.values(staat.klantenboek || {})) {
+      const delen = String(k.naam || '').toLowerCase().split(/[\s()]+/).filter((w) => w.length >= 4);
+      const raak = t.includes(String(k.naam || '').toLowerCase()) ? 99 : delen.filter((w) => t.includes(w)).length;
+      if (raak && (!beste || raak > beste.raak)) beste = { k, raak };
+    }
+    return beste?.k || null;
+  }
+  let agLijst = [];
+  async function toonAgenda() {
+    const doel = $('#ag-inhoud');
+    if (!DESKTOP || !window.crystal.agenda) { doel.innerHTML = '<p class="ag-leeg">De ophaalagenda werkt in het Windows-programma.</p>'; $('#ag-instellen').hidden = true; return; }
+    doel.innerHTML = '<p class="ag-leeg">Agenda ophalen…</p>';
+    const r = await window.crystal.agenda(Number($('#ag-dagen').value));
+    if (r.geenAdres) { doel.innerHTML = '<p class="ag-leeg">Nog geen agenda gekoppeld.</p>'; toonAgAdres(); return; }
+    if (r.fout) { doel.innerHTML = `<p class="fout">${esc(r.fout)}</p>`; return; }
+    agLijst = r.afspraken || [];
+    if (!agLijst.length) { doel.innerHTML = '<p class="ag-leeg">Geen ophalingen gepland in deze periode.</p>'; return; }
+    const vandaag = vandaagIso();
+    let html = '', dag = '';
+    agLijst.forEach((a, i) => {
+      if (a.datum !== dag) {
+        dag = a.datum;
+        html += `<h3 class="ag-dag${dag === vandaag ? ' vandaag' : ''}">${dag === vandaag ? 'Vandaag · ' : ''}${esc(mooiDatum(dag))}</h3>`;
+      }
+      const opgehaald = agVeld(a.notitie, 'opgehaald'), terug = agVeld(a.notitie, 'terug'), waar = agVeld(a.notitie, 'waar');
+      const rest = String(a.notitie || '').split('\n').filter((l) => !/^\s*(opgehaald|terug|waar)\s*[:=]/i.test(l)).join('\n').trim();
+      const kaart = a.plaats ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.plaats)}" target="_blank" rel="noopener">📍 ${esc(a.plaats)}</a>` : '';
+      html += `<div class="ag-item">
+        <div class="ag-tijd">${a.tijd ? esc(a.tijd) : 'hele dag'}</div>
+        <div><b>${esc(a.titel)}</b>
+          ${kaart ? `<div class="ag-plaats">${kaart}</div>` : ''}
+          ${opgehaald ? `<div class="ag-notitie">🧺 Opgehaald: <b>${esc(opgehaald)}</b></div>` : ''}
+          ${terug ? `<div class="ag-notitie">↩ Terug: <b>${esc(terugDatum(terug) ? mooiDatum(terugDatum(terug)) : terug)}</b></div>` : ''}
+          ${waar ? `<div class="ag-notitie">📦 Waar: <b>${esc(waar)}</b></div>` : ''}
+          ${rest ? `<div class="ag-notitie">${esc(rest)}</div>` : ''}
+        </div>
+        <button type="button" class="knop" data-ag-bon="${i}">Opgehaald → bon</button>
+      </div>`;
+    });
+    doel.innerHTML = html;
+  }
+  async function toonAgAdres() {
+    const f = $('#ag-adres-form');
+    f.hidden = false;
+    f.adres.value = (await window.crystal.agendaAdres()) || '';
+    $('#ag-adres-fout').textContent = '';
+  }
+  $('#agenda-knop').addEventListener('click', () => { $('#ag-adres-form').hidden = true; $('#agenda').showModal(); toonAgenda(); });
+  $('#ag-vernieuw').addEventListener('click', toonAgenda);
+  $('#ag-dagen').addEventListener('change', toonAgenda);
+  $('#ag-instellen').addEventListener('click', () => { const f = $('#ag-adres-form'); if (f.hidden) toonAgAdres(); else f.hidden = true; });
+  $('#ag-adres-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const r = await window.crystal.zetAgendaAdres(e.target.adres.value);
+    if (r.fout) { $('#ag-adres-fout').textContent = r.fout; return; }
+    e.target.hidden = true;
+    toonAgenda();
+  });
+  // Opgehaald: meteen een bon maken voor die klant, met de terugdatum en wat er opgehaald is.
+  $('#ag-inhoud').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-ag-bon]');
+    if (!knop) return;
+    const a = agLijst[Number(knop.dataset.agBon)];
+    if (!a) return;
+    const k = agKlant(a.titel);
+    $('#agenda').close();
+    openFormulier(null, k);
+    const f = $('#f');
+    if (!k) f.naam.value = a.titel.replace(/^\s*(ophalen|ophaling|afhalen|halen)\s*[:\-–]?\s*/i, '');
+    const terug = terugDatum(agVeld(a.notitie, 'terug'));
+    if (terug) f.klaarTegen.value = terug;
+    const opm = [agVeld(a.notitie, 'opgehaald') && 'Opgehaald: ' + agVeld(a.notitie, 'opgehaald'), agVeld(a.notitie, 'waar') && 'Terugbrengen naar: ' + agVeld(a.notitie, 'waar'), a.plaats && !agVeld(a.notitie, 'waar') && 'Adres: ' + a.plaats].filter(Boolean).join('\n');
+    if (opm) f.opmerking.value = opm;
+  });
   $('#pt-inhoud').addEventListener('click', async (e) => {
     const knop = e.target.closest('[data-pt]');
     if (knop) {
