@@ -11,8 +11,23 @@
   // gaat rechtstreeks naar de gekozen printer.
   const DESKTOP = Boolean(window.crystal && window.crystal.desktop);
   // Onze partners voor wat we niet zelf doen.
-  const PARTNERS = ['Kwikklien', 'Neven'];
+  // Aan te passen bij ⚙ Instellingen → Partners.
+  const STANDAARD_PARTNERS = ['Kwikklien', 'Neven'];
+  const partners = () => (staat?.instellingen?.partners?.length ? staat.instellingen.partners : STANDAARD_PARTNERS);
   const OP_WEG = ['sturen', 'weg'];
+  /** Wat de partner aanrekent voor een stuk (prijs per stuk × aantal), of null als nog niet ingevuld. */
+  const partnerKost = (st) => (st.partnerPrijs == null ? null : Math.round(st.partnerPrijs * st.aantal * 100) / 100);
+  /** Kost en wat de klant betaalt voor een lijst stukken bij een partner. */
+  function partnerSom(stukken) {
+    let kost = 0, klant = 0, zonder = 0;
+    for (const st of stukken) {
+      const k = partnerKost(st);
+      if (k == null) zonder += 1; else kost += k;
+      klant += regelBedrag(st);
+    }
+    return { kost: Math.round(kost * 100) / 100, klant: Math.round(klant * 100) / 100, zonder };
+  }
+  const somTekst = (som) => `kost ${eur(som.kost)}${som.zonder ? ` <small>(${som.zonder} zonder prijs)</small>` : ''} · klant ${eur(som.klant)} · marge <b>${eur(som.klant - som.kost)}</b>`;
   /** Per partner de stukken van deze bon die te versturen zijn of er nu liggen. */
   function bijPartner(b) {
     const per = new Map();
@@ -318,12 +333,13 @@
 
     if (!q && tab === 'partner') {
       // Per partner: wat ligt er bij Kwikklien, wat bij Neven.
-      const namen = [...new Set([...PARTNERS, ...lijst.flatMap((b) => [...bijPartner(b).keys()])])];
+      const namen = [...new Set([...partners(), ...lijst.flatMap((b) => [...bijPartner(b).keys()])])];
       $('#lijst').innerHTML = namen.map((naam) => {
         const hier = lijst.filter((b) => bijPartner(b).has(naam));
         if (!hier.length) return '';
-        const st = hier.reduce((n, b) => n + bijPartner(b).get(naam).reduce((m, x) => m + x.aantal, 0), 0);
-        return `<li class="zoek-kop partner-kop">🚚 <b>${esc(naam)}</b> · ${hier.length} bon${hier.length === 1 ? '' : 'nen'}, ${aantalTekst(st)} stuk${st === 1 ? '' : 's'}</li>` + hier.map(kaart).join('');
+        const alleSt = hier.flatMap((b) => bijPartner(b).get(naam));
+        const st = alleSt.reduce((m, x) => m + x.aantal, 0);
+        return `<li class="zoek-kop partner-kop">🚚 <b>${esc(naam)}</b> · ${hier.length} bon${hier.length === 1 ? '' : 'nen'}, ${aantalTekst(st)} stuk${st === 1 ? '' : 's'} · ${somTekst(partnerSom(alleSt))}</li>` + hier.map(kaart).join('');
       }).join('');
     } else $('#lijst').innerHTML = (q && lijst.length ? zoekKop(lijst) : '') + lijst.map(kaart).join('');
     $('#leeg').hidden = lijst.length > 0;
@@ -400,7 +416,9 @@
     return `<li class="bon" data-id="${esc(b.id)}" tabindex="0">
       <div class="nr">${esc(b.nr)}</div>
       <div class="naam">${esc(b.klant.naam)}${b.klant.telefoon ? ` <span class="tel">${esc(b.klant.telefoon)}</span>` : ''}</div>
-      <div class="rechts">${label}<span>${b.totaal ? eur(b.totaal) : ''}${b.betaald ? ' · betaald' : ''}</span></div>
+      <div class="rechts">${label}<span>${b.totaal ? eur(b.totaal) : ''}${b.betaald ? ' · betaald' : ''}</span>${b.status === 'klaar' ? `<span class="snel-afhalen">${b.betaald
+        ? `<button type="button" data-snel="${esc(b.id)}" data-betaal="">✓ Afgehaald</button>`
+        : `<button type="button" data-snel="${esc(b.id)}" data-betaal="cash">💶 Cash</button><button type="button" data-snel="${esc(b.id)}" data-betaal="kaart">💳 Kaart</button>`}</span>` : ''}</div>
       <div class="info">${esc(b.soort)}${aantal ? ' · ' + aantal + ' stuk' + (aantal > 1 ? 's' : '') : ' · <i>nog te tellen</i>'}${locatie}${b.status !== 'opgehaald' ? ` <button type="button" class="plus-stukken" data-plus-stukken="${esc(b.id)}" title="Stukken toevoegen">＋ stukken</button>` : ''}</div>
     </li>`;
   }
@@ -433,11 +451,24 @@
     const blok = (titel, lijst, knoppen, extra = '') => `<section class="pt-blok"><h3>${titel} <span class="teller">${lijst.length}</span></h3>${extra}
       ${lijst.length ? lijst.map((x) => partnerRij(x, knoppen)).join('') : '<p class="tijdlijn">Niets.</p>'}</section>`;
     $('#pt-inhoud').innerHTML = '<p class="tijdlijn">Alles wat we niet zelf doen. Een deel van een bon sturen? Open de bon en kies bij "Waar is alles?" → Partner.</p>' +
-      blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button>' + PARTNERS.map((n) => `<button class="knop klein goud" data-pt="sturen" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join(''))
+      blok('Nog kiezen: zelf of naar de partner?', kiezen, '<button class="knop klein" data-pt="zelf">Zelf</button>' + partners().map((n) => `<button class="knop klein goud" data-pt="sturen" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join(''))
       + blok('📦 Te versturen', sturen, '<button class="knop klein" data-pt="">Toch niet</button><button class="knop klein" data-pt="weg">Verstuurd</button>',
-        sturen.length ? '<div class="d-knoppen"><button class="knop" id="pt-lijst">🖨 Verzendlijst</button><button class="knop hoofd" id="pt-alles-weg">Alles verstuurd</button></div>' : '')
+        sturen.length ? `<div class="d-knoppen">${[...new Set(sturen.map((x) => x.st.partner || ''))].map((n) => `<button class="knop" data-pt-lijst="${esc(n)}">🖨 Verzendlijst ${esc(n || 'zonder partner')} (${sturen.filter((x) => (x.st.partner || '') === n).length})</button>`).join('')}<button class="knop hoofd" id="pt-alles-weg">Alles verstuurd</button></div>` : '')
       + blok('🚚 Bij de partner', weg, '<button class="knop klein hoofd" data-pt="terug">Terug ✓</button>')
-      + blok('✓ Teruggebracht (laatste 14 dagen)', terug, '<button class="knop klein" data-pt="weg">Toch nog weg</button>');
+      + blok('✓ Teruggebracht (laatste 14 dagen)', terug, '<button class="knop klein" data-pt="weg">Toch nog weg</button>')
+      + maandPartners();
+  }
+  // Per partner: wat deze maand vertrok, wat het kost en wat de klant betaalt (om hun factuur na te kijken).
+  function maandPartners() {
+    const maand = vandaagIso().slice(0, 7);
+    const per = new Map();
+    for (const b of staat.bonnen || []) for (const st of b.stukken) {
+      if (!st.partner || !['weg', 'terug'].includes(st.extern) || !(st.externOp || '').startsWith(maand)) continue;
+      per.set(st.partner, [...(per.get(st.partner) || []), st]);
+    }
+    if (!per.size) return '';
+    return `<section class="pt-blok"><h3>💶 Deze maand per partner</h3>${[...per].map(([naam, l]) =>
+      `<div class="pt-rij"><span><b>${esc(naam)}</b><small>${aantalTekst(l.reduce((n, x) => n + x.aantal, 0))} stuks · ${somTekst(partnerSom(l))}</small></span></div>`).join('')}</section>`;
   }
   async function zetPartner(status, stukken, partner) {
     try { await doe({ op: 'extern', status, stukken, ...(partner ? { partner } : {}) }); toonPartner(); } catch (err) { if (err.message !== 'pin') alert(err.message); }
@@ -573,6 +604,24 @@
     }
     const sturen = partnerStukken().filter((x) => x.stand === 'sturen');
     if (e.target.closest('#pt-alles-weg')) return zetPartner('weg', sturen.map((x) => ({ id: x.b.id, index: x.index })));
+    const lijstKnop = e.target.closest('[data-pt-lijst]');
+    if (lijstKnop) {
+      // Verzendlijst om mee te geven aan één partner, met vakjes voor mee en terug.
+      const naam = lijstKnop.dataset.ptLijst;
+      const deze = sturen.filter((x) => (x.st.partner || '') === naam);
+      const totaalKost = partnerSom(deze.map((x) => x.st));
+      $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
+        <div class="a4-titelrij"><div><div class="a4-soort">Verzendlijst${naam ? ' · ' + esc(naam) : ''}</div><div class="a4-nr">${esc(korteDag(vandaagIso()))}</div></div></div>
+        <table class="a4-tabel"><thead><tr><th class="a4-n">Aantal</th><th>Stuk</th><th>Bon</th><th class="r">Prijs</th><th>Mee ✓</th><th>Terug ✓</th></tr></thead>
+        <tbody>${deze.map((x) => `<tr><td class="a4-n">${aantalTekst(x.st.aantal)}</td><td>${esc(kaleNaam(x.st))}${x.st.vlek ? ' <span class="a4-vlek">⚠ vlek</span>' : ''}</td><td>${esc(x.b.nr)}</td><td class="r">${partnerKost(x.st) == null ? '' : eur(partnerKost(x.st))}</td><td>☐</td><td>☐</td></tr>`).join('')}</tbody></table>
+        <div class="a4-totaal"><span>Totaal</span><b>${aantalTekst(deze.reduce((n, x) => n + x.st.aantal, 0))} stuks${totaalKost.kost ? ' · ' + eur(totaalKost.kost) : ''}</b></div>
+        <p style="margin-top:14mm">Meegegeven op ____ / ____ &nbsp;&nbsp; Handtekening: ______________________ &nbsp;&nbsp;&nbsp; Terug op ____ / ____</p>
+      </section>`;
+      $('#afdruk').className = 'a4';
+      await logoGeladen();
+      await afdrukken('a4', 'a4');
+      return;
+    }
     if (e.target.closest('#pt-lijst')) {
       // Verzendlijst om mee te geven aan de partner.
       $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
@@ -607,6 +656,15 @@
   }
 
   $('#lijst').addEventListener('click', (e) => {
+    // Snel afhalen vanuit de lijst: dezelfde controles als in de bon (prijzen, tickets), daarna de afhaalbon.
+    const snel = e.target.closest('[data-snel]');
+    if (snel) {
+      e.stopPropagation();
+      openDetail(snel.dataset.snel);
+      const sel = snel.dataset.betaal ? `#detail [data-actie="opgehaald"][data-betaal="${snel.dataset.betaal}"]` : '#detail [data-actie="opgehaald"]';
+      $(sel)?.click();
+      return;
+    }
     const plus = e.target.closest('[data-plus-stukken]');
     if (plus) { e.stopPropagation(); const b = bonVan(plus.dataset.plusStukken); if (b) openStukken(b); return; }
     const nieuwVoor = e.target.closest('[data-nieuw-voor]');
@@ -712,12 +770,14 @@
         <div class="d-waar">${b.stukken.map((st, i) => {
           const stand = st.extern || '';
           const knop = stand === '' || stand === 'zelf' || stand === 'terug'
-            ? PARTNERS.map((n) => `<button class="knop klein" data-naar-partner="${i}" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join('')
+            ? partners().map((n) => `<button class="knop klein" data-naar-partner="${i}" data-partner="${esc(n)}">→ ${esc(n)}</button>`).join('')
             : stand === 'sturen' ? `<button class="knop klein" data-partner-zet="weg" data-i="${i}">Verstuurd</button><button class="knop klein" data-partner-zet="" data-i="${i}">Toch niet</button>`
             : `<button class="knop klein hoofd" data-partner-zet="terug" data-i="${i}">Terug ✓</button>`;
           // Oude stukken zonder partnernaam: nog aanduiden bij wie ze zijn.
-          const kies = OP_WEG.includes(stand) && !st.partner ? PARTNERS.map((n) => `<button class="knop klein goud" data-partner-zet="${stand}" data-partner="${esc(n)}" data-i="${i}">${esc(n)}?</button>`).join('') : '';
-          return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b><small>${STAND[stand] || ''}${st.partner && OP_WEG.includes(stand) ? ' · <b>' + esc(st.partner) + '</b>' : ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${kies}${knop}</span></div>`;
+          const kies = OP_WEG.includes(stand) && !st.partner ? partners().map((n) => `<button class="knop klein goud" data-partner-zet="${stand}" data-partner="${esc(n)}" data-i="${i}">${esc(n)}?</button>`).join('') : '';
+          const prijsVeld = st.partner && ['sturen', 'weg', 'terug'].includes(stand)
+            ? `<label class="pp-veld">${esc(st.partner)} rekent <input inputmode="decimal" data-pp="${i}" value="${st.partnerPrijs == null ? '' : String(st.partnerPrijs).replace('.', ',')}" placeholder="€" aria-label="Prijs per stuk van de partner"> /st.</label>` : '';
+          return `<div class="pt-rij"><span><b>${aantalTekst(st.aantal)}× ${esc(kaleNaam(st))}</b>${prijsVeld}<small>${STAND[stand] || ''}${st.partner && OP_WEG.includes(stand) ? ' · <b>' + esc(st.partner) + '</b>' : ''}${st.externOp && stand ? ' · ' + esc(mooiDatum(st.externOp)) : ''}</small></span><span class="pt-knoppen">${kies}${knop}</span></div>`;
         }).join('')}</div>
       </div>` : '';
 
@@ -728,7 +788,7 @@
         <div class="d-knoppen">
           ${b.betaald
             ? `<button class="knop ${stijl}" data-actie="opgehaald">Opgehaald</button>`
-            : [['cash', 'Cash'], ['kaart', 'Kaart'], ['factuur', 'Via factuur']].map(([w, t]) => `<button class="knop ${stijl}" data-actie="opgehaald" data-betaal="${w}">${t}</button>`).join('')}
+            : [['cash', 'Cash', 'C'], ['kaart', 'Kaart', 'K'], ['factuur', 'Via factuur', 'F']].map(([w, t, toets]) => `<button class="knop ${stijl}" data-actie="opgehaald" data-betaal="${w}" title="Toets ${toets}">${t} <kbd>${toets}</kbd></button>`).join('')}
           ${extra}
         </div>
       </div>`;
@@ -1970,6 +2030,21 @@
   }
 
   $('#nieuw').addEventListener('click', () => openFormulier(null));
+  // Afhalen met het toetsenbord in een open bon: C = cash, K = kaart, F = via factuur.
+  document.addEventListener('keydown', (e) => {
+    if (!$('#detail').open || e.ctrlKey || e.altKey || e.metaKey || e.target.closest('input, textarea, select')) return;
+    const w = { c: 'cash', k: 'kaart', f: 'factuur' }[e.key.toLowerCase()];
+    const knop = w && $(`#detail [data-actie="opgehaald"][data-betaal="${w}"]`);
+    if (knop) { e.preventDefault(); knop.click(); }
+  });
+  // Partnerprijs per stuk invullen in "Waar is alles?".
+  $('#detail').addEventListener('change', (e) => {
+    const veld = e.target.closest('[data-pp]');
+    if (!veld) return;
+    const id = $('#detail').dataset.id;
+    doe({ op: 'partnerPrijs', id, index: Number(veld.dataset.pp), prijs: veld.value.trim() === '' ? null : veld.value.replace(',', '.') })
+      .then(() => toast('Partnerprijs bewaard')).catch((err) => alert(err.message));
+  });
   // De bon openen op stap 3 (stukken), met de zoekbalk klaar om te typen.
   function openStukken(b) {
     openFormulier(b);
@@ -2123,7 +2198,14 @@
     toonPrinter();
     $('#instellingen').showModal();
   }
+  $('#instellingen-knop').addEventListener('click', () => { $('#i-partners').value = partners().join(', '); });
   $('#instellingen-knop').addEventListener('click', openInstellingen);
+  $('#i-partners-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const lijst = $('#i-partners').value.split(',').map((x) => x.trim()).filter(Boolean);
+    try { await doe({ op: 'instellingen', partners: lijst }); $('#i-partners').value = partners().join(', '); toast('Partners bewaard'); }
+    catch (err) { if (err.message !== 'pin') $('#i-fout').textContent = err.message; }
+  });
   $('#i-print').addEventListener('change', (e) => zetAutoPrint(e.target.checked));
   $('#i-formaat').addEventListener('change', (e) => {
     doe({ op: 'instellingen', formaat: e.target.value }).catch((err) => { if (err.message !== 'pin') $('#i-fout').textContent = err.message; });
@@ -2776,7 +2858,30 @@
   const factuurNaam = (b) => b.factuur.naam || b.klant.naam;
 
   /** In de kassa: alle aanvragen die nog een factuur nodig hebben, met een knop om af te vinken. */
+  // Gemaakte facturen die de klant nog niet betaalde, per klant, oudste eerst.
+  function openstaandeFacturen() {
+    const lijst = (staat.bonnen || []).filter((b) => b.factuur?.gemaaktOp && !b.factuur.betaaldOp)
+      .sort((a, b) => a.factuur.gemaaktOp.localeCompare(b.factuur.gemaaktOp));
+    if (!lijst.length) return '<h3>Openstaande facturen</h3><p class="tijdlijn">Alle gemaakte facturen zijn betaald.</p>';
+    const totaal = lijst.reduce((n, b) => n + (b.totaal || 0), 0);
+    return `<h3>Openstaande facturen (${lijst.length}) · ${eur(totaal)}</h3>
+      <table class="stukken"><tbody>${lijst.map((b) => {
+        const d = dagenGeleden(b.factuur.gemaaktOp);
+        const mail = b.factuur.email || b.klant.email;
+        const tekst = encodeURIComponent(`Beste,\n\nVolgens onze gegevens staat de factuur voor bon ${b.nr} (${eur(b.totaal)}) nog open. Mogen wij u vragen ze te betalen? Is ze intussen betaald, dan mag u dit bericht negeren.\n\nMet vriendelijke groeten,\n${WINKEL.naam}`);
+        return `<tr>
+        <td><span class="label ${d >= 30 ? 'laat' : d >= 14 ? 'vandaag' : 'ok'}">${d} d</span></td>
+        <td><b>${esc(factuurNaam(b))}</b> · bon ${esc(b.nr)}<br><span class="tijdlijn">gemaakt ${esc(mooiDatum(b.factuur.gemaaktOp))}${mail ? ' · ' + esc(mail) : ''}</span></td>
+        <td class="bedrag">${eur(b.totaal)}</td>
+        <td>${mail ? `<a class="knop klein" href="mailto:${esc(mail)}?subject=${encodeURIComponent('Herinnering factuur bon ' + b.nr)}&body=${tekst}">✉ Herinnering</a>` : ''}
+          <button class="knop klein hoofd" type="button" data-fbetaald="${esc(b.id)}">Betaald ✓</button></td>
+      </tr>`;
+      }).join('')}</tbody></table>`;
+  }
   function factuurLijst() {
+    return factuurAanvragen() + '<div style="margin-top:18px"></div>' + openstaandeFacturen();
+  }
+  function factuurAanvragen() {
     const lijst = openVragen();
     if (!lijst.length) return '<h3>Factuuraanvragen</h3><p class="tijdlijn">Geen openstaande factuuraanvragen.</p>';
     return `<h3>Factuuraanvragen nog te maken (${lijst.length})</h3>
@@ -2788,6 +2893,11 @@
       </tr>`).join('')}</tbody></table>`;
   }
   $('#k-inhoud').addEventListener('click', async (e) => {
+    const bet = e.target.closest('[data-fbetaald]');
+    if (bet) {
+      try { await doe({ op: 'factuurBetaald', id: bet.dataset.fbetaald }); toonKassa(); } catch (err) { if (err.message !== 'pin') $('#k-fout').textContent = err.message; }
+      return;
+    }
     const knop = e.target.closest('[data-gemaakt]');
     if (!knop) return;
     try {

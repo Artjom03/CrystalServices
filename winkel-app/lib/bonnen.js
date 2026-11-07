@@ -84,9 +84,11 @@ export function schoonStukken(stukken) {
     if (EXTERN.includes(s?.extern) && s.extern) {
       stuk.extern = s.extern;
       if (s.externOp) stuk.externOp = tekst(s.externOp, 40);
-      // Bij welke partner (bv. Kwikklien of Neven).
+      // Bij welke partner (bv. Kwikklien of Neven), en wat de partner ons per stuk kost.
       if (s.partner) stuk.partner = tekst(s.partner, 40);
     }
+    const pp = prijsOfLeeg(s?.partnerPrijs);
+    if (pp != null) stuk.partnerPrijs = pp;
     // Waar een vlek zit (bv. "kraag, linkermouw"); leeg = geen vlek.
     const vlek = tekst(s?.vlek, 120);
     if (vlek) {
@@ -520,6 +522,11 @@ function handeling(oud, actie, nu) {
         if (actie.indeling === null) delete nieuw.indeling;
         else nieuw.indeling = indelingVan(actie.indeling);
       }
+      if (actie.partners !== undefined) {
+        const lijst = (Array.isArray(actie.partners) ? actie.partners : []).map((x) => tekst(x, 40)).filter(Boolean);
+        if (!lijst.length) delete nieuw.partners;
+        else nieuw.partners = [...new Set(lijst)].slice(0, 10);
+      }
       if (actie.locaties !== undefined) {
         if (actie.locaties === null) delete nieuw.locaties;
         else nieuw.locaties = locatiesVan(Array.isArray(actie.locaties) ? actie.locaties : []);
@@ -715,6 +722,7 @@ function handeling(oud, actie, nu) {
       const factuur = {
         gevraagdOp: vorig.gevraagdOp || iso,
         gemaaktOp: vorig.gemaaktOp || '',
+        ...(vorig.betaaldOp ? { betaaldOp: vorig.betaaldOp } : {}),
         naam: tekst(g.naam ?? vorig.naam ?? '', MAX.naam),
         adres: tekst(g.adres ?? vorig.adres ?? k.adres ?? '', 160),
         btw: tekst(g.btw ?? vorig.btw ?? k.btw ?? '', 30),
@@ -730,6 +738,26 @@ function handeling(oud, actie, nu) {
           email: k.email || factuur.email,
         };
       }
+      return { staat, bon: staat.bonnen[i] };
+    }
+    case 'partnerPrijs': {
+      // Wat de partner ons per stuk aanrekent (om hun factuur na te kijken en de marge te zien).
+      const i = zoek(actie.id);
+      const stukken = [...staat.bonnen[i].stukken];
+      if (!stukken[actie.index]) throw new Fout('Stuk niet gevonden', 404);
+      const st = { ...stukken[actie.index] };
+      const pp = prijsOfLeeg(actie.prijs);
+      if (pp == null) delete st.partnerPrijs; else st.partnerPrijs = pp;
+      stukken[actie.index] = st;
+      staat.bonnen[i] = { ...staat.bonnen[i], stukken, gewijzigdOp: iso };
+      return { staat, bon: staat.bonnen[i] };
+    }
+    case 'factuurBetaald': {
+      // De klant heeft de factuur betaald (overschrijving): niet meer bij de openstaande facturen.
+      const i = zoek(actie.id);
+      const b = staat.bonnen[i];
+      if (!b.factuur) throw new Fout('Voor deze bon is geen factuur gevraagd');
+      staat.bonnen[i] = { ...b, factuur: { ...b.factuur, betaaldOp: actie.betaald === false ? '' : iso }, gewijzigdOp: iso };
       return { staat, bon: staat.bonnen[i] };
     }
     case 'factuurGemaakt': {
@@ -821,7 +849,7 @@ export function voorKlant(staat, sleutel, nu = new Date()) {
       nr: b.nr,
       soort: b.soort,
       // Intern blijft intern: de klant ziet niet dat (of bij welke partner) een stuk weg is.
-      stukken: b.stukken.map(({ extern, externOp, partner, ...st }) => st),
+      stukken: b.stukken.map(({ extern, externOp, partner, partnerPrijs, ...st }) => st),
       totaal: b.totaal,
       prijsOpen: Boolean(b.prijsOpen),
       status: b.status,
