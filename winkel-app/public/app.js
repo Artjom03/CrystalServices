@@ -174,6 +174,9 @@
     if (metUur) Object.assign(opties, { hour: '2-digit', minute: '2-digit' });
     return d.toLocaleString('nl-BE', opties);
   }
+  // Aantal met een komma (bv. 2,35 kg), zoals in België.
+  const aantalTekst = (n) => String(n).replace('.', ',');
+
   function dagenGeleden(iso) {
     return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
   }
@@ -304,7 +307,27 @@
     $('#voetnoot').textContent = `Hier staan de laatste 60 dagen; oudere bonnen vind je via zoeken. Opgehaalde bonnen worden na ${maanden} ${maanden === 1 ? 'maand' : 'maanden'} gewist (⚙ Instellingen).`;
     toonLocaties();
     controleerKassa();
+    toonHerinnering();
   }
+
+  // Herinnering: bonnen die al lang klaar liggen, en bonnen die al klaar hadden moeten zijn.
+  const LANG_KLAAR = 14;
+  function toonHerinnering() {
+    const bonnen = staat.bonnen || [];
+    const vandaag = vandaagIso();
+    const lang = bonnen.filter((b) => b.status === 'klaar' && dagenGeleden(b.klaarOp) >= LANG_KLAAR).length;
+    const laat = bonnen.filter((b) => b.status === 'binnen' && b.klaarTegen && b.klaarTegen < vandaag).length;
+    const delen = [];
+    if (lang) delen.push(`<button type="button" data-herinner="klaar">⏰ ${lang} ${lang === 1 ? 'bon ligt' : 'bonnen liggen'} al ${LANG_KLAAR}+ dagen klaar</button>`);
+    if (laat) delen.push(`<button type="button" data-herinner="binnen">⚠ ${laat} ${laat === 1 ? 'bon is' : 'bonnen zijn'} over de klaar-datum</button>`);
+    const el = $('#herinnering');
+    el.innerHTML = delen.join('');
+    el.hidden = !delen.length || Boolean($('#zoek').value.trim());
+  }
+  $('#herinnering').addEventListener('click', (e) => {
+    const k = e.target.closest('[data-herinner]');
+    if (k) $(`.tabs button[data-tab="${k.dataset.herinner}"]`).click();
+  });
 
   /** Boven de zoekresultaten: de klant, als alle gevonden bonnen van dezelfde klant zijn. */
   function zoekKop(lijst) {
@@ -330,6 +353,7 @@
       label = b.verwittigdOp
         ? `<span class="label ${d >= 14 ? 'laat' : 'ok'}">Verwittigd${d >= 1 ? ' · ' + d + ' d' : ''}</span>`
         : '<span class="label vandaag">Nog verwittigen</span>';
+      if (d >= LANG_KLAAR) label += ` <span class="label laat">⏰ ${d} dagen klaar</span>`;
     } else if (b.status === 'opgehaald') {
       label = `<span class="label">Opgehaald ${esc(mooiDatum(b.opgehaaldOp))}</span>`;
     }
@@ -361,7 +385,7 @@
     return uit;
   }
   const partnerRij = (x, knoppen) => `<div class="pt-rij" data-id="${esc(x.b.id)}" data-index="${x.index}">
-      <span><b>${x.st.aantal}× ${esc(kaleNaam(x.st))}</b><small>Bon ${esc(x.b.nr)} · ${esc(x.b.klant.naam)}${x.st.externOp ? ' · sinds ' + esc(mooiDatum(x.st.externOp)) : ''}</small></span>
+      <span><b>${aantalTekst(x.st.aantal)}× ${esc(kaleNaam(x.st))}</b><small>Bon ${esc(x.b.nr)} · ${esc(x.b.klant.naam)}${x.st.externOp ? ' · sinds ' + esc(mooiDatum(x.st.externOp)) : ''}</small></span>
       <span class="pt-knoppen">${knoppen}</span></div>`;
   function toonPartner() {
     const alle = partnerStukken();
@@ -517,7 +541,7 @@
       $('#afdruk').innerHTML = `<section class="a4-blad">${a4Kop()}
         <div class="a4-titelrij"><div><div class="a4-soort">Verzendlijst droogkuis</div><div class="a4-nr">${esc(korteDag(vandaagIso()))}</div></div></div>
         <table class="a4-tabel"><thead><tr><th class="a4-n">Aantal</th><th>Stuk</th><th>Bon</th><th>Klant</th><th>Terug ✓</th></tr></thead>
-        <tbody>${sturen.map((x) => `<tr><td class="a4-n">${x.st.aantal}</td><td>${esc(kaleNaam(x.st))}${x.st.vlek ? ' <span class="a4-vlek">⚠ vlek</span>' : ''}</td><td>${esc(x.b.nr)}</td><td>${esc(x.b.klant.naam)}</td><td>☐</td></tr>`).join('')}</tbody></table>
+        <tbody>${sturen.map((x) => `<tr><td class="a4-n">${aantalTekst(x.st.aantal)}</td><td>${esc(kaleNaam(x.st))}${x.st.vlek ? ' <span class="a4-vlek">⚠ vlek</span>' : ''}</td><td>${esc(x.b.nr)}</td><td>${esc(x.b.klant.naam)}</td><td>☐</td></tr>`).join('')}</tbody></table>
         <div class="a4-totaal"><span>Totaal</span><b>${sturen.reduce((n, x) => n + x.st.aantal, 0)} stuks</b></div>
       </section>`;
       $('#afdruk').className = 'a4';
@@ -635,7 +659,7 @@
     const stukken = b.stukken.length
       ? `<table class="stukken"><tbody>${groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
           `<tr class="groep"><td colspan="3">${BEHANDELING[beh]}</td></tr>` +
-          lijst.map((s) => `<tr><td>${s.aantal} ×</td><td>${esc(s.naam)}${s.vlek ? '<br>' + vlekTag(s) : ''}</td><td class="bedrag">${bedragOfVolgt(s)}</td></tr>`).join('')).join('')}</tbody>
+          lijst.map((s) => `<tr><td>${aantalTekst(s.aantal)} ×</td><td>${esc(s.naam)}${s.vlek ? '<br>' + vlekTag(s) : ''}</td><td class="bedrag">${bedragOfVolgt(s)}</td></tr>`).join('')).join('')}</tbody>
          <tfoot><tr><td colspan="2">Totaal</td><td class="bedrag">${eur(b.totaal)}${b.prijsOpen ? ' <span class="volgt">+ prijs volgt</span>' : ''}</td></tr></tfoot></table>`
       : '<p class="tijdlijn">Nog geen stukken ingevuld.</p>';
 
@@ -1091,7 +1115,7 @@
       // Kort: wat de klant nodig heeft om terug te komen.
       const code = scanCode(b.nr);
       const lijst = blokkenVan(b).map(([titel, stukken]) => `<tr><th>${esc(titel)}</th><td>${stukken.length
-        ? splitsVlekken(stukken).map((s) => `<b>${s.aantal}×</b> ${esc(kaleNaam(s))}${s.vlek ? ' <span class="pr-vlek">⚠ met vlek</span>' : ''}`).join(', ')
+        ? splitsVlekken(stukken).map((s) => `<b>${aantalTekst(s.aantal)}×</b> ${esc(kaleNaam(s))}${s.vlek ? ' <span class="pr-vlek">⚠ met vlek</span>' : ''}`).join(', ')
         : (titel === 'Strijk' ? 'strijkmand, wordt nog geteld' : titel === 'Was' ? 'was, wordt nog geteld' : 'wordt nog geteld')}</td></tr>`).join('');
       return `<section class="pr-bon pr-kort">
         <header class="pr-kop-kort">
@@ -1115,7 +1139,7 @@
 
     const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
       `<tr class="pr-groep"><td colspan="2">${BEHANDELING[beh]}</td></tr>` +
-      lijst.map((s) => `<tr><td>${s.aantal} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}${s.korting ? `<div class="pr-stukprijs">korting −${String(s.korting).replace('.', ',')} %</div>` : ''}${s.vlek ? '<div class="pr-vlek">⚠ met vlek</div>' : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
+      lijst.map((s) => `<tr><td>${aantalTekst(s.aantal)} × ${esc(kaleNaam(s))}${s.aantal > 1 && s.prijs != null ? `<div class="pr-stukprijs">${eur(s.prijs)} per stuk</div>` : ''}${s.korting ? `<div class="pr-stukprijs">korting −${String(s.korting).replace('.', ',')} %</div>` : ''}${s.vlek ? '<div class="pr-vlek">⚠ met vlek</div>' : ''}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
     ).join('');
     return `<section class="pr-bon">
         <header class="pr-kop">
@@ -1153,7 +1177,7 @@
     const plaatsen = [...perPlaats].filter(([, l]) => l.length).map(([plaats, lijst]) => `
         <div class="pr-plaats">
           <div class="pr-plaats-kop">${esc(plaats)}<span>${lijst.reduce((n, s) => n + s.aantal, 0)} st.</span></div>
-          ${lijst.map((s) => `<div class="pr-plaats-rij"><i></i><b>${s.aantal}×</b><span>${esc(kaleNaam(s))}${s.vlek ? '<em class="pr-vlek">⚠ met vlek</em>' : ''}</span><small>${esc((BEHANDELING[s.behandeling] || '').toLowerCase())}</small></div>`).join('')}
+          ${lijst.map((s) => `<div class="pr-plaats-rij"><i></i><b>${aantalTekst(s.aantal)}×</b><span>${esc(kaleNaam(s))}${s.vlek ? '<em class="pr-vlek">⚠ met vlek</em>' : ''}</span><small>${esc((BEHANDELING[s.behandeling] || '').toLowerCase())}</small></div>`).join('')}
         </div>`).join('');
     // Strijk of was zonder getelde stukken: dat moet nog geteld en ingedeeld worden.
     const teTellen = blokkenVan(b).filter(([, l]) => !l.length).map(([titel]) => `<div class="pr-plaats-rij"><i></i><span>${esc(mandTekst(titel))}</span></div>`).join('');
@@ -1211,7 +1235,7 @@
       const rijen = blokkenVan(b).map(([titel, stukken]) => `
         <tr class="a4-groep"><td colspan="2">${esc(titel)}</td></tr>
         ${stukken.length
-          ? splitsVlekken(stukken).map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td></tr>`).join('')
+          ? splitsVlekken(stukken).map((s) => `<tr><td class="a4-n">${aantalTekst(s.aantal)}</td><td>${esc(kaleNaam(s))}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td></tr>`).join('')
           : `<tr><td class="a4-n"></td><td class="a4-zacht">${mandTekst(titel)}</td></tr>`}`).join('');
       tabel = `<table class="a4-tabel">
         <thead><tr><th class="a4-n">Aantal</th><th>Wat u binnenbracht</th></tr></thead>
@@ -1221,7 +1245,7 @@
     } else {
       const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
         dienstKop(beh, lijst, 4, true) +
-        lijst.map((s) => `<tr><td class="a4-n">${s.aantal}</td><td>${esc(kaleNaam(s))}${kortingTag(s)}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
+        lijst.map((s) => `<tr><td class="a4-n">${aantalTekst(s.aantal)}</td><td>${esc(kaleNaam(s))}${kortingTag(s)}${s.vlek ? ' <span class="a4-vlek">⚠ met vlek</span>' : ''}</td><td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td></tr>`).join('')
       ).join('');
       tabel = `<table class="a4-tabel">
         <thead><tr><th class="a4-n">Aantal</th><th>Omschrijving</th><th class="r">Per stuk</th><th class="r">Bedrag</th></tr></thead>
@@ -1274,7 +1298,7 @@
     const rijen = groepen(splitsVlekken(b.stukken)).map(([beh, lijst]) =>
       dienstKop(beh, lijst, kolommen, afhaal) +
       lijst.map((s) => `<tr class="${s.vlek ? 'vr-rij-vlek' : ''}">
-        <td class="a4-n">${s.aantal}</td>
+        <td class="a4-n">${aantalTekst(s.aantal)}</td>
         <td>${esc(kaleNaam(s))}${kortingTag(s)}</td>
         <td class="vr-jn">${s.vlek ? `<b>JA</b>${s.vlekOngeteld && s.aantal > 1 ? '<small class="vr-ongeteld">aantal niet geteld</small>' : ''}` : 'nee'}</td>
         ${afhaal ? `<td class="r">${s.prijs == null ? '' : eur(s.prijs)}</td><td class="r">${s.prijs == null ? 'volgt' : eur(regelBedrag(s))}</td>` : ''}
