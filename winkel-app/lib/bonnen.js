@@ -358,13 +358,12 @@ function kassaCorrectie(staat, dag, tekst, iso) {
  * De bonnen die blijven: opgehaalde bonnen verdwijnen na de gekozen bewaartermijn,
  * gerekend vanaf het ophalen. Wat nog niet opgehaald is, blijft altijd staan.
  */
-export function teBewaren(staat, nu = new Date()) {
-  const grens = new Date(nu);
-  grens.setMonth(grens.getMonth() - instellingenVan(staat).bewaarMaanden);
-  const iso = grens.toISOString();
-  // Een gevraagde factuur die nog niet gemaakt is, houdt de bon vast.
-  // Bonnen van professionele klanten of klanten met een btw-nummer worden nooit automatisch gewist.
-  return (staat.bonnen || []).filter((b) => !(b.status === 'opgehaald' && b.opgehaaldOp && b.opgehaaldOp < iso && !(b.factuur && !b.factuur.gemaaktOp) && !blijftBewaard(staat, b)));
+/**
+ * Welke bonnen er bewaard blijven. Er wordt niets meer automatisch gewist na een termijn:
+ * opgehaalde bonnen van gewone klanten verdwijnen enkel met "Dagoverzicht afdrukken en wissen" (dagWissen).
+ */
+export function teBewaren(staat, nu = new Date()) { // eslint-disable-line no-unused-vars
+  return staat.bonnen || [];
 }
 
 /** Elk bonnummer is een willekeurig getal van 6 cijfers, dat nog niet bij een andere bon hoort. */
