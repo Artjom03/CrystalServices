@@ -4,6 +4,7 @@
 import { gunzipSync } from 'node:zlib';
 import { juistePin, geblokkeerd, ipVan } from '../lib/pin.js';
 import { wijzig } from '../lib/opslag.js';
+import { bewaarBackup } from '../lib/kluis.js';
 
 const MAX = 4_000_000; // Vercel aanvaardt tot 4,5 MB per aanvraag.
 
@@ -58,7 +59,10 @@ export default async function handler(req, res) {
         },
       },
     }));
-    return json(res, 200, { ok: true, op });
+    // Dagelijkse back-up: versleuteld op een geheime plek, max. 7 dagen. Lukt dat niet, dan gaat de kopie toch door.
+    let backup = null;
+    try { backup = await bewaarBackup(ruw); } catch (e) { console.error('Back-up: fout', e); }
+    return json(res, 200, { ok: true, op, backup: Boolean(backup) });
   } catch (e) {
     if (e.status === 413) return json(res, 413, { error: 'Te groot' });
     console.error('Spiegel: fout', e);
