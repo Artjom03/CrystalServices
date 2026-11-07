@@ -1,0 +1,11 @@
+{
+  "name": "crystal-winkel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node bouw.mjs 314946b1fbb98cf0a3ba6e3b0b422238f7331377"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.1"
+  }
+}
