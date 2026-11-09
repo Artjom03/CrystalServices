@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Over ons - Crystal Services",
+  title: "Over ons | Crystal Services, familiebedrijf in Borgerhout",
   description: "Leer meer over Crystal Services, een familiebedrijf in Borgerhout, gebouwd op meer dan 30 jaar ervaring met professionele wasserijapparatuur.",
   keywords: "over ons, Crystal Services, familiebedrijf, ervaring, wasserij, strijkservice",
 };

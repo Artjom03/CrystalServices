@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Algemene Voorwaarden - Crystal Services",
+  title: "Algemene voorwaarden | Crystal Services",
   description: "Lees de algemene voorwaarden van Crystal Services voor onze was- en strijkdiensten.",
   keywords: "algemene voorwaarden, Crystal Services, wasserij, strijkservice, voorwaarden, service",
 };
