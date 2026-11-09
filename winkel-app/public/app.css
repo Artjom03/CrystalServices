@@ -701,3 +701,9 @@ kbd { font: inherit; font-size: .72em; opacity: .6; border: 1px solid currentCol
 .alleen-kijken #partner .pt-knoppen, .alleen-kijken #pt-alles-weg, .alleen-kijken [data-fbetaald], .alleen-kijken [data-gemaakt],
 .alleen-kijken #k-dagwis, .alleen-kijken #kl-vast-weg, .alleen-kijken #kl-weg, .alleen-kijken #kl-form [type=submit],
 .alleen-kijken #kl-toevoegen, .alleen-kijken #instellingen form [type=submit], .alleen-kijken #i-loc-wis { display: none !important; }
+
+/* Openstaande facturen: knoppen onder elkaar zonder overlap, dagen op één regel */
+td.f-acties { width: 1%; }
+td.f-acties > div { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+td.f-acties .knop { white-space: nowrap; text-align: center; justify-content: center; }
+td.f-dagen .label { white-space: nowrap; }

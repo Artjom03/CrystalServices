@@ -2953,11 +2953,11 @@
         const mail = b.factuur.email || b.klant.email;
         const tekst = encodeURIComponent(`Beste,\n\nVolgens onze gegevens staat de factuur voor bon ${b.nr} (${eur(b.totaal)}) nog open. Mogen wij u vragen ze te betalen? Is ze intussen betaald, dan mag u dit bericht negeren.\n\nMet vriendelijke groeten,\n${WINKEL.naam}`);
         return `<tr>
-        <td><span class="label ${d >= 30 ? 'laat' : d >= 14 ? 'vandaag' : 'ok'}">${d} d</span></td>
+        <td class="f-dagen"><span class="label ${d >= 30 ? 'laat' : d >= 14 ? 'vandaag' : 'ok'}">${d} d</span></td>
         <td><b>${esc(factuurNaam(b))}</b> · bon ${esc(b.nr)}<br><span class="tijdlijn">gemaakt ${esc(mooiDatum(b.factuur.gemaaktOp))}${mail ? ' · ' + esc(mail) : ''}</span></td>
         <td class="bedrag">${eur(b.totaal)}</td>
-        <td>${mail ? `<a class="knop klein" href="mailto:${esc(mail)}?subject=${encodeURIComponent('Herinnering factuur bon ' + b.nr)}&body=${tekst}">✉ Herinnering</a>` : ''}
-          <button class="knop klein hoofd" type="button" data-fbetaald="${esc(b.id)}">Betaald ✓</button></td>
+        <td class="f-acties"><div>${mail ? `<a class="knop klein" href="mailto:${esc(mail)}?subject=${encodeURIComponent('Herinnering factuur bon ' + b.nr)}&body=${tekst}">✉ Herinnering</a>` : ''}
+          <button class="knop klein hoofd" type="button" data-fbetaald="${esc(b.id)}">Betaald ✓</button></div></td>
       </tr>`;
       }).join('')}</tbody></table>`;
   }
