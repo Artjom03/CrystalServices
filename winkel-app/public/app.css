@@ -707,3 +707,32 @@ td.f-acties { width: 1%; }
 td.f-acties > div { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 td.f-acties .knop { white-space: nowrap; text-align: center; justify-content: center; }
 td.f-dagen .label { white-space: nowrap; }
+
+/* Aanraakscherm, ronde 2: alles wat nog te klein was voor een vinger. */
+.korting-knop{margin-left:6px;border:1px dashed var(--lijn);background:transparent;color:var(--ink-soft);border-radius:999px;padding:3px 10px;font:inherit;font-size:.8rem;cursor:pointer;}
+#f-regels tr .cijferpad.zweef{grid-column:1 / -1;max-width:420px;}
+#f-regels tr .cijferpad.zweef[hidden]{display:none;}
+.cijferpad.zweef button:last-child{grid-column:1 / -1;background:var(--navy);color:#fff;font-size:1.1rem;}
+.knop.groot{font-size:1.1rem;}
+.aanraak .knop.groot{min-height:72px;padding:18px 30px;font-size:1.25rem;flex:1 1 160px;}
+.aanraak .snel-afhalen{gap:10px;margin-top:8px;}
+.aanraak .snel-afhalen button{min-height:52px;padding:10px 20px;font-size:1.05rem;}
+.aanraak .plus-stukken{min-height:48px;padding:8px 18px;font-size:1rem;margin:6px 0 0 8px;}
+.aanraak .korting-knop{min-height:48px;padding:8px 16px;font-size:.95rem;}
+.aanraak .herinnering button{min-height:52px;padding:12px 20px;font-size:1.02rem;}
+.aanraak .vink{min-height:56px;padding:6px 12px;margin:0 -12px;border-radius:12px;cursor:pointer;}
+.aanraak .vink:active{background:var(--geel-zacht);}
+.aanraak .vink input{width:34px;height:34px;flex:0 0 34px;}
+.aanraak .bon .naam{white-space:normal;font-size:1.12rem;line-height:1.3;}
+.aanraak .bon .tel{display:block;margin-left:0;font-size:.95rem;}
+.aanraak .tabs button{padding:18px 22px;font-size:1.08rem;min-width:140px;}
+.aanraak .tabs b{min-width:28px;font-size:.9rem;}
+@media (min-width:900px){
+  .aanraak #f-regels tr{grid-template-columns:auto minmax(0,2fr) minmax(0,1fr) minmax(0,1.3fr) 54px;grid-template-areas:"aantal naam beh prijs weg";}
+}
+.aanraak #f-regels .prijs-veld{flex-wrap:wrap;}
+/* Aanraakscherm: kaarten in twee kolommen, Cash/Kaart als brede knoppen onderaan de kaart. */
+@media (min-width: 1600px) { .aanraak .lijst { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.aanraak .bon .rechts { grid-row: auto; }
+.aanraak .snel-afhalen button, .aanraak .plus-stukken { white-space: nowrap; }
+.aanraak .bon:has(.snel-afhalen) .rechts { grid-row: span 2; }

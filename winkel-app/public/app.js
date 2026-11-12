@@ -816,7 +816,7 @@
           ${extra}
         </div>
       </div>`;
-    let status;
+    let status, bovenaan = '';
     if (b.status === 'binnen') {
       status = `<div class="d-blok"><h3>Status</h3><div class="d-knoppen"><button class="knop hoofd" data-actie="klaar">Klaar ✓</button></div></div>${ophalen('')}`;
     } else if (b.status === 'klaar') {
@@ -830,13 +830,16 @@
             ${!tel && !b.klant.email ? '<p class="tijdlijn">Geen telefoon of e-mail ingevuld: bel of laat de klant zelf langskomen.</p>' : ''}
           </div>
         </div>
-        ${ophalen('hoofd', '<button class="knop" data-actie="binnen">Terug naar in behandeling</button>')}`;
+        <div class="d-blok"><div class="d-knoppen"><button class="knop" data-actie="binnen">Terug naar in behandeling</button></div></div>`;
+      // Betalen en meegeven staat bovenaan: geen scrollen nodig aan de toonbank.
+      bovenaan = ophalen('hoofd groot');
     } else {
       status = `<div class="d-blok"><h3>Status</h3><div class="d-knoppen"><button class="knop" data-actie="klaar">Toch niet opgehaald</button></div></div>`;
     }
 
     $('#d-inhoud').innerHTML = `
       ${boodschap ? `<p class="d-melding">${esc(boodschap)}</p>` : ''}
+      ${bovenaan}
       <div class="d-blok">
         <h3>Klant</h3>
         <p><strong>${esc(b.klant.naam)}</strong></p>
@@ -1782,6 +1785,8 @@
   const exclVan = (incl) => Math.round((Number(incl) / (1 + BTW / 100)) * 100) / 100;
   const inclVan = (excl) => Math.round(Number(excl) * (1 + BTW / 100) * 100) / 100;
   const prijsTekst = (v) => (v == null ? '' : typeof v === 'string' ? v : v.toFixed(2).replace('.', ','));
+  // Regels waarvan het kortingsvak open staat (ook als er nog niets in staat).
+  const kortingOpen = new WeakSet();
   function toonRegels(net) {
     $('#f-fout').textContent = '';
     $('#f-regels').innerHTML = regels.map((r, i) => `<tr data-i="${i}"${i === net ? ' class="net"' : ''}>
@@ -1793,7 +1798,7 @@
       <td><input value="${esc(r.naam)}" aria-label="Stuk" data-veld="naam" placeholder="Welk stuk?"></td>
       <td><select data-veld="behandeling" aria-label="Behandeling">${VOLGORDE.map((b) => `<option value="${b}"${r.behandeling === b ? ' selected' : ''}>${BEHANDELING[b]}</option>`).join('')}</select></td>
       <td class="bedrag"><span class="prijs-veld">€ <input class="prijs" inputmode="decimal" value="${prijsTekst(r.prijs)}" placeholder="volgt" aria-label="Prijs per stuk" data-veld="prijs"></span>
-        <span class="korting-veld">−<input class="korting" inputmode="decimal" value="${r.korting ? String(r.korting).replace('.', ',') : ''}" placeholder="0" aria-label="Korting in procent" data-veld="korting">%</span></td>
+        ${r.korting || kortingOpen.has(r) ? `<span class="korting-veld">−<input class="korting" inputmode="decimal" value="${r.korting ? String(r.korting).replace('.', ',') : ''}" placeholder="0" aria-label="Korting in procent" data-veld="korting">%</span>` : '<button type="button" class="korting-knop" data-korting-open>Korting</button>'}</td>
       <td><button type="button" class="weg" aria-label="Verwijderen" data-weg>✕</button></td>
       <td class="vlek-td">${vlekCel(r)}</td>
     </tr>`).join('');
@@ -1872,6 +1877,13 @@
       if (vlek.hasAttribute('data-vlek')) { regels[i].vlek = 'ja'; regels[i].vlekAantal = regels[i].aantal > 1 ? '' : 1; }
       else { delete regels[i].vlek; delete regels[i].vlekAantal; delete regels[i].vlekOngeteld; }
       toonRegels();
+      return;
+    }
+    if (e.target.closest('[data-korting-open]')) {
+      const i = Number(e.target.closest('tr').dataset.i);
+      kortingOpen.add(regels[i]);
+      toonRegels();
+      $(`#f-regels tr[data-i="${i}"] .korting`)?.focus();
       return;
     }
     if (!e.target.closest('[data-weg]')) return;
@@ -2865,6 +2877,42 @@
     });
     (input.closest('.rij') || input.closest('.prijs-veld')).after(pad);
   }
+  // Eén cijferklavier voor de stukken van een nieuwe bon: verschijnt onder de regel waarin je tikt.
+  const zweefPad = document.createElement('div');
+  zweefPad.className = 'cijferpad zweef';
+  zweefPad.hidden = true;
+  zweefPad.innerHTML = ['7', '8', '9', '4', '5', '6', '1', '2', '3', ',', '0', '⌫', 'Klaar ✓']
+    .map((t) => `<button type="button" data-toets="${t}"${t === '⌫' ? ' aria-label="Wissen"' : ''}>${t}</button>`).join('');
+  let zweefVeld = null, zweefNieuw = false;
+  zweefPad.addEventListener('pointerdown', (e) => e.preventDefault());
+  zweefPad.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-toets]')?.dataset.toets;
+    if (!t || !zweefVeld) return;
+    if (t === 'Klaar ✓') { zweefVeld.blur(); return; }
+    // De eerste toets na het aantikken vervangt wat er stond.
+    let v = zweefNieuw && t !== '⌫' ? '' : zweefVeld.value;
+    zweefNieuw = false;
+    const heel = zweefVeld.inputMode === 'numeric' || zweefVeld.type === 'number';
+    if (t === '⌫') v = v.slice(0, -1);
+    else if (t === ',') { if (!heel && !/[,.]/.test(v)) v = (v || '0') + ','; }
+    else if (!/[,.]\d\d$/.test(v)) v = (v === '0' ? '' : v) + t;
+    zweefVeld.value = v;
+    zweefVeld.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  $('#f-regels').addEventListener('focusin', (e) => {
+    const veld = e.target.closest('.prijs, .aantal, .korting');
+    if (!veld || !document.documentElement.classList.contains('aanraak')) return;
+    zweefVeld = veld;
+    zweefNieuw = true;
+    veld.inputMode = 'none';
+    veld.select?.();
+    const tr = veld.closest('tr');
+    if (zweefPad.parentNode !== tr) tr.appendChild(zweefPad);
+    zweefPad.hidden = false;
+  });
+  $('#f-regels').addEventListener('focusout', () => {
+    setTimeout(() => { if (!zweefPad.contains(document.activeElement) && !document.activeElement?.closest?.('#f-regels .prijs, #f-regels .aantal, #f-regels .korting')) zweefPad.hidden = true; }, 0);
+  });
   ['#ko [name=begin]', '#k-beweging [name=bedrag]', '#k-sluit [name=geteld]', '#k-corr [name=bedrag]'].forEach((sel) => cijferpad($(sel)));
   zetAanraak(aanraak);
 
