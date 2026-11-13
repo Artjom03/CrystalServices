@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://crystal-services.be"),
+  metadataBase: new URL("https://www.crystal-services.be"),
   alternates: { canonical: "./" },
   icons: { icon: "/favicon-48.png", apple: "/apple-touch-icon.png" },
   title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Crystal Services | Wasserij & Droogkuis Antwerpen (Borgerhout)",
     description: "Professionele was-, strijk-, droogkuis- en wetcleaningdienst in Antwerpen.",
-    url: "https://crystal-services.be",
+    url: "https://www.crystal-services.be",
     siteName: "Crystal Services",
     locale: "nl_BE",
     type: "website",
@@ -39,17 +38,6 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
-        {/* Google-tag met toestemmingsmodus: zonder "Akkoord" in de cookiemelding
-            van de statische pagina's blijft meten met cookies uit. */}
-        <Script id="ga-consent" strategy="afterInteractive">
-          {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied'});
-try { if (localStorage.getItem('cs-cookies') === 'ja') gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'}); } catch (e) {}
-gtag('js', new Date());
-gtag('config', 'G-FZ10NJFRPN');`}
-        </Script>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN" strategy="afterInteractive" />
         <script
   type="application/ld+json"
   dangerouslySetInnerHTML={{
@@ -57,8 +45,8 @@ gtag('config', 'G-FZ10NJFRPN');`}
       "@context": "https://schema.org",
       "@type": "LaundryOrDryCleaning",
       name: "Crystal Services",
-      "@id": "https://crystal-services.be",
-      url: "https://crystal-services.be",
+      "@id": "https://www.crystal-services.be",
+      url: "https://www.crystal-services.be",
       telephone: "+32494403841",
       address: {
         "@type": "PostalAddress",

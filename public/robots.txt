@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://crystal-services.be/sitemap.xml
+Sitemap: https://www.crystal-services.be/sitemap.xml

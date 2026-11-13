@@ -5,7 +5,7 @@ const nextConfig = {
   async redirects() {
     return [
       { source: '/index.html', destination: '/', permanent: true },
-      { source: '/:pagina(wassalon|zakelijk|contact).html', destination: '/:pagina', permanent: true },
+      { source: '/:pagina(wassalon|zakelijk|contact|over-ons|algemene-voorwaarden|privacy).html', destination: '/:pagina', permanent: true },
       // Schoenen en motorkleding staan niet meer in het aanbod: oude links gaan naar de startpagina.
       { source: '/:pagina(schoenen|motorkleding){.html}?', destination: '/', permanent: true },
     ];
@@ -16,6 +16,11 @@ const nextConfig = {
         {
           source: '/',
           destination: '/index.html',
+        },
+        {
+          // Over ons, algemene voorwaarden en privacy: statische pagina's in de huisstijl.
+          source: '/:pagina(over-ons|algemene-voorwaarden|privacy)',
+          destination: '/:pagina.html',
         },
         {
           source: '/wassalon',
