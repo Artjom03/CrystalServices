@@ -34,9 +34,8 @@ function header(path) {
 
 <header class="site">
   <div class="wrap">
-    <a href="/" class="logo" aria-label="{{naam}} – startpagina">
-      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="4" fill="#17191b"/><path fill="none" d="M10 8l7 16 7-16" stroke="#fff" stroke-width="2.6" stroke-linecap="square"/><circle cx="17" cy="28.5" r="2.2" fill="#a8592a"/></svg>
-      <span>{{naam}}<small>${esc(site.slogan)}</small></span>
+    <a href="/" class="logo" aria-label="${esc(site.naam)} ${esc(site.slogan)} – startpagina">
+      <img src="/assets/logo.png" width="730" height="169" alt="${esc(site.naam)} ${esc(site.slogan)}" class="logo-img">
     </a>
     <nav class="main" id="nav" aria-label="Hoofdmenu">
       ${links}
@@ -58,14 +57,15 @@ function footer() {
   <div class="wrap">
     <div class="cols">
       <div>
-        <div class="logo">{{naam}}</div>
+        <div class="logo">{{naam}} <small>${esc(site.slogan)}</small></div>
         <p>Plaatsing, onderhoud en herstelling van verwarmingsketels in {{regio}}. Erkend technicus gas en mazout.</p>
+        <p class="legal">${esc(site.naam)} is een handelsnaam van ${esc(site.bedrijf)}.</p>
       </div>
       <div><h4>Diensten</h4><ul><li><a href="/ketel-onderhoud/">Ketel onderhoud</a></li><li><a href="/ketel-herstelling/">Herstelling &amp; storing</a></li><li><a href="/ketel-vervangen/">Nieuwe ketel plaatsen</a></li><li><a href="/afspraak/">Afspraak maken</a></li></ul></div>
       <div><h4>Merken</h4><ul>${eigenMerken.map(m => `<li><a href="/merken/${m.slug}/">${esc(m.naam)}</a></li>`).join('')}<li><a href="/merken/">Alle merken</a></li></ul></div>
       <div><h4>Contact</h4><ul><li><a href="tel:{{telLink}}">{{tel}}</a></li><li><a href="mailto:{{email}}">{{email}}</a></li><li>{{openingsuren}}</li><li>BTW {{btw}}</li><li><a href="/privacy/">Privacyverklaring</a></li></ul></div>
     </div>
-    <div class="bottom"><span>© <span id="yr"></span> {{naam}}</span><span>{{regio}}</span></div>
+    <div class="bottom"><span>© <span id="yr"></span> ${esc(site.bedrijf)} – {{naam}}</span><span>{{regio}}</span></div>
   </div>
 </footer>
 
@@ -79,9 +79,9 @@ export function baseUrl() {
 export function businessSchema() {
   const url = baseUrl();
   const b = {
-    '@type': 'HVACBusiness', '@id': url + '/#bedrijf', name: site.naam, url: url + '/',
+    '@type': 'HVACBusiness', '@id': url + '/#bedrijf', name: site.naam, legalName: site.bedrijf, alternateName: `${site.naam} ${site.slogan}`, url: url + '/',
     telephone: site.telefoonLink, email: site.email,
-    image: url + '/assets/og.png', logo: url + '/assets/icon-512.png',
+    image: url + '/assets/og.png', logo: url + '/assets/logo.png',
     areaServed: site.werkgebied.map(name => ({ '@type': 'City', name })),
     address: { '@type': 'PostalAddress', addressLocality: site.gemeente, postalCode: site.postcode, addressCountry: 'BE', ...(site.straat ? { streetAddress: site.straat } : {}) },
     openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: site.uren.dagen.map(d => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][d - 1]), opens: site.uren.van, closes: site.uren.tot }],
@@ -113,7 +113,7 @@ export function render(page) {
 <meta name="description" content="${esc(page.description)}">
 <link rel="canonical" href="${esc(url)}">
 ${noindex ? '<meta name="robots" content="noindex, nofollow">' : '<meta name="robots" content="index, follow, max-image-preview:large">'}
-<meta name="theme-color" content="#17191b">
+<meta name="theme-color" content="#1b3358">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="nl_BE">
 <meta property="og:site_name" content="${esc(site.naam)}">
@@ -121,8 +121,8 @@ ${noindex ? '<meta name="robots" content="noindex, nofollow">' : '<meta name="ro
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${esc(url)}">
 <meta property="og:image" content="${esc(baseUrl())}/assets/og.png">
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="icon" href="/assets/favicon-64.png" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css?v=${page.cssVersion || '1'}">

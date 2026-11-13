@@ -71,11 +71,15 @@
 .cta-band h2{color:#fff;font-size:clamp(1.7rem,3vw,2.4rem);margin-bottom:8px}
 .cta-band p{color:#b9bdc1;max-width:36em}
 .cta-band .cta{display:flex;gap:12px;flex-wrap:wrap}
-.btn-ghost-light{border-color:#55595d;color:#fff}
+.btn-ghost-light{border-color:#4a5f83;color:#fff}
 .btn-ghost-light:hover{background:#fff;color:var(--ink)}
 
 /* Menu: afspraakknop alleen in het uitklapmenu */
 .nav-cta{display:none}
+.logo-img{height:46px;width:auto}
+@media (max-width:480px){.logo-img{height:38px}}
+footer .logo small{font-weight:500;font-size:.75rem;color:#9fb0c8;letter-spacing:.04em;text-transform:uppercase}
+footer .legal{font-size:.82rem;margin-top:10px;opacity:.8}
 @media (max-width:1120px){nav.main .nav-cta{display:block;background:var(--ink);color:#fff;font-weight:700}}
 nav.main a[aria-current]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--copper)}
 @media (max-width:1120px){nav.main a[aria-current]{box-shadow:inset 3px 0 0 var(--copper)}}

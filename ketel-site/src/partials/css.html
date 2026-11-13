@@ -1,14 +1,16 @@
   :root{
-    --ink:#17191b;        /* antraciet */
-    --ink-2:#33373b;
-    --muted:#62676c;
-    --paper:#f2f2ef;      /* koel lichtgrijs */
+    --ink:#1b3358;        /* Ketelzorg-blauw */
+    --ink-2:#34445e;
+    --muted:#5b6676;
+    --paper:#f3f5f8;      /* lichtgrijs-blauw */
     --white:#ffffff;
-    --line:#d8d8d3;
-    --line-dark:#33373b;
-    --copper:#a8592a;     /* koperen leiding */
-    --copper-dark:#874520;
-    --copper-tint:#f3e9e1;
+    --line:#d8dde5;
+    --line-dark:#34496c;
+    --copper:#b85c0c;     /* oranje voor tekst (leesbaar op wit) */
+    --flame:#ec8a24;      /* Ketelzorg-oranje */
+    --flame-hover:#f59c40;
+    --copper-dark:#8f4708;
+    --copper-tint:#fdf1e4;
     --radius:4px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -22,11 +24,11 @@
   .label b{color:var(--copper);font-weight:500}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:var(--radius);font-weight:600;text-decoration:none;border:1.5px solid transparent;transition:background .15s,color .15s,border-color .15s;cursor:pointer;font-family:inherit;font-size:1rem;line-height:1.2}
   .btn-primary{background:var(--ink);color:#fff}
-  .btn-primary:hover{background:var(--copper)}
+  .btn-primary:hover{background:#28497a}
   .btn-line{border-color:var(--ink);color:var(--ink)}
   .btn-line:hover{background:var(--ink);color:#fff}
-  .btn-copper{background:var(--copper);color:#fff}
-  .btn-copper:hover{background:var(--copper-dark)}
+  .btn-copper{background:var(--flame);color:var(--ink)}
+  .btn-copper:hover{background:var(--flame-hover)}
 
   /* Header */
   .topbar{background:var(--ink);color:#c9cbcd;font-size:.85rem}
@@ -166,7 +168,7 @@
   .rules div{display:flex;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid var(--line-dark);font-size:1.05rem}
   .rules span{color:#b9bdc1}
   .rules b{color:#fff;font-weight:600}
-  .rules b em{font-style:normal;color:#d9925f}
+  .rules b em{font-style:normal;color:var(--flame)}
   @media (max-width:880px){.maint .wrap{grid-template-columns:1fr;gap:32px}}
 
   /* Reviews */
@@ -203,8 +205,8 @@
   form.quote{background:var(--white);border:1px solid var(--line);padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
   form.quote .full{grid-column:1/-1}
   form.quote label{font-weight:500;font-size:.9rem;display:grid;gap:7px}
-  form.quote input,form.quote select,form.quote textarea{font:inherit;font-size:1rem;padding:12px 14px;border:1px solid #c4c4be;border-radius:var(--radius);background:var(--white);color:var(--ink)}
-  form.quote input:focus,form.quote select:focus,form.quote textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #e2e2dd}
+  form.quote input,form.quote select,form.quote textarea{font:inherit;font-size:1rem;padding:12px 14px;border:1px solid #bcc5d1;border-radius:var(--radius);background:var(--white);color:var(--ink)}
+  form.quote input:focus,form.quote select:focus,form.quote textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #dfe5ee}
   form.quote textarea{min-height:120px;resize:vertical}
   @media (max-width:880px){.contact{grid-template-columns:1fr;gap:32px}form.quote{grid-template-columns:1fr;padding:22px}.ci{grid-template-columns:100px 1fr}}
 
@@ -245,8 +247,8 @@
   .bk-tips b{display:block;color:var(--ink);font-weight:600}
   .bk-form{background:var(--paper);border-left:1px solid var(--ink);padding:32px;display:grid;gap:14px;align-content:start}
   .bk-form label{display:grid;gap:6px;font-weight:500;font-size:.9rem}
-  .bk-form input,.bk-form select,.bk-form textarea{font:inherit;font-size:1rem;padding:11px 13px;border:1px solid #c4c4be;border-radius:var(--radius);background:var(--white);color:var(--ink)}
-  .bk-form input:focus,.bk-form select:focus,.bk-form textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #e2e2dd}
+  .bk-form input,.bk-form select,.bk-form textarea{font:inherit;font-size:1rem;padding:11px 13px;border:1px solid #bcc5d1;border-radius:var(--radius);background:var(--white);color:var(--ink)}
+  .bk-form input:focus,.bk-form select:focus,.bk-form textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #dfe5ee}
   .bk-form textarea{min-height:80px;resize:vertical}
   .bk-sum{font-size:.95rem;border-top:1px solid var(--line);padding-top:14px}
   .bk-sum b{display:block;font-size:1.1rem}

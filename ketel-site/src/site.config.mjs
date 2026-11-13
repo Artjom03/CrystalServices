@@ -12,8 +12,9 @@ export const site = {
   //  - het werkgebied en de tekst bij "Over ons" (klein, lokaal bedrijf; u krijgt de technicus zelf aan de lijn)
   gecontroleerd: false,
 
-  naam: 'Voltra',                        // bedrijfsnaam zoals klanten hem zien
-  slogan: 'Verwarming & sanitair',
+  naam: 'Ketelzorg',                     // merknaam zoals klanten hem zien
+  slogan: 'by Voltra',
+  bedrijf: 'Voltra',                     // officiële bedrijfsnaam (voor btw, privacy en Google)
   telefoon: '03 000 00 00',              // zoals het op de site moet staan
   telefoonLink: '+3230000000',           // zelfde nummer, internationaal en zonder spaties
   email: 'info@voorbeeld.be',

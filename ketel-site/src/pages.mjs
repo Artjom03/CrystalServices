@@ -333,7 +333,7 @@ const privacy = {
 <section style="padding-top:24px">
   <div class="wrap prose narrow">
     <h2>Wie zijn wij?</h2>
-    <p>${esc(site.naam)}${site.straat ? ', ' + esc(site.straat) + ', ' + esc(site.postcode) + ' ' + esc(site.gemeente) : ', ' + esc(site.gemeente)}, btw ${esc(site.btw)}, is verantwoordelijk voor de verwerking van uw persoonsgegevens. U bereikt ons op {{tel}} of via {{email}}.</p>
+    <p>${esc(site.bedrijf)} (handelsnaam ${esc(site.naam)})${site.straat ? ', ' + esc(site.straat) + ', ' + esc(site.postcode) + ' ' + esc(site.gemeente) : ', ' + esc(site.gemeente)}, btw ${esc(site.btw)}, is verantwoordelijk voor de verwerking van uw persoonsgegevens. U bereikt ons op {{tel}} of via {{email}}.</p>
     <h2>Welke gegevens verzamelen we?</h2>
     <p>Alleen wat u zelf invult wanneer u een afspraak maakt of een offerte vraagt: naam, telefoonnummer, e-mailadres, het adres van de werken en de informatie die u over uw installatie geeft.</p>
     <h2>Waarvoor gebruiken we ze?</h2>
