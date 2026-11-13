@@ -46,7 +46,9 @@ export type Stuk = {
 
 export type Groep = { titel: string; wassenLabel: string; stukken: Stuk[] };
 
-export const PRIJSLIJST: Groep[] = [
+// Reserve: deze prijzen gelden enkel als het winkelprogramma even niet bereikbaar is.
+// Normaal komen de prijzen live uit het programma (zie vernieuwPrijzen hieronder).
+const PRIJSLIJST_VAST: Groep[] = [
   {
     titel: 'Dames- en herenkleding',
     wassenLabel: 'wassen + strijken',
@@ -157,6 +159,41 @@ export const PRIJSLIJST: Groep[] = [
     ],
   },
 ];
+
+/**
+ * De prijzen zoals ze nu in het winkelprogramma staan. Past de winkel daar een prijs aan,
+ * dan gebruikt de chatbot die binnen enkele minuten. Enkel de gewone prijzen: afgesproken
+ * klantprijzen komen nooit mee (die filtert het programma er zelf uit).
+ */
+export let PRIJSLIJST: Groep[] = PRIJSLIJST_VAST;
+const WINKEL_URL = process.env.WINKEL_URL || 'https://crystal-winkel.vercel.app';
+const VERS_MS = 5 * 60 * 1000;
+// Schoenen en motorkleding beantwoordt de chatbot niet met prijzen (zie Diensten).
+const NIET_IN_CHAT = /schoen|motor/i;
+let opgehaald = 0;
+
+export async function vernieuwPrijzen(): Promise<void> {
+  if (Date.now() - opgehaald < VERS_MS) return;
+  opgehaald = Date.now();
+  try {
+    const r = await fetch(WINKEL_URL + '/api/prijzen', { signal: AbortSignal.timeout(3000), cache: 'no-store' });
+    if (!r.ok) return;
+    const data = (await r.json()) as { groepen?: Groep[] };
+    // Zoekwoorden (ook) blijven uit de vaste lijst komen.
+    const ook = new Map<string, string[] | undefined>(PRIJSLIJST_VAST.flatMap((g) => g.stukken).map((s): [string, string[] | undefined] => [s.naam.toLowerCase(), s.ook]));
+    const groepen = (data.groepen || [])
+      .filter((g) => !NIET_IN_CHAT.test(g.titel))
+      .map((g) => ({
+        titel: String(g.titel),
+        wassenLabel: String(g.wassenLabel || ''),
+        stukken: (g.stukken || []).map((s) => ({ ...s, ook: ook.get(String(s.naam).toLowerCase()) })),
+      }))
+      .filter((g) => g.stukken.length);
+    if (groepen.length) PRIJSLIJST = groepen;
+  } catch {
+    // Niet bereikbaar: we houden de laatst gekende prijzen.
+  }
+}
 
 /** De oktoberactie. Na de einddatum verdwijnt ze vanzelf uit de antwoorden. */
 export const ACTIE = {

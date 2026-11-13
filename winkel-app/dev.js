@@ -6,6 +6,7 @@ import { extname } from 'node:path';
 import handler from './api/bonnen.js';
 import klant from './api/klant.js';
 import spiegel from './api/spiegel.js';
+import prijzen from './api/prijzen.js';
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const poort = Number(process.env.PORT) || 3000;
@@ -15,6 +16,7 @@ http.createServer(async (req, res) => {
   if (pad === '/api/bonnen') return handler(req, res);
   if (pad === '/api/klant') return klant(req, res);
   if (pad === '/api/spiegel') return spiegel(req, res);
+  if (pad === '/api/prijzen') return prijzen(req, res);
   try {
     const bestand = pad.endsWith('/') ? pad + 'index.html' : pad === '/klant' ? '/klant/index.html' : pad;
     const inhoud = await readFile(new URL('./public' + bestand, import.meta.url));
