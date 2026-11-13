@@ -17,7 +17,7 @@
   var css = document.createElement('style');
   css.textContent = [
     '#cs-sluit-balk{background:#081430;color:#fff;text-align:center;font-size:.88rem;padding:9px 16px;line-height:1.4;}',
-    '#cs-sluit-balk b{color:#C9A062;}',
+    '#cs-sluit-balk b{color:#7FAEE0;}',
     '#cs-sluit{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,20,48,.55);}',
     '#cs-sluit[hidden]{display:none;}',
     '#cs-sluit .kaart{background:var(--white,#fff);color:var(--ink,#1B2422);border-radius:16px;max-width:420px;width:100%;padding:28px 26px 22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);text-align:center;}',

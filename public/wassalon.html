@@ -56,9 +56,9 @@
     --ink-soft:#565B63;
     --navy:#0E1F42;
     --navy-deep:#081430;
-    --gold:#B98D4A;
-    --gold-deep:#8A6829;      /* 4,65:1 op de achtergrond; #96712F haalde net geen 4,5:1 */
-    --gold-hover:#C9A062;
+    --gold:#2F6FB0;
+    --gold-deep:#1F5490;
+    --gold-hover:#3A7FC4;
     --line:#DCD5C4;
     --white:#FFFFFF;
     --radius:14px;
@@ -148,7 +148,7 @@
   .btn-primary:hover{background:var(--navy-deep);}
   .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
   .btn-ghost:hover{border-color:var(--ink);}
-  .btn-copper{background:var(--gold);color:var(--ink);}
+  .btn-copper{background:var(--gold);color:#fff;}
   .btn-copper:hover{background:var(--gold-hover);}
 
   .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;}
@@ -478,8 +478,8 @@
   nav.mainnav .navgroup:focus-within .navdrop{opacity:1;visibility:visible;transform:translateY(0);}
   .navdrop::before{content:"";position:absolute;top:-12px;left:0;right:0;height:12px;}
   nav.mainnav .navdrop a{display:block;padding:9px 20px;white-space:nowrap;}
-  nav.mainnav .navdrop a:hover{background:rgba(185,141,74,.10);color:var(--ink);}
-  nav.mainnav .navdrop a.active{color:var(--navy);font-weight:600;background:rgba(185,141,74,.10);}
+  nav.mainnav .navdrop a:hover{background:rgba(47,111,176,.10);color:var(--ink);}
+  nav.mainnav .navdrop a.active{color:var(--navy);font-weight:600;background:rgba(47,111,176,.10);}
   nav.mainnav .navdrop a.active::after{display:none;}
   @media (max-width: 900px){
     nav.mainnav .navgroup{display:block;}
@@ -496,7 +496,7 @@
   /* ---------- Tijdelijke openingsuren ---------- */
   .uren-tijdelijk{
     grid-column:1 / -1;
-    background:rgba(185,141,74,.10);border:1px solid var(--gold);
+    background:rgba(47,111,176,.10);border:1px solid var(--gold);
     border-radius:12px;padding:14px 18px;margin:0 0 22px;
     font-size:.9rem;color:var(--ink-soft);
   }
@@ -526,9 +526,9 @@
       --line:#263244;
       --navy:#C8D3EA;           /* als tekst: bleek navy */
       --navy-deep:#DCE3F2;
-      --gold:#C9A062;
-      --gold-deep:#D9B478;      /* als tekst moet 'diep' goud hier lichter zijn */
-      --gold-hover:#E3C38D;
+      --gold:#7FAEE0;
+      --gold-deep:#9CC2EC;      /* als tekst moet 'diep' goud hier lichter zijn */
+      --gold-hover:#A9CBEF;
       --shadow: 0 12px 32px -14px rgba(0,0,0,0.6);
       --surface-navy:#16223A;   /* voor blokken die in licht navy-donker zijn */
       --surface-raised:#1D2A3F;
@@ -556,7 +556,7 @@
 
     /* Chatvenster */
     #cs-chat-launcher{background:var(--gold);color:#0D131C;}
-    #cs-chat-launcher:hover{background:#D9B478;}
+    #cs-chat-launcher:hover{background:#9CC2EC;}
     .cs-chat-head{background:var(--surface-navy);}
     .cs-msg.bot{background:var(--surface-raised);color:var(--ink);}
     .cs-msg.user{background:#2B3B57;color:#fff;}
@@ -856,7 +856,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l16-8L4 4v6l10 2-10 2v6Z" fill="currentColor"/></svg>
     </button>
   </div>
-  <div class="cs-disclaimer">Antwoorden opgesteld met AI · twijfelt u? <a href="tel:0494403841" style="color:var(--navy-deep);">bel ons</a></div>
+  <div class="cs-disclaimer">Automatische antwoorden · twijfelt u? <a href="tel:0494403841" style="color:var(--navy-deep);">bel ons</a></div>
 </div>
 
 <script>

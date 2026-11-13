@@ -1,5 +1,5 @@
 // Chatwidget van Crystal Services, gedeeld door alle pagina's.
-// Vragen gaan naar /api/chat, die met AI antwoordt op basis van onze prijslijst.
+// Vragen gaan naar /api/chat, die automatisch antwoordt op basis van onze prijslijst.
 // Geen automatische pop-ups: de chat opent pas als de bezoeker erop klikt.
 (function(){
   const launcher = document.getElementById('cs-chat-launcher');
