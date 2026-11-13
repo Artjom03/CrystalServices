@@ -35,7 +35,7 @@ function header(path) {
 <header class="site">
   <div class="wrap">
     <a href="/" class="logo" aria-label="{{naam}} – startpagina">
-      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="4" fill="#17191b"/><path d="M11 8v18M23 8v18M11 17h12" stroke="#fff" stroke-width="2.6" stroke-linecap="square"/><circle cx="17" cy="17" r="3" fill="#a8592a"/></svg>
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="4" fill="#17191b"/><path fill="none" d="M10 8l7 16 7-16" stroke="#fff" stroke-width="2.6" stroke-linecap="square"/><circle cx="17" cy="28.5" r="2.2" fill="#a8592a"/></svg>
       <span>{{naam}}<small>${esc(site.slogan)}</small></span>
     </a>
     <nav class="main" id="nav" aria-label="Hoofdmenu">
