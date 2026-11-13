@@ -78,3 +78,57 @@ test('beheer: overzicht, annuleren maakt de plaats weer vrij, sluiten verbergt h
   assert.equal((await publicAvailability(s, NOW)).length, 0);
   await assert.rejects(cancelSeat(s, '../slots/x'), { code: 'invalid_seat' });
 });
+
+// ---------- Beheerder: zelf inplannen, wijzigen, verplaatsen ----------
+import { adminPlan, adminUpdate, toICal } from '../lib/agenda.mjs';
+
+test('beheerder plant in, ook in een gesloten of vol dagdeel', async () => {
+  const s = memStore();
+  const a = await adminPlan(s, { slot: '2026-11-20_VM', naam: 'Mevr. Claes', tel: '03 123 45 67' }, NOW);
+  assert.equal(a.seat, '2026-11-20_VM_1');
+  await openSlots(s, ['2026-11-20_NM'], 1);
+  await book(s, klant('2026-11-20_NM'), NOW);
+  const b = await adminPlan(s, { slot: '2026-11-20_NM', naam: 'Extra klant' }, NOW);
+  assert.equal(b.seat, '2026-11-20_NM_2');
+  await assert.rejects(adminPlan(s, { slot: '2026-11-20_NM', naam: '' }, NOW), { code: 'invalid_naam' });
+  // klanten zien het gesloten dagdeel niet, en het volle dagdeel ook niet
+  assert.deepEqual((await publicAvailability(s, NOW)).map(x => x.id), []);
+});
+
+test('wijzigen behoudt gegevens, verplaatsen maakt de oude plaats vrij', async () => {
+  const s = memStore();
+  await openSlots(s, ['2026-11-21_VM', '2026-11-23_NM'], 1);
+  const r = await book(s, klant('2026-11-21_VM', { opmerking: 'Bulex' }), NOW);
+  await adminUpdate(s, r.seat, { status: 'afgewerkt' }, NOW);
+  let o = await adminOverview(s);
+  assert.equal(o.bookings[0].status, 'afgewerkt');
+  assert.equal(o.bookings[0].opmerking, 'Bulex');
+  const m = await adminUpdate(s, r.seat, { slot: '2026-11-23_NM', tel: '0470 99 88 77' }, NOW);
+  assert.equal(m.moved, true);
+  o = await adminOverview(s);
+  assert.equal(o.bookings.length, 1);
+  assert.equal(o.bookings[0].slot, '2026-11-23_NM');
+  assert.equal(o.bookings[0].tel, '0470 99 88 77');
+  assert.equal(o.bookings[0].naam, 'Jan Peeters');
+  assert.deepEqual((await publicAvailability(s, NOW)).map(x => x.id), ['2026-11-21_VM']);
+  await assert.rejects(adminUpdate(s, '2026-11-21_VM_1', {}, NOW), { code: 'not_found' });
+});
+
+test('overzicht leest alleen de gevraagde periode', async () => {
+  const s = memStore();
+  await adminPlan(s, { slot: '2026-10-01_VM', naam: 'Oud' }, NOW);
+  await adminPlan(s, { slot: '2026-12-01_VM', naam: 'Nieuw' }, NOW);
+  let gets = 0; const orig = s.get; s.get = (...a) => { gets++; return orig(...a); };
+  const o = await adminOverview(s, '2026-11-15', '2026-12-31');
+  assert.deepEqual(o.bookings.map(b => b.naam), ['Nieuw']);
+  assert.equal(gets, 1);
+});
+
+test('agenda-abonnement (iCal) is geldig en met Belgische tijden', () => {
+  const ics = toICal([{ seat: '2026-11-20_VM_1', date: '2026-11-20', part: 'VM', naam: 'Jan; Peeters', type: 'Onderhoud', adres: 'Kerkstraat 1, Deurne', tel: '0470', opmerking: 'regel 1\nregel 2 met een heel lange opmerking die zeker over de vijfenzeventig tekens van een ical-regel gaat' }], { now: NOW });
+  assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+  assert.match(ics, /DTSTART;TZID=Europe\/Brussels:20261120T080000/);
+  assert.match(ics, /SUMMARY:Jan\; Peeters – Onderhoud/);
+  assert.match(ics, /LOCATION:Kerkstraat 1\\, Deurne/);
+  assert.ok(ics.split('\r\n').every(l => Buffer.byteLength(l) <= 75));
+});

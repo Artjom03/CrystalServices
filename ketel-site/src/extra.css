@@ -1,0 +1,81 @@
+
+/* ---------- Eigen lettertypes (geen Google Fonts) ---------- */
+/* @font-face staat bovenaan het bestand */
+
+/* ---------- Binnenpagina's ---------- */
+.page-hero{border-bottom:1px solid var(--line);background:var(--paper);padding:0}
+.page-hero .wrap{display:grid;grid-template-columns:1.4fr .8fr;gap:56px;align-items:end;padding:56px 0 64px}
+.page-hero .wrap>*{min-width:0}
+.page-hero h1{font-size:clamp(2.2rem,4.4vw,3.4rem);margin:16px 0 18px;text-wrap:balance}
+.page-hero .lead{font-size:1.12rem;color:var(--ink-2);max-width:36em}
+.page-hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.ph-aside .rules{border-top:1px solid var(--ink)}
+.rules.light div{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rules.light span{color:var(--muted)}
+.rules.light b{font-weight:600;text-align:right;color:var(--ink)}
+.rules.light b em{color:var(--copper);font-style:normal}
+.crumbs{font-size:.88rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.crumbs a{text-decoration:none;color:var(--muted)}
+.crumbs a:hover{color:var(--copper)}
+.crumbs [aria-current]{color:var(--ink)}
+@media (max-width:880px){.page-hero .wrap{grid-template-columns:1fr;gap:28px;padding:40px 0 44px}}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.two-col>*{min-width:0}
+@media (max-width:880px){.two-col{grid-template-columns:1fr;gap:36px}}
+.prose h2,.h3{font-size:clamp(1.5rem,2.6vw,2rem);margin-bottom:16px;text-wrap:balance}
+.h3{font-size:1.35rem}
+.prose p{color:var(--ink-2);margin-bottom:14px;max-width:36em}
+.prose ul{margin:0 0 16px 20px;display:grid;gap:10px;color:var(--ink-2)}
+.prose a{color:var(--copper)}
+.prose.narrow{max-width:46em}
+.prose.narrow h2{font-size:1.25rem;margin:32px 0 8px}
+
+.checks{list-style:none;border-top:1px solid var(--ink)}
+.checks li{display:grid;grid-template-columns:28px 1fr;padding:14px 0;border-bottom:1px solid var(--line)}
+.checks li::before{content:"✓";color:var(--copper);font-weight:700;grid-row:span 2}
+.checks b{display:block}
+.checks span{color:var(--muted);font-size:.95rem}
+
+.alert-box{border:2px solid #b42318;background:#fff;padding:28px}
+.alert-box h2{color:#b42318}
+.alert-box p{color:var(--ink-2)}
+.tip-box{background:var(--copper-tint);border-left:3px solid var(--copper);padding:24px 28px}
+.tip-box p:last-child{margin-top:8px;font-size:1.05rem}
+
+.more{display:inline-block;margin-top:16px;font-weight:600;color:var(--copper);text-decoration:none}
+.more:hover{text-decoration:underline}
+.brands ul a{text-decoration:none;color:inherit}
+.brands ul a:hover{color:var(--copper)}
+
+.brand-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.brand-card{display:grid;gap:6px;padding:22px;border:1px solid var(--line);background:var(--white);text-decoration:none;transition:border-color .15s}
+.brand-card b{font-size:1.25rem;letter-spacing:-.02em}
+.brand-card span{color:var(--copper);font-size:.92rem;font-weight:600}
+.brand-card:hover{border-color:var(--ink)}
+@media (max-width:880px){.brand-grid{grid-template-columns:1fr 1fr}}
+.brand-list{border-top:1px solid var(--ink)}
+.brand-row{display:grid;grid-template-columns:1fr auto;gap:24px 40px;align-items:center;padding:28px 0;border-bottom:1px solid var(--line)}
+.brand-row>*{min-width:0}
+.brand-row h2{font-size:1.6rem;margin-bottom:8px}
+.brand-row h2 a{text-decoration:none}
+.brand-row p{color:var(--ink-2);max-width:44em}
+@media (max-width:760px){.brand-row{grid-template-columns:1fr}}
+.pill-list{list-style:none;display:flex;flex-wrap:wrap;gap:10px}
+.pill-list li{border:1px solid var(--line);background:var(--white);padding:9px 16px;border-radius:var(--radius);font-weight:600}
+.pill-list a{text-decoration:none}
+.note a{color:var(--copper)}
+
+.cta-band{background:var(--ink);color:#e6e7e8;padding:64px 0}
+.cta-band .wrap{display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap}
+.cta-band h2{color:#fff;font-size:clamp(1.7rem,3vw,2.4rem);margin-bottom:8px}
+.cta-band p{color:#b9bdc1;max-width:36em}
+.cta-band .cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn-ghost-light{border-color:#55595d;color:#fff}
+.btn-ghost-light:hover{background:#fff;color:var(--ink)}
+
+/* Menu: afspraakknop alleen in het uitklapmenu */
+.nav-cta{display:none}
+@media (max-width:1120px){nav.main .nav-cta{display:block;background:var(--ink);color:#fff;font-weight:700}}
+nav.main a[aria-current]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--copper)}
+@media (max-width:1120px){nav.main a[aria-current]{box-shadow:inset 3px 0 0 var(--copper)}}

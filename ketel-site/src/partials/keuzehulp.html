@@ -1,0 +1,44 @@
+<section id="keuzehulp">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="label">Keuzehulp</p>
+        <h2>Twijfelt u? Drie vragen, een eerste advies.</h2>
+      </div>
+      <p>Een richtlijn, geen verkooppraatje. Bij het plaatsbezoek bekijken we uw situatie altijd in detail.</p>
+    </div>
+    <div class="rv advisor">
+      <form id="advisor" onsubmit="return false">
+        <div class="q">
+          <span class="t"><span>1</span>Heeft u een aardgasaansluiting?</span>
+          <div class="opts">
+            <input type="radio" name="gas" id="g1" value="ja" checked><label for="g1">Ja</label>
+            <input type="radio" name="gas" id="g2" value="nee"><label for="g2">Nee</label>
+          </div>
+        </div>
+        <div class="q">
+          <span class="t"><span>2</span>Hoe goed is uw woning geïsoleerd?</span>
+          <div class="opts">
+            <input type="radio" name="iso" id="i1" value="goed"><label for="i1">Goed</label>
+            <input type="radio" name="iso" id="i2" value="matig" checked><label for="i2">Matig</label>
+            <input type="radio" name="iso" id="i3" value="slecht"><label for="i3">Slecht</label>
+          </div>
+        </div>
+        <div class="q">
+          <span class="t"><span>3</span>Wat vindt u het belangrijkst?</span>
+          <div class="opts">
+            <input type="radio" name="prio" id="p1" value="budget" checked><label for="p1">Lage aankoopprijs</label>
+            <input type="radio" name="prio" id="p2" value="besparen"><label for="p2">Laag verbruik</label>
+            <input type="radio" name="prio" id="p3" value="toekomst"><label for="p3">Toekomstbestendig</label>
+          </div>
+        </div>
+      </form>
+      <div class="result" aria-live="polite">
+        <p class="label">Ons eerste advies</p>
+        <h3 id="resTitle">Condensatieketel</h3>
+        <p id="resText">Een betaalbare en zuinige keuze die past bij uw woning.</p>
+        <a href="/afspraak/" class="btn btn-copper" id="resBtn">Bespreek dit met een technicus</a>
+      </div>
+    </div>
+  </div>
+</section>

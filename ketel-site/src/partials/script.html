@@ -1,0 +1,180 @@
+  const EMAIL = '{{email}}';
+
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  const menuBtn = document.getElementById('menuBtn'), nav = document.getElementById('nav');
+  menuBtn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+  });
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', false);
+  }));
+
+  // Open of gesloten (ma–vr 8:00–18:00, Belgische tijd)
+  (function () {
+    const el = document.getElementById('status');
+    const parts = new Intl.DateTimeFormat('nl-BE', { timeZone: 'Europe/Brussels', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date());
+    const get = t => parts.find(p => p.type === t).value;
+    const day = get('weekday').replace('.', ''), h = +get('hour') + +get('minute') / 60;
+    const open = ['ma', 'di', 'wo', 'do', 'vr'].includes(day) && h >= 8 && h < 18;
+    el.classList.toggle('open', open);
+    el.querySelector('span').textContent = open ? 'Nu open – tot 18:00' : 'Nu gesloten – ma–vr 8:00–18:00';
+  })();
+
+  // Header-schaduw en zacht inschuivende blokken
+  const header = document.querySelector('header.site');
+  addEventListener('scroll', () => header.classList.toggle('scrolled', scrollY > 8), { passive: true });
+  if ('IntersectionObserver' in window) {
+    const rv = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); }
+    }), { threshold: .1 });
+    document.querySelectorAll('.rv').forEach(el => rv.observe(el));
+  } else {
+    document.querySelectorAll('.rv').forEach(el => el.classList.add('in'));
+  }
+
+  // Keuzehulp
+  const advisor = document.getElementById('advisor');
+  if (advisor) {
+  function advise() {
+    const f = new FormData(advisor), gas = f.get('gas'), iso = f.get('iso'), prio = f.get('prio');
+    let t, x, svc;
+    if (gas === 'nee' && (iso === 'goed' || prio === 'toekomst')) {
+      t = 'Warmtepomp'; x = 'Zonder aardgas en met een degelijk geïsoleerde woning is een volledige warmtepomp vaak de slimste keuze op lange termijn.'; svc = 'Advies hybride warmtepomp';
+    } else if (gas === 'nee') {
+      t = 'Condenserende mazoutketel'; x = 'Zonder aardgas en met beperkte isolatie geeft een moderne mazoutketel betrouwbare warmte met een lager verbruik dan uw oude toestel.'; svc = 'Plaatsbezoek nieuwe ketel';
+    } else if (prio === 'budget' && iso !== 'goed') {
+      t = 'Condensatieketel'; x = 'Een betaalbare en zuinige keuze. Snel geplaatst en meteen een merkbaar lager verbruik.'; svc = 'Plaatsbezoek nieuwe ketel';
+    } else {
+      t = 'Hybride warmtepomp'; x = 'De warmtepomp doet het grootste deel van het werk, de gasketel springt bij als het hard vriest. Laag verbruik en klaar voor de toekomst.'; svc = 'Advies hybride warmtepomp';
+    }
+    document.getElementById('resTitle').textContent = t;
+    document.getElementById('resText').textContent = x;
+    document.getElementById('resBtn').href = '/afspraak/?type=' + encodeURIComponent(svc);
+  }
+  advisor.addEventListener('change', advise); advise();
+  }
+
+  // Offerteformulier: verstuurd via Netlify Forms (komt als e-mail binnen).
+  const encode = obj => new URLSearchParams(obj).toString();
+  const quote = document.getElementById('quote');
+  if (quote) quote.addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target, ok = document.getElementById('formOk'), btn = form.querySelector('[type=submit]');
+    if (!form.reportValidity()) return;
+    btn.disabled = true; ok.classList.remove('show');
+    try {
+      const res = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: encode(new FormData(form)) });
+      if (!res.ok) throw new Error();
+      form.reset();
+      ok.textContent = 'Bedankt, uw aanvraag is verstuurd. We antwoorden binnen één werkdag.';
+    } catch (err) {
+      ok.textContent = 'Versturen lukte niet. Bel ons gerust op {{tel}} of mail naar ' + EMAIL + '.';
+    }
+    ok.classList.add('show'); btn.disabled = false;
+  });
+
+  // ================= Afspraken (dagdelen) =================
+  (function () {
+    const $ = id => document.getElementById(id);
+    if (!$('bkForm')) return;
+    const wanted = new URLSearchParams(location.search).get('type');
+    if (wanted && [...$('bkType').options].some(o => o.value === wanted)) $('bkType').value = wanted;
+    const PARTS = { VM: { label: 'Voormiddag', range: '8:00 – 12:00' }, NM: { label: 'Namiddag', range: '13:00 – 17:00' } };
+    const dt = s => new Date(s + 'T12:00:00');
+    const fmt = (s, o) => dt(s).toLocaleDateString('nl-BE', o || { weekday: 'long', day: 'numeric', month: 'long' });
+    const when = id => { const d = id.slice(0, 10), p = PARTS[id.slice(11, 13)]; return fmt(d) + ', ' + p.label.toLowerCase() + ' (' + p.range + ')'; };
+    let slots = [], pickDay = null, pickSlot = null, busy = false;
+
+    function msg(text, err) { const m = $('bkMsg'); m.textContent = text; m.classList.toggle('err', !!err); m.hidden = !text; }
+
+    async function load() {
+      const note = $('bkNote');
+      try {
+        const res = await fetch('/api/afspraak', { cache: 'no-store' });
+        if (!res.ok) throw new Error();
+        slots = (await res.json()).slots || [];
+        render();
+      } catch (e) {
+        note.hidden = false; $('bkSteps').hidden = true;
+        note.textContent = 'De online agenda is even niet bereikbaar. Bel ons op {{tel}}, dan plannen we samen een afspraak.';
+      }
+    }
+
+    function render() {
+      const byDay = {};
+      slots.forEach(s => { (byDay[s.date] = byDay[s.date] || []).push(s); });
+      const days = Object.keys(byDay).sort();
+      if (!$('bkDone').hidden) { $('bkSteps').hidden = true; $('bkNote').hidden = true; return; }
+      if (!days.length) {
+        $('bkNote').hidden = false; $('bkSteps').hidden = true;
+        $('bkNote').textContent = 'Er zijn op dit moment geen vrije momenten online. Bel ons op {{tel}}, dan zoeken we samen een moment.';
+        return;
+      }
+      $('bkNote').hidden = true; $('bkSteps').hidden = false;
+      if (!byDay[pickDay]) pickDay = days[0];
+      if (pickSlot && !slots.some(s => s.id === pickSlot)) pickSlot = null;
+
+      const dayBox = $('bkDays'); dayBox.textContent = '';
+      days.forEach(d => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'day'; b.setAttribute('aria-pressed', d === pickDay);
+        b.innerHTML = '<small></small><b></b><small></small><em></em>';
+        b.children[0].textContent = fmt(d, { weekday: 'short' });
+        b.children[1].textContent = dt(d).getDate();
+        b.children[2].textContent = fmt(d, { month: 'short' });
+        const ps = byDay[d].map(s => s.part);
+        b.children[3].textContent = ps.length === 2 ? 'VM + NM' : ps[0] === 'VM' ? 'voormiddag' : 'namiddag';
+        b.setAttribute('aria-label', fmt(d) + ', vrij: ' + ps.map(p => PARTS[p].label.toLowerCase()).join(' en '));
+        b.onclick = () => { pickDay = d; pickSlot = null; render(); };
+        dayBox.appendChild(b);
+      });
+
+      const box = $('bkParts'); box.textContent = '';
+      const wrap = document.createElement('div'); wrap.className = 'part';
+      ['VM', 'NM'].forEach(p => {
+        const s = byDay[pickDay].find(x => x.part === p);
+        const b = document.createElement('button');
+        b.type = 'button'; b.disabled = !s;
+        b.innerHTML = '<span></span><small></small>';
+        b.children[0].textContent = PARTS[p].label;
+        b.children[1].textContent = s ? PARTS[p].range : 'niet beschikbaar';
+        b.setAttribute('aria-pressed', !!s && s.id === pickSlot);
+        if (s) b.onclick = () => { pickSlot = s.id; render(); };
+        wrap.appendChild(b);
+      });
+      box.appendChild(wrap);
+
+      const sum = $('bkSum');
+      if (pickSlot) { sum.innerHTML = '<span class="label">Gekozen moment</span><b></b>'; sum.querySelector('b').textContent = when(pickSlot); }
+      else sum.innerHTML = '<span class="empty">Nog geen moment gekozen.</span>';
+      $('bkSubmit').disabled = !pickSlot || busy;
+    }
+
+    $('bkForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const form = e.target;
+      if (!pickSlot || busy) return;
+      if (!form.reportValidity()) return;
+      const f = Object.fromEntries(new FormData(form));
+      busy = true; render(); msg('Bezig met inplannen…');
+      try {
+        const res = await fetch('/api/afspraak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...f, slot: pickSlot }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) { msg(j.error || 'Inplannen lukte niet. Bel ons op {{tel}}.', true); if (res.status === 409) await load(); return; }
+        // Melding als e-mail naar de zaak (Netlify Forms). Mislukt dit, dan staat de afspraak toch al vast.
+        fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ 'form-name': 'afspraak', moment: when(pickSlot), type: f.type, naam: f.naam, tel: f.tel, adres: f.adres, opmerking: f.opmerking || '' }).toString() }).catch(() => {});
+        $('bkDoneWhen').textContent = when(pickSlot);
+        form.reset(); pickSlot = null; msg('');
+        $('bkSteps').hidden = true; $('bkDone').hidden = false; $('bkDone').focus();
+        load();
+      } catch (err) {
+        msg('Inplannen lukte niet. Controleer uw internetverbinding of bel ons op {{tel}}.', true);
+      } finally { busy = false; render(); }
+    });
+    $('bkAgain').onclick = () => { $('bkDone').hidden = true; render(); };
+
+    load();
+  })();

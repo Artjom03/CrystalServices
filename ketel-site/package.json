@@ -3,9 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "dev": "netlify dev --offline"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.8"
+  },
+  "devDependencies": {
+    "netlify-cli": "^27.18.0"
   }
 }

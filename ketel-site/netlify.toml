@@ -1,12 +1,23 @@
 # Netlify: kies bij het koppelen "ketel-site" als base directory.
 [build]
-  publish = "public"
+  command = "npm run build"
+  publish = "dist"
   functions = "netlify/functions"
 
+
+# Oude adressen naar de nieuwe pagina's
 [[redirects]]
   from = "/beheer"
-  to = "/beheer.html"
-  status = 200
+  to = "/beheer/"
+  status = 301
+[[redirects]]
+  from = "/beheer.html"
+  to = "/beheer/"
+  status = 301
+[[redirects]]
+  from = "/privacy.html"
+  to = "/privacy/"
+  status = 301
 
 [[headers]]
   for = "/*"
@@ -14,9 +25,20 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 [[headers]]
-  for = "/beheer.html"
+  for = "/assets/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/beheer/*"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
-    Cache-Control = "no-store"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/formulieren.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"

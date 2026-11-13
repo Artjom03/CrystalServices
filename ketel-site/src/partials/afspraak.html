@@ -1,0 +1,59 @@
+<section id="afspraak">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="label"><b>●</b> — Afspraak</p>
+        <h2>Plan zelf uw afspraak in.</h2>
+      </div>
+      <p>Kies een dag en of u ons liever in de voormiddag of de namiddag ziet komen. De dag voordien bellen we u met een preciezer uur.</p>
+    </div>
+
+    <p class="bk-note" id="bkNote">De agenda wordt geladen…</p>
+
+    <div class="bk-steps" id="bkSteps" hidden>
+      <div class="bk-pick">
+        <div>
+          <h3><span>1</span>Kies een dag</h3>
+          <div class="days" id="bkDays"></div>
+        </div>
+        <div>
+          <h3><span>2</span>Voormiddag of namiddag?</h3>
+          <div id="bkParts"><p class="empty">Kies eerst een dag.</p></div>
+        </div>
+        <ul class="bk-tips">
+          <li><b>Een preciezer uur</b>De dag voordien bellen we u met een tijdsvenster van ongeveer een uur.</li>
+          <li><b>Duur</b>Een onderhoud duurt meestal 45 minuten tot een uur.</li>
+          <li><b>Dringend?</b>Bij een storing zonder verwarming belt u best meteen: {{tel}}.</li>
+        </ul>
+      </div>
+      <form class="bk-form" id="bkForm" novalidate>
+        <h3><span>3</span>Uw gegevens</h3>
+        <label for="bkType">Waarvoor?
+          <select id="bkType" name="type"><option>Onderhoud</option><option>Plaatsbezoek nieuwe ketel</option><option>Herstelling / storing</option><option>Advies hybride warmtepomp</option></select>
+        </label>
+        <label for="bkName">Naam<input id="bkName" name="naam" required autocomplete="name"></label>
+        <label for="bkTel">Telefoon<input id="bkTel" name="tel" type="tel" required autocomplete="tel"></label>
+        <label for="bkAddr">Adres<input id="bkAddr" name="adres" required autocomplete="street-address" placeholder="Straat, nummer, gemeente"></label>
+        <label for="bkOpm">Opmerking<textarea id="bkOpm" name="opmerking" placeholder="Merk van de ketel, foutcode, …"></textarea></label>
+        <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+        <div class="bk-sum" id="bkSum"><span class="empty">Nog geen moment gekozen.</span></div>
+        <button class="btn btn-primary" type="submit" id="bkSubmit" disabled>Afspraak bevestigen</button>
+        <p class="form-note" style="margin:0">Door te bevestigen gaat u akkoord met onze <a href="/privacy.html">privacyverklaring</a>.</p>
+        <p class="bk-msg" id="bkMsg" role="status" hidden></p>
+      </form>
+    </div>
+
+    <div class="bk-done" id="bkDone" hidden tabindex="-1">
+      <p class="label"><b>✓</b> Afspraak bevestigd</p>
+      <h3 id="bkDoneWhen"></h3>
+      <p>Bedankt. De dag voordien bellen we u met een preciezer uur. Kan u toch niet? Bel ons op {{tel}}.</p>
+      <div><button class="btn btn-line" type="button" id="bkAgain">Nog een afspraak maken</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- Verborgen formulier zodat Netlify het herkent: elke nieuwe afspraak komt ook als e-mail binnen. -->
+<form name="afspraak" data-netlify="true" netlify-honeypot="website" hidden>
+  <input name="moment"><input name="type"><input name="naam"><input name="tel"><input name="adres"><textarea name="opmerking"></textarea><input name="website">
+</form>
+

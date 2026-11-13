@@ -1,0 +1,38 @@
+<section id="contact">
+  <div class="wrap contact">
+    <div class="intro">
+      <p class="label">Contact</p>
+      <h2>Vraag uw gratis offerte aan.</h2>
+      <p>We antwoorden binnen één werkdag.</p>
+      <div class="ci-list">
+        <div class="ci"><span>Telefoon</span><a href="tel:{{telLink}}">{{tel}}</a></div>
+        <div class="ci"><span>E-mail</span><a href="mailto:{{email}}">{{email}}</a></div>
+        <div class="ci"><span>Werkgebied</span><div>{{regio}}</div></div>
+        <div class="ci"><span>Bereikbaar</span><div>{{openingsuren}}{{weekend}}</div></div>
+      </div>
+      <div class="area">
+        <p class="label">Werkgebied</p>
+        <ul>
+          <li>Antwerpen</li><li>Borgerhout</li><li>Deurne</li><li>Berchem</li><li>Merksem</li><li>Wilrijk</li><li>Mortsel</li><li>Edegem</li><li>Schoten</li><li>Wijnegem</li><li>Kontich</li><li>Brasschaat</li>
+        </ul>
+      </div>
+    </div>
+    <form class="rv quote" id="quote" name="offerte" method="POST" data-netlify="true" netlify-honeypot="website">
+      <input type="hidden" name="form-name" value="offerte">
+      <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+      <label>Naam<input name="naam" required autocomplete="name"></label>
+      <label>Telefoon<input name="tel" type="tel" required autocomplete="tel"></label>
+      <label class="full">E-mail<input name="email" type="email" autocomplete="email"></label>
+      <label>Waarvoor?
+        <select name="dienst" id="dienst">
+          <option>Offerte nieuwe ketel</option><option>Onderhoud</option><option>Herstelling / storing</option><option>Advies hybride warmtepomp</option>
+        </select>
+      </label>
+      <label>Postcode<input name="postcode" inputmode="numeric" autocomplete="postal-code"></label>
+      <label class="full">Bericht<textarea name="bericht" placeholder="Bijvoorbeeld: merk en leeftijd van uw huidige ketel, wat er mis is…"></textarea></label>
+      <div class="full"><button class="btn btn-primary" type="submit">Aanvraag versturen</button></div>
+      <p class="form-ok" id="formOk" role="status"></p>
+      <p class="note full" style="margin:0">Uw gegevens worden enkel gebruikt om uw aanvraag te beantwoorden. Meer in onze <a href="/privacy.html">privacyverklaring</a>.</p>
+    </form>
+  </div>
+</section>

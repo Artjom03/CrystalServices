@@ -1,38 +1,41 @@
-# Haard & Ketel – website
+# Haard & Ketel – website en planning-app
 
-Statische website met een online afsprakenagenda (voormiddag / namiddag) en een beheerpagina.
+## Wat aanpassen?
 
-```
-public/            de website (index.html, beheer.html, privacy.html)
-netlify/functions/ afspraak.mjs (publieke agenda) en beheer.mjs (beheer, met wachtwoord)
-lib/agenda.mjs     de agendalogica (getest in test/)
-```
+| Wat | Bestand |
+|---|---|
+| Bedrijfsnaam, telefoon, e-mail, adres, btw, domein, werkgebied, reviews | `src/site.config.mjs` |
+| Merken (eigen pagina of alleen in de lijst) | `src/merken.mjs` |
+| Teksten van de pagina's | `src/pages.mjs` |
 
-## Online zetten op Netlify
+Zolang er nog voorbeeldgegevens (`voorbeeld`, `0000`) in `src/site.config.mjs` staan, krijgt elke
+pagina `noindex` en wordt er geen sitemap gemaakt. Zo komt er niets onjuists in Google.
 
-1. Netlify → **Add new project** → **Import an existing project** → kies deze GitHub-repository.
-2. Zet **Base directory** op `ketel-site`. De rest staat al in `netlify.toml`.
-3. **Project configuration → Environment variables**: voeg `BEHEER_WACHTWOORD` toe
-   (minstens 8 tekens, scope *Functions*). Daarna opnieuw deployen.
-4. **Forms → Form notifications**: voeg een e-mailmelding toe voor de formulieren
-   `afspraak` (elke nieuwe afspraak) en `offerte` (offerte-aanvragen).
-5. Optioneel: koppel een eigen domeinnaam onder **Domain management**.
+## De planning-app (`/beheer/`)
 
-## Gebruik
+- **Planning**: per dag, per week of alles. Bellen, route, wijzigen, verplaatsen, afgewerkt.
+- **+ Klant inplannen**: zelf een klant inplannen, ook in een gesloten of vol dagdeel.
+- **Klanten**: zoeken, opnieuw inplannen, filter "onderhoud langer dan 1 jaar geleden".
+- **Vrije momenten**: kiezen welke voor- en namiddagen klanten online kunnen boeken.
+- **Gsm-agenda**: een abonnementslink voor Google Agenda of de iPhone-agenda.
+- Installeerbaar als app: Android "App installeren", iPhone "Zet op beginscherm".
 
-- Beheer: ga naar `/beheer` en meld je aan met het wachtwoord.
-  - **Agenda**: alle afspraken per dag, met adres (route), telefoon en opmerking.
-  - **Beschikbaarheid**: zet per dag de voormiddag en namiddag open en kies hoeveel afspraken erin passen.
-- Klanten zien op de website alleen open dagdelen met nog vrije plaatsen.
+## Online zetten (Netlify)
 
-## Nog aan te passen
+1. Netlify → Add new project → Import from GitHub → deze repository, **Base directory** `ketel-site`.
+2. Environment variables → `BEHEER_WACHTWOORD` (minstens 8 tekens) → opnieuw deployen.
+3. Forms → zet formulierdetectie aan en voeg e-mailmeldingen toe voor `afspraak` en `offerte`.
+4. Eigen domein: Domain management, en vul `domein` in `src/site.config.mjs` in.
+5. Echte gegevens ingevuld? Dien `https://jouwdomein/sitemap.xml` in bij Google Search Console
+   en maak een Google-bedrijfsprofiel aan met dezelfde naam, telefoon en adres.
 
-Bedrijfsnaam, telefoonnummer, e-mailadres, btw-nummer, reviews en de gegevens in `privacy.html`
-zijn nog voorbeelden.
-
-## Testen
+## Voor ontwikkelaars
 
 ```bash
 npm install
-npm test
+npm test          # agendalogica + SEO-controle van de gebouwde site
+npm run build     # bouwt naar dist/
 ```
+
+Structuur: `build.mjs` (bouwt de site), `src/` (inhoud en opmaak), `src/static/` (lettertypes,
+iconen, beheer-app), `lib/agenda.mjs` (agenda), `netlify/functions/` (API).
