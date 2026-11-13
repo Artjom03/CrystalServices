@@ -11,6 +11,10 @@ import { pasToe, voorWinkel, teBewaren, Fout, LEEG, klantSleutel } from './app/l
 import { leesAgenda, komendeAfspraken, agendaAdres } from './app/lib/agenda.js';
 import { geblokkeerdTot, noteerFout, blokTekst } from './app/lib/slot.js';
 
+// Belgische notatie in het programma: datums als dag/maand/jaar (bv. 13/11/2026),
+// ook als Windows in het Engels staat.
+app.commandLine.appendSwitch('lang', 'nl-BE');
+
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIEK = path.join(HIER, 'app', 'public');
 const DATA = () => path.join(app.getPath('userData'), 'bonnen.json');
