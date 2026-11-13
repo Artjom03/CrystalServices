@@ -628,7 +628,8 @@ fieldset.kies-datum legend::after { content: ' — kies een datum'; color: #b07d
 .ag-balk select { width: auto; flex: 0 0 auto; } .ag-balk .knop { flex: 0 0 auto; }
 .ag-kop { font-size: 1.15rem; margin: 18px 0 4px; border-top: 1px solid #e3e6ee; padding-top: 12px; }
 #ag-leveringen .ag-kop { border-top: 0; padding-top: 0; margin-top: 4px; }
-.f-levering { margin-top: 10px; display: block; }
+.f-levering, .f-binnen { margin-top: 10px; display: block; }
+.f-binnen { margin: 0 0 12px; }
 .f-levering input { width: 100%; }
 .herinnering { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .herinnering button { border: 1px solid #f0b429; background: #fff8e6; color: #7a4b00; border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 600; cursor: pointer; }

@@ -869,7 +869,7 @@
         ${portaalBlok(b, nieuwePin)}
       </div>`}
       <div class="d-blok tijdlijn">
-        Binnen: ${esc(mooiDatum(b.binnenOp, true))}
+        Binnen: ${esc(mooiDatum(b.binnenOp, !b.binnenGekozen))}
         ${b.klaarOp ? '<br>Klaar: ' + esc(mooiDatum(b.klaarOp, true)) : ''}
         ${b.verwittigdOp ? '<br>Verwittigd: ' + esc(mooiDatum(b.verwittigdOp, true)) : ''}
         ${b.opgehaaldOp ? '<br>Opgehaald: ' + esc(mooiDatum(b.opgehaaldOp, true)) : ''}
@@ -1297,7 +1297,7 @@
         <table class="pr-info">
           <tr><th>Klant</th><td><b>${esc(b.klant.naam)}</b></td></tr>
           ${b.vliegtuig ? `<tr><th>Vliegtuig</th><td><b>${esc(b.vliegtuig)}</b></td></tr>` : ''}
-          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, true))}</td></tr>
+          <tr><th>Binnen</th><td>${esc(mooiDatum(b.binnenOp, !b.binnenGekozen))}</td></tr>
           <tr class="pr-klaar-rij"><th>Klaar</th><td><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'wij laten het u weten'}</b></td></tr>
           ${lijst}
         </table>
@@ -1394,7 +1394,7 @@
       <div class="a4-vakken">
         <div class="a4-vak"><h4>Klant</h4><b>${esc(k.naam)}</b>${k.telefoon ? '<br>' + esc(k.telefoon) : ''}${k.email ? '<br>' + esc(k.email) : ''}</div>
         ${b.vliegtuig ? `<div class="a4-vak a4-vliegtuig"><h4>✈ Vliegtuig</h4><b>${esc(b.vliegtuig)}</b></div>` : ''}
-        <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, true))}</div>
+        <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, !b.binnenGekozen))}</div>
         ${afhaal
           ? `<div class="a4-vak"><h4>Opgehaald</h4>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</div>`
           : `<div class="a4-vak a4-accent"><h4>Klaar vanaf</h4><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'Wij laten het u weten'}</b></div>`}
@@ -1488,7 +1488,7 @@
       <div class="a4-vakken">
         <div class="a4-vak"><h4>Klant</h4><b>${esc(k.naam)}</b>${k.adres ? '<br>' + esc(k.adres) : ''}${k.btw ? '<br>' + esc(k.btw) : ''}</div>
         ${b.vliegtuig ? `<div class="a4-vak a4-vliegtuig"><h4>✈ Vliegtuig</h4><b>${esc(b.vliegtuig)}</b></div>` : ''}
-        <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, true))}</div>
+        <div class="a4-vak"><h4>Binnengebracht</h4>${esc(mooiDatum(b.binnenOp, !b.binnenGekozen))}</div>
         ${afhaal
           ? `<div class="a4-vak"><h4>Opgehaald</h4>${esc(mooiDatum(b.opgehaaldOp || new Date().toISOString(), true))}</div>`
           : `<div class="a4-vak a4-accent"><h4>Klaar vanaf</h4><b>${b.klaarTegen ? esc(mooiDatum(b.klaarTegen)) : 'Wij laten het u weten'}</b></div>`}
@@ -2072,6 +2072,8 @@
     if (klant) vulKlant(klant);
     // Bij een nieuwe bon kiest de winkel zelf de ophaaldatum (geen automatische datum meer).
     f.klaarTegen.value = b ? b.klaarTegen : '';
+    f.binnenDatum.max = vandaagIso();
+    f.binnenDatum.value = b ? dagVan(b.binnenOp) : vandaagIso();
     f.klaarTegen.closest('fieldset').classList.remove('kies-datum');
     fTickets = b ? (ticketsVan(b).length ? ticketsVan(b).map((t) => t.locatie) : [b.locatie || '']) : [''];
     toonFormTickets();
@@ -2149,6 +2151,7 @@
       soorten: [...soorten],
       stukken,
       klaarTegen: f.klaarTegen.value,
+      binnenDatum: f.binnenDatum.value,
       tickets: fTickets.map((locatie) => ({ locatie })),
       betaald: f.betaald.checked,
       betaalwijze: f.betaalwijze.value,

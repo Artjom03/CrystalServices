@@ -514,3 +514,16 @@ test('partnerprijs, partners in instellingen, factuur betaald', async () => {
   staat = pasToe(staat, { op: 'factuurVraag', id, gegevens: { naam: 'X bv' } }).staat;
   assert.ok(staat.bonnen[0].factuur.betaaldOp, 'betaald blijft na aanpassen gegevens');
 });
+
+test('datum van binnenbrengen kiezen', () => {
+  let { staat, bon } = nieuw(LEEG, { klant: { naam: 'Jan' }, binnenDatum: '2026-01-02' });
+  assert.equal(bon.binnenOp.slice(0, 10), '2026-01-02');
+  // Wijzigen naar een andere dag.
+  ({ staat, bon } = pasToe(staat, { op: 'wijzig', id: bon.id, bon: { binnenDatum: '2026-01-01' } }, nu));
+  assert.equal(bon.binnenOp.slice(0, 10), '2026-01-01');
+  // Geen datum gekozen: het tijdstip van nu.
+  ({ bon } = nieuw(staat, { klant: { naam: 'Piet' } }));
+  assert.equal(bon.binnenOp, nu.toISOString());
+  // Toekomst kan niet.
+  assert.throws(() => nieuw(staat, { klant: { naam: 'Toekomst' }, binnenDatum: '2999-01-01' }), /toekomst/);
+});
