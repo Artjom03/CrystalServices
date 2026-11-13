@@ -3,31 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Google-tag. Standaard staat meten met cookies UIT; pas na "Akkoord"
-     in de cookiemelding wordt het aangezet (Google Consent Mode v2). -->
+<!-- Google-tag. Zonder "Akkoord" in de cookiemelding wordt Google niet geladen
+     en wordt er niets naar Google gestuurd (Google Consent Mode v2). -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied', wait_for_update:500});
+  // Google wordt pas geladen na "Akkoord" in de cookiemelding.
+  window.csLaadGoogle = function () {
+    if (window.csGoogleGeladen) return;
+    window.csGoogleGeladen = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN';
+    document.head.appendChild(s);
+  };
   try {
     if (localStorage.getItem('cs-cookies') === 'ja') {
       gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+      window.csLaadGoogle();
     }
   } catch (e) {}
   gtag('js', new Date());
   gtag('config', 'G-FZ10NJFRPN');
 </script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN"></script>
 <title>Wasserij &amp; droogkuis in Antwerpen (Borgerhout) | Crystal Services</title>
 <meta name="description" content="Wasserij en droogkuis in Borgerhout, Antwerpen. Droogkuis, wetcleaning, was- en strijkservice, handtassen en leer. Dienstencheques welkom.">
-<link rel="canonical" href="https://crystal-services.be/">
+<link rel="canonical" href="https://www.crystal-services.be/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Crystal Services">
 <meta property="og:locale" content="nl_BE">
-<meta property="og:url" content="https://crystal-services.be/">
+<meta property="og:url" content="https://www.crystal-services.be/">
 <meta property="og:title" content="Wasserij &amp; droogkuis in Antwerpen (Borgerhout) | Crystal Services">
 <meta property="og:description" content="Wasserij en droogkuis in Borgerhout, Antwerpen. Droogkuis, wetcleaning, was- en strijkservice, handtassen en leer. Dienstencheques welkom.">
-<meta property="og:image" content="https://crystal-services.be/images/deelbeeld.jpg">
+<meta property="og:image" content="https://www.crystal-services.be/images/deelbeeld.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -37,9 +46,9 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="keywords" content="wasserij Antwerpen, droogkuis Antwerpen, wetcleaning Antwerpen, droogkuis Borgerhout, strijkservice Antwerpen, wasserij Deurne, wasserij Berchem, wasserij Merksem, handtassen reinigen, leren kledij reinigen, dienstencheques strijken">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/fraunces-latin-39ce20.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/work-sans-latin-f7b83d.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root{
     --bg:#F6F4EF;
@@ -318,6 +327,10 @@
   .map-frame{
     border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:340px;
   }
+  .kaart-dicht{height:100%;min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;background:var(--white);color:var(--ink-soft);}
+  .kaart-dicht p{margin:0;color:var(--ink);}
+  .kaart-dicht a{color:var(--gold-deep);font-weight:600;}
+  .kaart-dicht small{font-size:.78rem;max-width:34ch;}
   .map-frame iframe{width:100%;height:100%;min-height:340px;border:0;display:block;}
 
   /* ---------- Footer ---------- */
@@ -554,10 +567,10 @@
   "@context": "https://schema.org",
   "@type": "LaundryOrDryCleaning",
   "name": "Crystal Services",
-  "@id": "https://crystal-services.be",
-  "url": "https://crystal-services.be",
-  "image": "https://crystal-services.be/images/deelbeeld.jpg",
-  "logo": "https://crystal-services.be/images/logo.webp",
+  "@id": "https://www.crystal-services.be",
+  "url": "https://www.crystal-services.be",
+  "image": "https://www.crystal-services.be/images/deelbeeld.jpg",
+  "logo": "https://www.crystal-services.be/images/logo.webp",
   "hasMap": "https://www.google.com/maps/search/?api=1&query=Lodewijk+van+Berckenlaan+189+2140+Borgerhout",
   "description": "Wasserij en droogkuis in Borgerhout, Antwerpen: droogkuis, wetcleaning, was- en strijkservice, handtassen en leren kledij.",
   "telephone": "+32494403841",
@@ -899,7 +912,12 @@
           </div>
         </div>
         <div class="map-frame reveal">
-          <iframe src="https://www.google.com/maps?q=Lodewijk+van+Berckenlaan+189,+2140+Borgerhout&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Kaart Crystal Services"></iframe>
+          <div class="kaart-dicht">
+            <p><b>Lodewijk van Berckenlaan 189</b><br>2140 Borgerhout (Antwerpen)</p>
+            <button type="button" class="btn btn-ghost" data-kaart>Kaart tonen</button>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query=Lodewijk+van+Berckenlaan+189+2140+Borgerhout" target="_blank" rel="noopener">Openen in Google Maps</a>
+            <small>De kaart komt van Google. Pas als u op "Kaart tonen" klikt, wordt ze geladen.</small>
+          </div>
         </div>
       </div>
     </div>
@@ -936,7 +954,7 @@
   </div>
   <div class="wrap footer-bottom">
     <span>© 2026 Crystal Services. Alle rechten voorbehouden.</span>
-    <a href="#">Cookies</a>
+    <span><a href="/privacy">Privacy &amp; cookies</a> · <a href="/algemene-voorwaarden">Algemene voorwaarden</a> · <a href="#" data-cookies>Cookie-instellingen</a></span>
   </div>
 </footer>
 
@@ -1043,7 +1061,7 @@
   }
 </style>
 <div id="cs-cookies" role="dialog" aria-label="Cookies" hidden>
-  <p>Mogen wij met cookies meten hoe bezoekers onze website vinden? Zo zien wij welke advertenties werken. Wij gebruiken hiervoor Google Analytics.</p>
+  <p>Mogen wij cookies van Google (Analytics en Ads) gebruiken om te meten hoe bezoekers onze website vinden en welke advertenties werken? Weigert u, dan wordt er niets naar Google gestuurd. <a href="/privacy" style="color:var(--gold-deep);font-weight:600;">Meer info</a></p>
   <div class="cs-cookies-knoppen">
     <button type="button" class="nee">Weigeren</button>
     <button type="button" class="ja">Akkoord</button>
@@ -1057,9 +1075,21 @@
     if (!keuze) { box.hidden = false; document.body.classList.add('cs-cookies-open'); }
     function kies(ja){
       try { localStorage.setItem('cs-cookies', ja ? 'ja' : 'nee'); } catch (e) {}
-      if (ja) gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+      if (ja) {
+        gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+        window.csLaadGoogle();
+      } else {
+        gtag('consent', 'update', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied'});
+      }
       box.hidden = true; document.body.classList.remove('cs-cookies-open');
     }
+    // "Cookie-instellingen" onderaan de pagina: de keuze opnieuw maken (of intrekken).
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('[data-cookies]');
+      if (!a) return;
+      e.preventDefault();
+      box.hidden = false; document.body.classList.add('cs-cookies-open');
+    });
     box.querySelector('.ja').addEventListener('click', function(){ kies(true); });
     box.querySelector('.nee').addEventListener('click', function(){ kies(false); });
 
@@ -1071,5 +1101,14 @@
   })();
 </script>
 <script src="/sluiting.js" defer></script>
+<script>
+  // De Google-kaart pas laden als de bezoeker erom vraagt.
+  document.addEventListener('click', function(e){
+    var knop = e.target.closest && e.target.closest('[data-kaart]');
+    if (!knop) return;
+    var vak = knop.closest('.map-frame');
+    vak.innerHTML = '<iframe src="https://www.google.com/maps?q=Lodewijk+van+Berckenlaan+189,+2140+Borgerhout&output=embed" referrerpolicy="no-referrer-when-downgrade" title="Kaart Crystal Services" allowfullscreen></iframe>';
+  });
+</script>
 </body>
 </html>

@@ -3,31 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Google-tag. Standaard staat meten met cookies UIT; pas na "Akkoord"
-     in de cookiemelding wordt het aangezet (Google Consent Mode v2). -->
+<!-- Google-tag. Zonder "Akkoord" in de cookiemelding wordt Google niet geladen
+     en wordt er niets naar Google gestuurd (Google Consent Mode v2). -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('consent', 'default', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied', wait_for_update:500});
+  // Google wordt pas geladen na "Akkoord" in de cookiemelding.
+  window.csLaadGoogle = function () {
+    if (window.csGoogleGeladen) return;
+    window.csGoogleGeladen = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN';
+    document.head.appendChild(s);
+  };
   try {
     if (localStorage.getItem('cs-cookies') === 'ja') {
       gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+      window.csLaadGoogle();
     }
   } catch (e) {}
   gtag('js', new Date());
   gtag('config', 'G-FZ10NJFRPN');
 </script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FZ10NJFRPN"></script>
 <title>Wasserij voor bedrijven in Antwerpen | Crystal Services</title>
 <meta name="description" content="Linnen en bedrijfskleding voor horeca, kapsalons, B&amp;B's en praktijken in Antwerpen. Vaste ophaal- en brengdagen, vaste kwaliteit. Vraag een offerte.">
-<link rel="canonical" href="https://crystal-services.be/zakelijk">
+<link rel="canonical" href="https://www.crystal-services.be/zakelijk">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Crystal Services">
 <meta property="og:locale" content="nl_BE">
-<meta property="og:url" content="https://crystal-services.be/zakelijk">
+<meta property="og:url" content="https://www.crystal-services.be/zakelijk">
 <meta property="og:title" content="Wasserij voor bedrijven in Antwerpen | Crystal Services">
 <meta property="og:description" content="Linnen en bedrijfskleding voor horeca, kapsalons, B&amp;B's en praktijken in Antwerpen. Vaste ophaal- en brengdagen, vaste kwaliteit. Vraag een offerte.">
-<meta property="og:image" content="https://crystal-services.be/images/deelbeeld.jpg">
+<meta property="og:image" content="https://www.crystal-services.be/images/deelbeeld.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -36,9 +45,9 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/fraunces-latin-39ce20.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/work-sans-latin-f7b83d.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root{
     --bg:#F6F4EF;
@@ -569,13 +578,13 @@
       "@type": "ListItem",
       "position": 1,
       "name": "Home",
-      "item": "https://crystal-services.be/"
+      "item": "https://www.crystal-services.be/"
     },
     {
       "@type": "ListItem",
       "position": 2,
       "name": "Zakelijke klanten",
-      "item": "https://crystal-services.be/zakelijk"
+      "item": "https://www.crystal-services.be/zakelijk"
     }
   ]
 }
@@ -586,10 +595,10 @@
   "@type": "Service",
   "name": "Wasserij voor bedrijven",
   "serviceType": "Linnen en bedrijfskleding wassen en strijken",
-  "url": "https://crystal-services.be/zakelijk",
+  "url": "https://www.crystal-services.be/zakelijk",
   "provider": {
     "@type": "LaundryOrDryCleaning",
-    "@id": "https://crystal-services.be",
+    "@id": "https://www.crystal-services.be",
     "name": "Crystal Services",
     "address": {
       "@type": "PostalAddress",
@@ -815,7 +824,7 @@
   </div>
   <div class="wrap footer-bottom">
     <span>© 2026 Crystal Services. Alle rechten voorbehouden.</span>
-    <a href="#">Cookies</a>
+    <span><a href="/privacy">Privacy &amp; cookies</a> · <a href="/algemene-voorwaarden">Algemene voorwaarden</a> · <a href="#" data-cookies>Cookie-instellingen</a></span>
   </div>
 </footer>
 
@@ -906,7 +915,7 @@
   }
 </style>
 <div id="cs-cookies" role="dialog" aria-label="Cookies" hidden>
-  <p>Mogen wij met cookies meten hoe bezoekers onze website vinden? Zo zien wij welke advertenties werken. Wij gebruiken hiervoor Google Analytics.</p>
+  <p>Mogen wij cookies van Google (Analytics en Ads) gebruiken om te meten hoe bezoekers onze website vinden en welke advertenties werken? Weigert u, dan wordt er niets naar Google gestuurd. <a href="/privacy" style="color:var(--gold-deep);font-weight:600;">Meer info</a></p>
   <div class="cs-cookies-knoppen">
     <button type="button" class="nee">Weigeren</button>
     <button type="button" class="ja">Akkoord</button>
@@ -920,9 +929,21 @@
     if (!keuze) { box.hidden = false; document.body.classList.add('cs-cookies-open'); }
     function kies(ja){
       try { localStorage.setItem('cs-cookies', ja ? 'ja' : 'nee'); } catch (e) {}
-      if (ja) gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+      if (ja) {
+        gtag('consent', 'update', {ad_storage:'granted', ad_user_data:'granted', ad_personalization:'granted', analytics_storage:'granted'});
+        window.csLaadGoogle();
+      } else {
+        gtag('consent', 'update', {ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'denied'});
+      }
       box.hidden = true; document.body.classList.remove('cs-cookies-open');
     }
+    // "Cookie-instellingen" onderaan de pagina: de keuze opnieuw maken (of intrekken).
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('[data-cookies]');
+      if (!a) return;
+      e.preventDefault();
+      box.hidden = false; document.body.classList.add('cs-cookies-open');
+    });
     box.querySelector('.ja').addEventListener('click', function(){ kies(true); });
     box.querySelector('.nee').addEventListener('click', function(){ kies(false); });
 
