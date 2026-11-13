@@ -11,15 +11,16 @@
     nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', false);
   }));
 
-  // Open of gesloten (ma–vr 8:00–18:00, Belgische tijd)
+  // Open of gesloten (uren uit site.config.mjs, Belgische tijd)
   (function () {
     const el = document.getElementById('status');
-    const parts = new Intl.DateTimeFormat('nl-BE', { timeZone: 'Europe/Brussels', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date());
+    const U = {{urenJson}};
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Brussels', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
     const get = t => parts.find(p => p.type === t).value;
-    const day = get('weekday').replace('.', ''), h = +get('hour') + +get('minute') / 60;
-    const open = ['ma', 'di', 'wo', 'do', 'vr'].includes(day) && h >= 8 && h < 18;
+    const day = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(get('weekday')) + 1, now = get('hour') + ':' + get('minute');
+    const open = U.dagen.includes(day) && now >= U.van && now < U.tot;
     el.classList.toggle('open', open);
-    el.querySelector('span').textContent = open ? 'Nu open – tot 18:00' : 'Nu gesloten – ma–vr 8:00–18:00';
+    el.querySelector('span').textContent = open ? 'Nu open – tot ' + U.tot.replace(/^0/, '') : 'Nu gesloten – {{openingsuren}}';
   })();
 
   // Header-schaduw en zacht inschuivende blokken

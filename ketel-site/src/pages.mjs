@@ -6,6 +6,8 @@ import { esc, pageHero, faqBlock, ctaBand, baseUrl } from './layout.mjs';
 
 const part = name => readFileSync(new URL(`./partials/${name}.html`, import.meta.url), 'utf8');
 const plaats = site.gemeente;
+const eigenNamen = eigenMerken.map(m => m.kort || m.naam);
+const lijst = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' en ' + a[a.length - 1] : a.join('');
 const service = (name, description, path) => ({
   '@type': 'Service', name, description, serviceType: name, url: baseUrl() + path,
   provider: { '@id': baseUrl() + '/#bedrijf' }, areaServed: site.werkgebied.map(n => ({ '@type': 'City', name: n })),
@@ -19,7 +21,7 @@ const merkLinks = () => `<div class="brand-grid">${eigenMerken.map(m => `<a clas
 const homeFaq = [
   ['Hoe lang gaat een verwarmingsketel mee?', 'Een goed onderhouden ketel gaat gemiddeld 15 tot 20 jaar mee. Is uw ketel ouder, dan levert vervangen vaak een merkbare besparing op.'],
   ['Hoe vaak moet mijn ketel onderhouden worden?', 'In Vlaanderen moet een gasketel minstens om de twee jaar en een mazoutketel elk jaar onderhouden worden door een erkend technicus. U krijgt daarbij een verbrandingsattest.'],
-  ['Welke merken onderhouden jullie?', `Onder meer Vaillant, Remeha, ACV en Junkers (nu Bosch), en ook ${andereMerken.slice(0, 5).join(', ')} en andere gangbare merken.`],
+  ['Welke merken onderhouden jullie?', `Onder meer ${lijst(eigenMerken.map(m => m.naam))}, en ook ${andereMerken.slice(0, 5).join(', ')} en andere gangbare merken.`],
   ['Kan ik online een afspraak maken?', 'Ja. Kies op de afsprakenpagina een dag en een voormiddag of namiddag. De dag voordien bellen we u met een preciezer uur.'],
   ['Wat moet ik doen bij een gasgeur?', 'Draai de gaskraan dicht, gebruik geen schakelaars of open vuur, verlucht en verlaat de woning. Bel daarna de noodlijn van uw netbeheerder of 112.'],
 ];
@@ -116,13 +118,13 @@ ${ctaBand('Onderhoud inplannen', 'Kies zelf een dag en een voormiddag of namidda
 const herstellingFaq = [
   ['Hoe snel komen jullie bij een storing?', 'Zo snel mogelijk. Bij een ketel zonder verwarming in de winter proberen we dezelfde of de volgende dag langs te komen. Bel ons daarvoor best rechtstreeks.'],
   ['Mag ik mijn ketel zelf resetten?', 'Eén keer resetten volgens de handleiding mag. Valt de ketel opnieuw uit, reset dan niet steeds opnieuw: er is dan een oorzaak die een technicus moet bekijken.'],
-  ['Herstellen jullie alle merken?', 'We herstellen de gangbare merken, zoals Vaillant, Remeha, ACV, Junkers (Bosch), Bulex en Viessmann. Geef het merk en de foutcode door, dan nemen we het juiste onderdeel mee.'],
+  ['Herstellen jullie alle merken?', `We herstellen de gangbare merken, zoals ${lijst([...eigenMerken.map(m => m.naam), ...andereMerken.slice(0, 2)])}. Geef het merk en de foutcode door, dan nemen we het juiste onderdeel mee.`],
   ['Is herstellen nog de moeite bij een oude ketel?', 'Dat bekijken we samen. Is de herstelling duur en de ketel ouder dan 15 à 20 jaar, dan zeggen we eerlijk of vervangen verstandiger is.'],
 ];
 const herstelling = {
   path: '/ketel-herstelling/',
   title: `Ketel herstelling en storing ${plaats} | ${site.naam}`,
-  description: `Ketel in storing, geen warm water of verwarming in ${site.regio}? Snelle herstelling van Vaillant, Remeha, ACV, Junkers en andere merken. Bel ${site.telefoon}.`,
+  description: `Ketel in storing, geen warm water of verwarming in ${site.regio}? Herstelling van ${eigenNamen.join(', ')} en andere merken. Bel ${site.telefoon}.`,
   faq: herstellingFaq,
   breadcrumbs: [['/ketel-herstelling/', 'Herstelling']],
   schema: [service('Herstelling verwarmingsketel', 'Herstelling van verwarmingsketels bij storing of panne.', '/ketel-herstelling/')],
@@ -209,8 +211,8 @@ ${ctaBand('Gratis plaatsbezoek aanvragen', 'Kies een moment voor het plaatsbezoe
 // ---------------------------------------------------------------- Merken
 const merken = {
   path: '/merken/',
-  title: `Vaillant, Remeha, ACV, Junkers en meer | ${site.naam}`,
-  description: `Wij onderhouden en herstellen ketels van Vaillant, Remeha, ACV, Junkers (Bosch), ${andereMerken.slice(0, 4).join(', ')} en andere merken in ${site.regio}.`,
+  title: `${eigenNamen.slice(0, 4).join(', ')} en meer | ${site.naam}`,
+  description: `Wij onderhouden en herstellen ketels van ${[...eigenMerken.map(m => m.naam), ...andereMerken.slice(0, 4)].join(', ')} en andere merken in ${site.regio}.`,
   breadcrumbs: [['/merken/', 'Merken']],
   body: `${pageHero({ crumbs: [['/merken/', 'Merken']], label: 'Merken', h1: 'Merken die wij onderhouden en herstellen', lead: 'We werken aan alle gangbare merken van gas- en mazoutketels. Kies uw merk voor meer uitleg.' })}
 

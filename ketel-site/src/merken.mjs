@@ -14,20 +14,20 @@ export const eigenMerken = [
   },
   {
     slug: 'remeha', naam: 'Remeha',
-    intro: 'Remeha is marktleider in Nederland en België en staat bekend om betrouwbare condensatieketels. Wij onderhouden en herstellen Remeha-ketels in woningen en kleinere gebouwen.',
+    intro: 'Remeha is een van de marktleiders in Nederland en België en staat bekend om betrouwbare condensatieketels. Wij onderhouden en herstellen Remeha-ketels in woningen en kleinere gebouwen.',
     groep: 'Remeha hoort bij de BDR Thermea Group, net als De Dietrich.',
     tip: 'Remeha-ketels tonen op het display een code bij een storing. Geef die code door bij het maken van de afspraak, dat spaart tijd.',
   },
   {
     slug: 'acv', naam: 'ACV',
-    intro: 'ACV is bekend van ketels met een ingebouwde warmwaterboiler, zoals de HeatMaster en de Prestige. Ze zijn wat anders opgebouwd dan een gewone combiketel. Wij kennen die toestellen en onderhouden en herstellen ze.',
-    groep: 'Bij een ACV met boiler-in-boiler kijken we tijdens het onderhoud ook het warmwatergedeelte na.',
+    intro: 'ACV is onder meer bekend van de HeatMaster, een ketel en warmwaterboiler in één toestel, en van de Prestige-ketels. Wij kennen die toestellen en onderhouden en herstellen ze.',
+    groep: 'Bij een ACV HeatMaster kijken we tijdens het onderhoud ook het warmwatergedeelte na.',
     tip: 'Heeft u een ACV HeatMaster of Prestige? Vermeld het type bij uw afspraak, dan plannen we de juiste tijd in.',
   },
   {
     slug: 'junkers-bosch', naam: 'Junkers (Bosch)', kort: 'Junkers',
     intro: 'Junkers heet in België sinds 2018 officieel Bosch. Veel woningen hebben nog een Junkers-ketel of -geiser hangen. Wij onderhouden en herstellen zowel oudere Junkers-toestellen als de nieuwere Bosch-ketels.',
-    groep: 'Junkers en Buderus horen allebei bij Bosch. Ook Buderus-ketels kunnen we onderhouden.',
+    groep: 'Wij onderhouden ook ketels van verwante merken, zoals Buderus.',
     tip: 'Op oudere Junkers-toestellen staat het type op een plaatje onderaan of achter het frontpaneel. Een foto daarvan helpt ons al veel.',
   },
 ];

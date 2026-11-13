@@ -1,5 +1,6 @@
 // Gedeelde opmaak: <head> met SEO-gegevens, kop, voet en gestructureerde gegevens (JSON-LD).
 import { site, isVoorbeeld } from './site.config.mjs';
+import { eigenMerken } from './merken.mjs';
 
 export const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -7,7 +8,7 @@ export const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&l
 export function fill(html) {
   const v = {
     naam: esc(site.naam), tel: esc(site.telefoon), telLink: esc(site.telefoonLink), email: esc(site.email),
-    regio: esc(site.regio), weekend: site.weekendStoringen ? '<br>Storingen ook in het weekend' : '', btw: esc(site.btw), gemeente: esc(site.gemeente), openingsuren: esc(site.openingsuren),
+    regio: esc(site.regio), urenJson: JSON.stringify(site.uren), weekend: site.weekendStoringen ? '<br>Storingen ook in het weekend' : '', btw: esc(site.btw), gemeente: esc(site.gemeente), openingsuren: esc(site.openingsuren),
   };
   return html.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in v ? v[k] : m));
 }
@@ -61,7 +62,7 @@ function footer() {
         <p>Plaatsing, onderhoud en herstelling van verwarmingsketels in {{regio}}. Erkend technicus gas en mazout.</p>
       </div>
       <div><h4>Diensten</h4><ul><li><a href="/ketel-onderhoud/">Ketel onderhoud</a></li><li><a href="/ketel-herstelling/">Herstelling &amp; storing</a></li><li><a href="/ketel-vervangen/">Nieuwe ketel plaatsen</a></li><li><a href="/afspraak/">Afspraak maken</a></li></ul></div>
-      <div><h4>Merken</h4><ul><li><a href="/merken/vaillant/">Vaillant</a></li><li><a href="/merken/remeha/">Remeha</a></li><li><a href="/merken/acv/">ACV</a></li><li><a href="/merken/junkers-bosch/">Junkers (Bosch)</a></li><li><a href="/merken/">Alle merken</a></li></ul></div>
+      <div><h4>Merken</h4><ul>${eigenMerken.map(m => `<li><a href="/merken/${m.slug}/">${esc(m.naam)}</a></li>`).join('')}<li><a href="/merken/">Alle merken</a></li></ul></div>
       <div><h4>Contact</h4><ul><li><a href="tel:{{telLink}}">{{tel}}</a></li><li><a href="mailto:{{email}}">{{email}}</a></li><li>{{openingsuren}}</li><li>BTW {{btw}}</li><li><a href="/privacy/">Privacyverklaring</a></li></ul></div>
     </div>
     <div class="bottom"><span>© <span id="yr"></span> {{naam}}</span><span>{{regio}}</span></div>
@@ -83,7 +84,7 @@ export function businessSchema() {
     image: url + '/assets/og.png', logo: url + '/assets/icon-512.png',
     areaServed: site.werkgebied.map(name => ({ '@type': 'City', name })),
     address: { '@type': 'PostalAddress', addressLocality: site.gemeente, postalCode: site.postcode, addressCountry: 'BE', ...(site.straat ? { streetAddress: site.straat } : {}) },
-    openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '18:00' }],
+    openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: site.uren.dagen.map(d => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][d - 1]), opens: site.uren.van, closes: site.uren.tot }],
     vatID: site.btw,
   };
   return b;

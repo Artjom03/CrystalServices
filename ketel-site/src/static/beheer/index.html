@@ -371,10 +371,23 @@
     return j;
   }
 
+  // Recente periode bij elke vernieuwing; oudere afspraken (voor de klantenlijst) maar één keer.
+  const HIST_GRENS = () => addDays(today(), -60);
+  let history = null;
   async function load() {
-    data = await api('GET', null, '?van=2000-01-01&tot=' + addDays(today(), 400));
+    const recent = await api('GET', null, '?van=' + HIST_GRENS() + '&tot=' + addDays(today(), 400));
+    data = { ...recent, bookings: [...(history || []), ...recent.bookings] };
     if (data.feed) $('feedUrl').value = location.origin + data.feed;
     render();
+    if (!history) loadHistory();
+  }
+  async function loadHistory() {
+    try {
+      const old = await api('GET', null, '?van=2000-01-01&tot=' + addDays(HIST_GRENS(), -1));
+      history = old.bookings;
+      data.bookings = [...history, ...data.bookings.filter(b => b.date >= HIST_GRENS())];
+      render();
+    } catch (e) { history = null; }
   }
 
   // ---------- Aanmelden ----------

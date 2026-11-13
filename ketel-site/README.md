@@ -8,8 +8,8 @@
 | Merken (eigen pagina of alleen in de lijst) | `src/merken.mjs` |
 | Teksten van de pagina's | `src/pages.mjs` |
 
-Zolang er nog voorbeeldgegevens (`voorbeeld`, `0000`) in `src/site.config.mjs` staan, krijgt elke
-pagina `noindex` en wordt er geen sitemap gemaakt. Zo komt er niets onjuists in Google.
+Zolang `gecontroleerd` op `false` staat of er nog voorbeeldgegevens (`voorbeeld`, `0000`) in `src/site.config.mjs`
+staan, krijgt elke pagina `noindex` en wordt er geen sitemap gemaakt. Zo komt er niets onjuists in Google.
 
 ## De planning-app (`/beheer/`)
 
@@ -20,21 +20,37 @@ pagina `noindex` en wordt er geen sitemap gemaakt. Zo komt er niets onjuists in 
 - **Gsm-agenda**: een abonnementslink voor Google Agenda of de iPhone-agenda.
 - Installeerbaar als app: Android "App installeren", iPhone "Zet op beginscherm".
 
-## Online zetten (Netlify)
+## Online (Netlify)
 
-1. Netlify → Add new project → Import from GitHub → deze repository, **Base directory** `ketel-site`.
-2. Environment variables → `BEHEER_WACHTWOORD` (minstens 8 tekens) → opnieuw deployen.
-3. Forms → zet formulierdetectie aan en voeg e-mailmeldingen toe voor `afspraak` en `offerte`.
-4. Eigen domein: Domain management, en vul `domein` in `src/site.config.mjs` in.
-5. Echte gegevens ingevuld? Dien `https://jouwdomein/sitemap.xml` in bij Google Search Console
-   en maak een Google-bedrijfsprofiel aan met dezelfde naam, telefoon en adres.
+De site staat op **https://haard-en-ketel.netlify.app** (Netlify-project `haard-en-ketel`, team Crystal Services BV).
+Ze is **rechtstreeks geüpload** en nog **niet gekoppeld aan GitHub**: wijzigingen in GitHub komen dus niet
+vanzelf online. Zo koppel je ze (eenmalig, daarna gaat alles automatisch):
+
+1. Netlify → project `haard-en-ketel` → **Project configuration → Build & deploy → Link repository**.
+2. Kies deze GitHub-repository, branch met de site (nu `claude/modest-babbage-x8hpk3`, later `main`),
+   **Base directory** `ketel-site`. Build command en publish directory staan al in `netlify.toml`.
+
+**Beheerwachtwoord wijzigen:** Netlify → Project configuration → Environment variables → `BEHEER_WACHTWOORD`
+aanpassen (minstens 8 tekens) en daarna **opnieuw deployen** (Deploys → Trigger deploy, kan pas na het koppelen
+met GitHub). De link voor de gsm-agenda verandert mee met het wachtwoord.
+
+**E-mail bij nieuwe afspraken en offertes:** Netlify → Forms → Form notifications → Add notification → Email,
+voor de formulieren `afspraak` en `offerte`. Zonder dit komen ze alleen in Netlify en in de planning-app terecht.
+
+**Eigen domein en Google:** koppel je domein onder Domain management en vul `domein` in. Zet `gecontroleerd: true`
+in `src/site.config.mjs` als alle gegevens kloppen; dan pas komen de pagina's in Google en wordt er een sitemap
+gemaakt. Dien die (`/sitemap.xml`) in bij Google Search Console en maak een Google-bedrijfsprofiel aan met exact
+dezelfde naam, telefoon en adres.
 
 ## Voor ontwikkelaars
 
 ```bash
 npm install
 npm test          # agendalogica + SEO-controle van de gebouwde site
-npm run build     # bouwt naar dist/
+npm run build     # test en bouwt naar dist/ (Netlify doet hetzelfde; faalt een test, dan gaat er niets online)
+
+# lokaal met de echte Netlify-functies (lokale opslag):
+npm run build && BEHEER_WACHTWOORD=testwachtwoord123 npx netlify-cli dev --offline --dir dist --functions netlify/functions
 ```
 
 Structuur: `build.mjs` (bouwt de site), `src/` (inhoud en opmaak), `src/static/` (lettertypes,

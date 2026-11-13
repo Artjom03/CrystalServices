@@ -57,6 +57,11 @@ test('voorbeeldgegevens: noindex en geen sitemap; geen verzonnen reviews', () =>
   assert.equal(existsSync(join(OUT, 'sitemap.xml')), false);
 });
 
+test('geen onvervangen {{invulvelden}} in pagina\'s of script', () => {
+  for (const { f, s } of pages) assert.doesNotMatch(s, /\{\{\w+\}\}/, f);
+  assert.doesNotMatch(readFileSync(join(OUT, 'assets/site.js'), 'utf8'), /\{\{\w+\}\}/);
+});
+
 test('beheer-app: manifest, service worker en noindex', () => {
   const m = JSON.parse(readFileSync(join(OUT, 'beheer/manifest.webmanifest'), 'utf8'));
   assert.equal(m.scope, '/beheer/');

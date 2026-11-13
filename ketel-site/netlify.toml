@@ -42,3 +42,8 @@
   for = "/formulieren.html"
   [headers.values]
     X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/beheer/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
