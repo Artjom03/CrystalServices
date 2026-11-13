@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { ipVan } from '../contact/spam';
-import { moment, systeemPrompt } from './kennis';
+import { moment, systeemPrompt, vernieuwPrijzen } from './kennis';
 import { regelAntwoord } from './regels';
 
 /**
@@ -85,6 +85,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Ongeldig verzoek' }, { status: 400 });
   }
+
+  // De prijzen uit het winkelprogramma (hoogstens elke 5 minuten opgehaald).
+  await vernieuwPrijzen();
 
   const berichten = naarBerichten(body.berichten);
   if (!berichten) {
