@@ -67,7 +67,9 @@ function hostVan(url: string): string | null {
 }
 
 function antwoord(tekst: string, bron: 'ai' | 'regels') {
-  return NextResponse.json({ antwoord: tekst, bron });
+  // De bron (automatisch of reserve-antwoord) blijft intern; de bezoeker krijgt enkel het antwoord.
+  void bron;
+  return NextResponse.json({ antwoord: tekst });
 }
 
 export async function POST(request: NextRequest) {
