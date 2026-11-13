@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node bouw.mjs 67729cc800481d281b9ca396753e928ce4bf3ed5"
+    "build": "node bouw.mjs 00d000f422eb1c107283cc0503c0881d3d947ed0"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.1"
