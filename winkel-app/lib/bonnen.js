@@ -61,6 +61,18 @@ function datum(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
 }
 
+/**
+ * De datum waarop de was binnengebracht (of bij de klant opgehaald) is. De winkel kan die
+ * kiezen, bv. als de bon pas later gemaakt wordt. Vandaag: het echte tijdstip; een andere
+ * dag: 12 uur 's middags op die dag. Een datum in de toekomst kan niet.
+ */
+function binnenVan(gekozen, iso) {
+  const d = datum(gekozen);
+  if (!d || d === dagVan(iso)) return null;
+  if (d > dagVan(iso)) throw new Fout('De datum van binnenbrengen kan niet in de toekomst liggen');
+  return d + 'T11:00:00.000Z';
+}
+
 export const EXTERN = ['', 'zelf', 'sturen', 'weg', 'terug'];
 
 /** Houdt enkel de velden over die we kennen, met redelijke grenzen. */
@@ -445,7 +457,9 @@ function handeling(oud, actie, nu) {
         nr: volgendNummer(staat),
         ...v,
         status: 'binnen',
-        binnenOp: iso,
+        binnenOp: binnenVan(actie.bon?.binnenDatum, iso) || iso,
+        // Zelf gekozen dag: er hoort geen uur bij op de bon.
+        binnenGekozen: Boolean(binnenVan(actie.bon?.binnenDatum, iso)),
         klaarOp: '',
         opgehaaldOp: '',
         verwittigdOp: '',
@@ -471,6 +485,12 @@ function handeling(oud, actie, nu) {
       if (!v.klant.naam) throw new Fout('Vul de naam van de klant in');
       const wasBetaald = staat.bonnen[i].betaald;
       staat.bonnen[i] = { ...staat.bonnen[i], ...v, gewijzigdOp: iso };
+      // Andere datum van binnenbrengen gekozen? Dezelfde dag laten we het tijdstip ongemoeid.
+      const gekozen = datum(actie.bon?.binnenDatum);
+      if (gekozen && gekozen !== dagVan(staat.bonnen[i].binnenOp)) {
+        staat.bonnen[i].binnenOp = binnenVan(gekozen, iso) || iso;
+        staat.bonnen[i].binnenGekozen = Boolean(binnenVan(gekozen, iso));
+      }
       if (actie.bewaarKlant || staat.klantenboek[klantSleutel(v.klant)]) zetKlant(staat.klantenboek, v.klant, iso);
       if (wasBetaald || v.betaald) betalingenVolgen(staat, staat.bonnen[i], iso);
       return { staat, bon: staat.bonnen[i] };
